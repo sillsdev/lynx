@@ -8,9 +8,9 @@ export enum DiagnosticSeverity {
 }
 
 export interface Diagnostic {
+  code: string | number;
+  source: string;
   range: Range;
-  severity?: DiagnosticSeverity;
-  code?: number | string;
-  source?: string;
+  severity: DiagnosticSeverity;
   message: string;
 }

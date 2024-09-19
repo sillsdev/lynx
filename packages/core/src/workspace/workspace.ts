@@ -1,6 +1,7 @@
 import { map, merge, Observable, tap } from 'rxjs';
 
 import { Diagnostic } from '../diagnostic/diagnostic';
+import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticProviderFactory, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { Document } from '../document/document';
 import { DocumentFactory } from '../document/document-factory';
@@ -14,7 +15,7 @@ export interface WorkspaceConfig<T extends Document> {
 }
 
 export class Workspace<T extends Document> {
-  private readonly diagnosticProviders: DiagnosticProvider[];
+  private readonly diagnosticProviders: Map<string, DiagnosticProvider>;
   private readonly lastDiagnosticChangedEvents = new Map<string, DiagnosticsChanged[]>();
 
   public readonly documentManager: DocumentManager<T>;
@@ -22,9 +23,14 @@ export class Workspace<T extends Document> {
 
   constructor(config: WorkspaceConfig<T>) {
     this.documentManager = new DocumentManager(config.documentReader, config.documentFactory);
-    this.diagnosticProviders = config.diagnosticProviders.map((factory) => factory(this.documentManager));
+    this.diagnosticProviders = new Map(
+      config.diagnosticProviders.map((factory) => {
+        const provider = factory(this.documentManager);
+        return [provider.id, provider];
+      }),
+    );
     this.diagnosticsChanged$ = merge(
-      ...this.diagnosticProviders.map((provider, i) =>
+      ...Array.from(this.diagnosticProviders.values()).map((provider, i) =>
         provider.diagnosticsChanged$.pipe(
           tap((e) => {
             this.updateCombinedDiagnosticChangedEvent(i, e);
@@ -35,9 +41,17 @@ export class Workspace<T extends Document> {
   }
 
   getDiagnostics(uri: string): Diagnostic[] {
-    return this.diagnosticProviders.reduce<Diagnostic[]>((diagnostics, provider) => {
+    return Array.from(this.diagnosticProviders.values()).reduce<Diagnostic[]>((diagnostics, provider) => {
       return diagnostics.concat(provider.getDiagnostics(uri));
     }, []);
+  }
+
+  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): DiagnosticFix[] {
+    const provider = this.diagnosticProviders.get(diagnostic.source);
+    if (provider == null) {
+      return [];
+    }
+    return provider.getDiagnosticFixes(uri, diagnostic);
   }
 
   private updateCombinedDiagnosticChangedEvent(providerIndex: number, event: DiagnosticsChanged) {

@@ -6,6 +6,7 @@ import {
   DiagnosticSeverity,
   DocumentManager,
 } from 'lynx-core';
+import { DiagnosticFix } from 'lynx-core/src/diagnostic/diagnostic-fix';
 import { map, merge, Observable } from 'rxjs';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -18,6 +19,7 @@ export class TestDiagnosticProvider implements DiagnosticProvider {
     return (documentManager: DocumentManager<TextDocument>) => new TestDiagnosticProvider(documentManager, config);
   }
 
+  public readonly id = 'test';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(
@@ -56,6 +58,14 @@ export class TestDiagnosticProvider implements DiagnosticProvider {
     return this.validateTextDocument(doc);
   }
 
+  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): DiagnosticFix[] {
+    const doc = this.documentManager.get(uri);
+    if (doc == null) {
+      return [];
+    }
+    return this.getFixes(doc, diagnostic);
+  }
+
   private validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     // In this simple example we get the settings for every validate run.
     const settings = this.config();
@@ -70,16 +80,39 @@ export class TestDiagnosticProvider implements DiagnosticProvider {
     while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
       problems++;
       const diagnostic: Diagnostic = {
+        code: 1,
+        source: this.id,
         severity: DiagnosticSeverity.Warning,
         range: {
           start: textDocument.positionAt(m.index),
           end: textDocument.positionAt(m.index + m[0].length),
         },
         message: `${m[0]} is all uppercase.`,
-        source: 'ex',
       };
       diagnostics.push(diagnostic);
     }
     return diagnostics;
+  }
+
+  private getFixes(textDocument: TextDocument, diagnostic: Diagnostic): DiagnosticFix[] {
+    if (diagnostic.code === 1) {
+      const text = textDocument.getText();
+      const start = textDocument.offsetAt(diagnostic.range.start);
+      const end = textDocument.offsetAt(diagnostic.range.end);
+      return [
+        {
+          title: `Convert to lowercase`,
+          isPreferred: true,
+          diagnostic,
+          edits: [
+            {
+              range: diagnostic.range,
+              newText: text.slice(start, end).toLowerCase(),
+            },
+          ],
+        },
+      ];
+    }
+    return [];
   }
 }

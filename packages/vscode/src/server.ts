@@ -1,5 +1,6 @@
-import { Workspace } from 'lynx-core';
+import { Diagnostic, Workspace } from 'lynx-core';
 import {
+  CodeAction,
   createConnection,
   DidChangeConfigurationNotification,
   type DocumentDiagnosticReport,
@@ -88,9 +89,23 @@ connection.languages.diagnostics.on((params) => {
   } satisfies DocumentDiagnosticReport;
 });
 
-connection.onCodeAction((_params) => {
-  // This is a placeholder for the code action
-  return null;
+connection.onCodeAction((params) => {
+  const actions: CodeAction[] = [];
+  for (const diagnostic of params.context.diagnostics) {
+    actions.push(
+      ...workspace.getDiagnosticFixes(params.textDocument.uri, diagnostic as Diagnostic).map((fix) => ({
+        title: fix.title,
+        kind: 'quickfix',
+        diagnostics: [diagnostic],
+        edit: {
+          changes: {
+            [params.textDocument.uri]: fix.edits,
+          },
+        },
+      })),
+    );
+  }
+  return actions;
 });
 
 connection.onDidOpenTextDocument((params) => {
