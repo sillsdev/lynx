@@ -6,6 +6,9 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
+  {
+    ignores: ['coverage/*', 'public/*', 'lib/*', 'package-lock.json'],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -14,7 +17,6 @@ export default tseslint.config(
     plugins: {
       'simple-import-sort': simpleImportSort,
     },
-    ignores: [`coverage/*`, `public/*`, `lib/*`, `package-lock.json`],
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
