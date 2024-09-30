@@ -82,18 +82,18 @@ connection.onDidChangeConfiguration((change) => {
   connection.languages.diagnostics.refresh();
 });
 
-connection.languages.diagnostics.on((params) => {
+connection.languages.diagnostics.on(async (params) => {
   return {
     kind: DocumentDiagnosticReportKind.Full,
-    items: workspace.getDiagnostics(params.textDocument.uri),
+    items: await workspace.getDiagnostics(params.textDocument.uri),
   } satisfies DocumentDiagnosticReport;
 });
 
-connection.onCodeAction((params) => {
+connection.onCodeAction(async (params) => {
   const actions: CodeAction[] = [];
   for (const diagnostic of params.context.diagnostics) {
     actions.push(
-      ...workspace.getDiagnosticFixes(params.textDocument.uri, diagnostic as Diagnostic).map((fix) => ({
+      ...(await workspace.getDiagnosticFixes(params.textDocument.uri, diagnostic as Diagnostic)).map((fix) => ({
         title: fix.title,
         kind: 'quickfix',
         diagnostics: [diagnostic],
@@ -109,7 +109,7 @@ connection.onCodeAction((params) => {
 });
 
 connection.onDidOpenTextDocument((params) => {
-  workspace.documentManager.fireOpened(
+  void workspace.documentManager.fireOpened(
     params.textDocument.uri,
     params.textDocument.languageId,
     params.textDocument.version,
@@ -118,11 +118,15 @@ connection.onDidOpenTextDocument((params) => {
 });
 
 connection.onDidCloseTextDocument((params) => {
-  workspace.documentManager.fireClosed(params.textDocument.uri);
+  void workspace.documentManager.fireClosed(params.textDocument.uri);
 });
 
 connection.onDidChangeTextDocument((params) => {
-  workspace.documentManager.fireChanged(params.textDocument.uri, params.contentChanges, params.textDocument.version);
+  void workspace.documentManager.fireChanged(
+    params.textDocument.uri,
+    params.contentChanges,
+    params.textDocument.version,
+  );
 });
 
 connection.onDidChangeWatchedFiles((_change) => {

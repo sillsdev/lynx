@@ -2,33 +2,29 @@
   "name": "lynx",
   "version": "1.0.0",
   "description": "",
+  "private": true,
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -b tsconfig.build.json",
-    "watch": "tsc -b tsconfig.build.json -w",
+    "vscode:prepublish": "npm run build",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "check-types": "turbo run check-types",
+    "lint": "turbo run lint",
+    "format": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "SIL Global",
   "license": "MIT",
-  "main": "./packages/vscode/lib/extension",
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
-    "@types/eslint__js": "^8.42.3",
-    "eslint": "^9.9.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-typescript": "^3.6.3",
-    "eslint-plugin-prettier": "^5.2.1",
-    "eslint-plugin-simple-import-sort": "^12.1.1",
     "prettier": "^3.3.3",
-    "typescript": "^5.5.4",
-    "typescript-eslint": "^8.3.0"
+    "turbo": "^2.1.3"
   },
   "volta": {
     "node": "20.17.0",
     "npm": "10.8.3"
-  }
+  },
+  "packageManager": "npm@10.8.3"
 }

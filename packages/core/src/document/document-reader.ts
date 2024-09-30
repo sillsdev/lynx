@@ -6,5 +6,5 @@ export interface DocumentData {
 
 export interface DocumentReader {
   keys(): string[];
-  read(uri: string): DocumentData | undefined;
+  read(uri: string): Promise<DocumentData | undefined>;
 }

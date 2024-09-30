@@ -1,13 +1,11 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "incremental": true,
     "target": "ES2016",
-    "module": "CommonJS",
+    "module": "ES2015",
     "declaration": true,
-    "sourceMap": true,
-    "composite": true,
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true

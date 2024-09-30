@@ -40,18 +40,20 @@ export class Workspace<T extends Document> {
     ).pipe(map((e) => this.getCombinedDiagnosticChangedEvent(e.uri, e.version)));
   }
 
-  getDiagnostics(uri: string): Diagnostic[] {
-    return Array.from(this.diagnosticProviders.values()).reduce<Diagnostic[]>((diagnostics, provider) => {
-      return diagnostics.concat(provider.getDiagnostics(uri));
-    }, []);
+  async getDiagnostics(uri: string): Promise<Diagnostic[]> {
+    const diagnostics: Diagnostic[] = [];
+    for (const provider of this.diagnosticProviders.values()) {
+      diagnostics.push(...(await provider.getDiagnostics(uri)));
+    }
+    return diagnostics;
   }
 
-  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): DiagnosticFix[] {
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
     const provider = this.diagnosticProviders.get(diagnostic.source);
     if (provider == null) {
       return [];
     }
-    return provider.getDiagnosticFixes(uri, diagnostic);
+    return await provider.getDiagnosticFixes(uri, diagnostic);
   }
 
   private updateCombinedDiagnosticChangedEvent(providerIndex: number, event: DiagnosticsChanged) {

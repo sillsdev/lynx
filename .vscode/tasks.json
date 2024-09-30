@@ -3,30 +3,54 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "compile",
+      "script": "build",
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      },
-      "problemMatcher": ["$tsc"]
+      "problemMatcher": [
+        {
+          "base": "$tsup",
+          "background": {
+            "beginsPattern": "^lynx-(.+):(.*): (ESM|CJS) Build start$",
+            "endsPattern": "^lynx-(.+):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
+          }
+        },
+        {
+          "base": "$tsup-dts",
+          "background": {
+            "beginsPattern": "^lynx-(.+):(.*): DTS Build start$",
+            "endsPattern": "^lynx-(.+):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
+          }
+        }
+      ],
+      "label": "npm: build"
     },
     {
       "type": "npm",
-      "script": "watch",
-      "isBackground": true,
+      "script": "dev",
       "group": {
         "kind": "build",
         "isDefault": false
       },
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "never"
-      },
-      "problemMatcher": ["$tsc-watch"]
+      "problemMatcher": [
+        {
+          "base": "$tsup-watch",
+          "background": {
+            "beginsPattern": "^lynx-(.+):(.*): (ESM|CJS) Build start$",
+            "endsPattern": "^lynx-(.+):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
+          }
+        },
+        {
+          "base": "$tsup-dts-watch",
+          "background": {
+            "beginsPattern": "^lynx-(.+):(.*): DTS Build start$",
+            "endsPattern": "^lynx-(.+):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
+          }
+        }
+      ],
+      "isBackground": true,
+      "label": "npm: dev"
     }
   ]
 }

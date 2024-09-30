@@ -58,20 +58,20 @@ export class DocumentManager<T extends Document> {
     return this.changedSubject.asObservable();
   }
 
-  get(uri: string): T | undefined {
+  async get(uri: string): Promise<T | undefined> {
     let doc = this.documents.get(uri);
     if (doc == null) {
-      doc = this.reload(uri);
+      doc = await this.reload(uri);
     }
     return doc;
   }
 
-  all(): T[] {
+  async all(): Promise<T[]> {
     const docs = Array.from(this.documents.values());
     if (this.reader != null) {
       for (const id of this.reader.keys()) {
         if (this.documents.has(id)) continue;
-        const doc = this.get(id);
+        const doc = await this.get(id);
         if (doc != null) {
           docs.push(doc);
         }
@@ -80,43 +80,51 @@ export class DocumentManager<T extends Document> {
     return docs;
   }
 
-  active(): T[] {
-    return Array.from(this.activeDocuments)
-      .map((uri) => this.get(uri))
-      .filter((doc) => doc != null);
+  async active(): Promise<T[]> {
+    const docs: T[] = [];
+    for (const uri of this.activeDocuments) {
+      const doc = await this.get(uri);
+      if (doc != null) {
+        docs.push(doc);
+      }
+    }
+    return docs;
   }
 
-  fireCreated(uri: string): void {
-    const doc = this.get(uri);
+  async fireCreated(uri: string): Promise<void> {
+    const doc = await this.get(uri);
     if (doc != null) {
       this.createdSubject.next({ document: doc });
     }
   }
 
-  fireClosed(uri: string): void {
+  fireClosed(uri: string): Promise<void> {
     this.documents.delete(uri);
     this.activeDocuments.delete(uri);
     this.closedSubject.next({ uri: uri });
+    return Promise.resolve();
   }
 
-  fireOpened(uri: string, format: string, version: number, content: string): void {
+  fireOpened(uri: string, format: string, version: number, content: string): Promise<void> {
     const doc = this.factory.create(uri, format, version, content);
     this.documents.set(uri, doc);
     this.activeDocuments.add(uri);
     this.openedSubject.next({ document: doc });
+    return Promise.resolve();
   }
 
-  fireDeleted(uri: string): void {
+  fireDeleted(uri: string): Promise<void> {
     this.documents.delete(uri);
     this.deletedSubject.next({ uri: uri });
+    return Promise.resolve();
   }
 
-  fireChanged(uri: string, changes?: readonly DocumentChange[], version?: number): void {
+  async fireChanged(uri: string, changes?: readonly DocumentChange[], version?: number): Promise<void> {
     let doc: T | undefined = undefined;
     if (changes == null) {
-      doc = this.reload(uri);
+      doc = await this.reload(uri);
     } else {
-      doc = this.get(uri);
+      doc = await this.get(uri);
       if (doc != null) {
         doc = this.factory.update(doc, changes, version ?? 0);
         this.documents.set(uri, doc);
@@ -127,8 +135,8 @@ export class DocumentManager<T extends Document> {
     }
   }
 
-  private reload(uri: string): T | undefined {
-    const data = this.reader?.read(uri);
+  private async reload(uri: string): Promise<T | undefined> {
+    const data = await this.reader?.read(uri);
     const doc = data == null ? undefined : this.factory.create(uri, data.format, data.version, data.content);
     if (doc != null) {
       this.documents.set(uri, doc);

@@ -16,6 +16,6 @@ export interface DiagnosticsChanged {
 export interface DiagnosticProvider {
   readonly id: string;
   readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
-  getDiagnostics(uri: string): Diagnostic[];
-  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): DiagnosticFix[];
+  getDiagnostics(uri: string): Promise<Diagnostic[]>;
+  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]>;
 }

@@ -6,8 +6,8 @@ import {
   DiagnosticSeverity,
   DocumentManager,
 } from 'lynx-core';
-import { DiagnosticFix } from 'lynx-core/src/diagnostic/diagnostic-fix';
-import { map, merge, Observable } from 'rxjs';
+import { DiagnosticFix } from 'lynx-core';
+import { map, merge, Observable, switchMap } from 'rxjs';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export interface TestDiagnosticProviderConfig {
@@ -42,24 +42,24 @@ export class TestDiagnosticProvider implements DiagnosticProvider {
         })),
       ),
       documentManager.closed$.pipe(
-        map((e) => {
-          const doc = this.documentManager.get(e.uri);
+        switchMap(async (e) => {
+          const doc = await this.documentManager.get(e.uri);
           return { uri: e.uri, version: doc?.version, diagnostics: [] };
         }),
       ),
     );
   }
 
-  getDiagnostics(uri: string): Diagnostic[] {
-    const doc = this.documentManager.get(uri);
+  async getDiagnostics(uri: string): Promise<Diagnostic[]> {
+    const doc = await this.documentManager.get(uri);
     if (doc == null) {
       return [];
     }
     return this.validateTextDocument(doc);
   }
 
-  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): DiagnosticFix[] {
-    const doc = this.documentManager.get(uri);
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
+    const doc = await this.documentManager.get(uri);
     if (doc == null) {
       return [];
     }
