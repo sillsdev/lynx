@@ -6,8 +6,7 @@
     "build": "tsup-node src/extension.ts src/server.ts --format cjs --clean --sourcemap",
     "dev": "tsup-node src/extension.ts src/server.ts --format cjs --watch",
     "check-types": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint ."
   },
   "author": "SIL Global",
   "license": "MIT",

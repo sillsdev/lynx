@@ -18,7 +18,7 @@
     "dev": "tsup src/index.ts --dts --format cjs,esm --watch",
     "check-types": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "keywords": [],
   "author": "SIL Global",
@@ -31,6 +31,7 @@
     "@repo/typescript-config": "*",
     "eslint": "^9.9.1",
     "tsup": "^8.3.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.2"
   }
 }
