@@ -6,8 +6,7 @@
     "build": "tsup-node src/extension.ts src/server.ts --format cjs --clean --sourcemap",
     "dev": "tsup-node src/extension.ts src/server.ts --format cjs --watch",
     "check-types": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint ."
   },
   "author": "SIL Global",
   "license": "MIT",
@@ -16,9 +15,23 @@
     "vscode": "^1.75.0"
   },
   "activationEvents": [
-    "onLanguage:plaintext"
+    "onLanguage:usfm"
   ],
   "contributes": {
+    "languages": [
+      {
+        "id": "usfm",
+        "extensions": [
+          ".SFM",
+          ".sfm",
+          ".usfm",
+          ".USFM"
+        ],
+        "aliases": [
+          "USFM"
+        ]
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "Lynx Test",
@@ -43,9 +56,9 @@
   },
   "dependencies": {
     "lynx-core": "*",
+    "lynx-usfm": "*",
     "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.12"
+    "vscode-languageserver": "^9.0.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

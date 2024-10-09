@@ -1,5 +1,5 @@
 {
-  "name": "lynx-core",
+  "name": "lynx-usfm",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -24,7 +24,8 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "rxjs": "^7.8.1"
+    "@sillsdev/machine": "^3.0.1",
+    "lynx-core": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

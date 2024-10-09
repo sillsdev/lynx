@@ -1,4 +1,6 @@
-import { Diagnostic, Workspace } from 'lynx-core';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
+import { Diagnostic, ScriptureDocument, Workspace } from 'lynx-core';
+import { UsfmDocumentFactory } from 'lynx-usfm';
 import {
   CodeAction,
   createConnection,
@@ -10,7 +12,6 @@ import {
   ProposedFeatures,
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node';
-import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { TestDiagnosticProvider, TestDiagnosticProviderConfig } from './test-diagnostic-provider';
 
@@ -25,8 +26,8 @@ let globalSettings: TestDiagnosticProviderConfig = defaultSettings;
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
-const workspace = new Workspace<TextDocument>({
-  documentFactory: TextDocument,
+const workspace = new Workspace<ScriptureDocument>({
+  documentFactory: new UsfmDocumentFactory(new UsfmStylesheet('usfm.sty')),
   diagnosticProviders: [TestDiagnosticProvider.factory(() => globalSettings)],
 });
 
