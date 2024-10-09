@@ -10,7 +10,7 @@
     "check-types": "turbo run check-types",
     "lint": "turbo run lint",
     "format": "prettier --write .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "turbo run test"
   },
   "keywords": [],
   "author": "SIL Global",
