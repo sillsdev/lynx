@@ -12,13 +12,13 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { TestDiagnosticProvider, TestDiagnosticProviderConfig } from './test-diagnostic-provider';
+import { ExamplePunctuationChecker, BasicCheckerConfig } from 'lynx-punctuation-checker';
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: TestDiagnosticProviderConfig = { maxNumberOfProblems: 1000 };
-let globalSettings: TestDiagnosticProviderConfig = defaultSettings;
+const defaultSettings: BasicCheckerConfig = { maxNumberOfProblems: 1000 };
+let globalSettings: BasicCheckerConfig = defaultSettings;
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -27,7 +27,7 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const workspace = new Workspace<TextDocument>({
   documentFactory: TextDocument,
-  diagnosticProviders: [TestDiagnosticProvider.factory(() => globalSettings)],
+  diagnosticProviders: [ExamplePunctuationChecker.factory(() => globalSettings)],
 });
 
 let hasConfigurationCapability = false;
@@ -75,7 +75,7 @@ connection.onInitialized(() => {
 
 connection.onDidChangeConfiguration((change) => {
   const settings = change.settings as Map<string, unknown>;
-  globalSettings = (settings.get('lynxTest') as TestDiagnosticProviderConfig | undefined) ?? defaultSettings;
+  globalSettings = (settings.get('lynxTest') as BasicCheckerConfig | undefined) ?? defaultSettings;
   // Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
   // We could optimize things here and re-fetch the setting first can compare it
   // to the existing setting, but this is out of scope for this example.
