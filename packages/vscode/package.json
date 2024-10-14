@@ -38,6 +38,7 @@
     "@sillsdev/lynx": "*",
     "@sillsdev/lynx-usfm": "*",
     "@sillsdev/lynx-examples": "*",
+    "@sillsdev/lynx-punctuation-checker": "*",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1"
   },
