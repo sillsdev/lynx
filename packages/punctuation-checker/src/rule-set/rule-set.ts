@@ -1,19 +1,12 @@
-import { DiagnosticProvider, DocumentManager } from "lynx-core";
-import { AllowedCharacterChecker } from "../allowed-character-checker";
-import { AllowedCharacterSet } from "./allowed-character-set";
-import { BasicCheckerConfig } from "../abstract-checker";
-import { TextDocument } from "vscode-languageserver-textdocument";
+import { DiagnosticProvider, DocumentManager, TextDocument } from '@sillsdev/lynx';
+
+import { AllowedCharacterChecker } from '../allowed-character-checker';
+import { AllowedCharacterSet } from './allowed-character-set';
 
 export class RuleSet {
+  constructor(private readonly allowedCharacterSet: AllowedCharacterSet) {}
 
-    constructor(private readonly allowedCharacterSet: AllowedCharacterSet) {
-
-    }
-
-    public createDiagnosticProviders(documentManager: DocumentManager<TextDocument>,
-                                     config: () => BasicCheckerConfig): DiagnosticProvider[] {
-        return [
-            new AllowedCharacterChecker(documentManager, config, this.allowedCharacterSet),
-        ]
-    }
+  public createDiagnosticProviders(documentManager: DocumentManager<TextDocument>): DiagnosticProvider[] {
+    return [new AllowedCharacterChecker(documentManager, this.allowedCharacterSet)];
+  }
 }

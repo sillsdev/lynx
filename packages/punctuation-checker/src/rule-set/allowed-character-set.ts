@@ -1,15 +1,11 @@
 export interface AllowedCharacterSet {
-    isCharacterAllowed(character: string): boolean;
+  isCharacterAllowed(character: string): boolean;
 }
 
-class CharacterRegexWhitelist implements AllowedCharacterSet {
+export class CharacterRegexWhitelist implements AllowedCharacterSet {
+  constructor(private readonly characterRegex: RegExp) {}
 
-    constructor(private readonly characterRegex: RegExp) {
-
-    }
-
-    isCharacterAllowed(character: string): boolean {
-        return this.characterRegex.test(character);
-    }
-
+  isCharacterAllowed(character: string): boolean {
+    return this.characterRegex.test(character);
+  }
 }
