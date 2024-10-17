@@ -1,5 +1,5 @@
 import { Diagnostic, Workspace } from 'lynx-core';
-import { BasicCheckerConfig, ExamplePunctuationChecker } from 'lynx-punctuation-checker';
+import { BasicCheckerConfig, RuleSet, StandardRuleSets } from 'lynx-punctuation-checker';
 import {
   CodeAction,
   createConnection,
@@ -23,10 +23,12 @@ let globalSettings: BasicCheckerConfig = defaultSettings;
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
+const ruleSet: RuleSet = StandardRuleSets.English;
+
 // Create a simple text document manager.
 const workspace = new Workspace<TextDocument>({
   documentFactory: TextDocument,
-  diagnosticProviders: [ExamplePunctuationChecker.factory(() => globalSettings)],
+  diagnosticProviders: ruleSet.createDiagnosticProviderFactories(() => globalSettings),
 });
 
 let hasConfigurationCapability = false;
@@ -74,7 +76,6 @@ connection.onInitialized(() => {
 
 connection.onDidChangeConfiguration((change) => {
   const settings = change.settings as Map<string, unknown>;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   globalSettings = (settings.get('lynxTest') as BasicCheckerConfig | undefined) ?? defaultSettings;
   // Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
   // We could optimize things here and re-fetch the setting first can compare it
