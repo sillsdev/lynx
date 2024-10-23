@@ -3,9 +3,13 @@ export interface AllowedCharacterSet {
 }
 
 export class CharacterRegexWhitelist implements AllowedCharacterSet {
-  constructor(private readonly characterRegex: RegExp) {}
+  private readonly characterRegex;
 
-  isCharacterAllowed(character: string): boolean {
+  constructor(characterRegex: RegExp) {
+    this.characterRegex = new RegExp('^' + characterRegex.source + '$', characterRegex.flags);
+  }
+
+  public isCharacterAllowed(character: string): boolean {
     return this.characterRegex.test(character);
   }
 }

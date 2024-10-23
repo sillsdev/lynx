@@ -8,7 +8,11 @@
       "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/vscode"],
-      "outFiles": ["${workspaceRoot}/packages/vscode/dist/**/*.js", "${workspaceRoot}/packages/core/dist/**/*.js"],
+      "outFiles": [
+        "${workspaceRoot}/packages/vscode/dist/**/*.js",
+        "${workspaceRoot}/packages/core/dist/**/*.js",
+        "${workspaceRoot}/packages/puncutation-checker/dist/**/*.js"
+      ],
       "autoAttachChildProcesses": true
     }
   ]

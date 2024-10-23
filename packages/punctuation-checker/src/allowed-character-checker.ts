@@ -24,7 +24,7 @@ export class AllowedCharacterChecker extends AbstractChecker {
       diagnosticFactory,
       this.allowedCharacterSet,
     );
-    return allowedCharacterIssueFinder.produceDiagnostics(textDocument);
+    return allowedCharacterIssueFinder.produceDiagnostics(textDocument.getText());
   }
   protected getFixes(_textDocument: TextDocument, _diagnostic: Diagnostic): DiagnosticFix[] {
     // no fixes available for disallowed characters
@@ -34,6 +34,8 @@ export class AllowedCharacterChecker extends AbstractChecker {
 
 class AllowedCharacterIssueFinder {
   private diagnosticList: DiagnosticList;
+  private readonly characterRegex: RegExp = /./gu;
+  private static readonly DIAGNOSTIC_CODE: string = 'disallowed-character';
 
   constructor(
     private readonly settings: BasicCheckerConfig,
@@ -43,14 +45,15 @@ class AllowedCharacterIssueFinder {
     this.diagnosticList = new DiagnosticList(settings);
   }
 
-  public produceDiagnostics(textDocument: TextDocument): Diagnostic[] {
+  public produceDiagnostics(text: string): Diagnostic[] {
     this.diagnosticList = new DiagnosticList(this.settings);
 
-    const text = textDocument.getText();
-    for (let characterIndex = 0; characterIndex < text.length; ++characterIndex) {
-      const character = text[characterIndex];
+    // TODO: convert to a standard Unicode format like NFKC
+    let match: RegExpExecArray | null;
+    while ((match = this.characterRegex.exec(text))) {
+      const character = match[0];
 
-      this.checkCharacter(character, characterIndex);
+      this.checkCharacter(character, match.index, match.index + match[0].length);
       if (this.diagnosticList.isProblemThresholdReached()) {
         break;
       }
@@ -59,21 +62,25 @@ class AllowedCharacterIssueFinder {
     return this.diagnosticList.toArray();
   }
 
-  private checkCharacter(character: string, characterIndex: number): void {
+  private checkCharacter(character: string, characterStartIndex: number, characterEndIndex: number): void {
     if (!this.allowedCharacterSet.isCharacterAllowed(character)) {
-      this.addDisallowedCharacterWarning(character, characterIndex);
+      this.addDisallowedCharacterWarning(character, characterStartIndex, characterEndIndex);
     }
   }
 
-  private addDisallowedCharacterWarning(character: string, characterIndex: number) {
+  private addDisallowedCharacterWarning(character: string, characterStartIndex: number, characterEndIndex: number) {
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(1)
+      .setCode(AllowedCharacterIssueFinder.DIAGNOSTIC_CODE)
       .setSeverity(DiagnosticSeverity.Warning)
-      .setRange(characterIndex, characterIndex + 1)
+      .setRange(characterStartIndex, characterEndIndex)
       .setMessage(`The character '${character}' is not typically used in this language.`)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 }
+
+export const _privateTestingClasses = {
+  AllowedCharacterIssueFinder,
+};

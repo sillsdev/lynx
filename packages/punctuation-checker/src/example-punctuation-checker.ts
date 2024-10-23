@@ -20,7 +20,7 @@ export class ExamplePunctuationChecker extends AbstractChecker {
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const quotationErrorFinder: QuotationErrorFinder = new QuotationErrorFinder(settings, diagnosticFactory);
-    return quotationErrorFinder.produceDiagnostics(textDocument);
+    return quotationErrorFinder.produceDiagnostics(textDocument.getText());
   }
 
   protected getFixes(_textDocument: TextDocument, diagnostic: Diagnostic): DiagnosticFix[] {
@@ -66,17 +66,16 @@ class QuotationErrorFinder {
     this.diagnosticList = new DiagnosticList(this.settings);
   }
 
-  public produceDiagnostics(textDocument: TextDocument): Diagnostic[] {
+  public produceDiagnostics(text: string): Diagnostic[] {
     this.reset();
 
-    this.processAllQuotationMarks(textDocument);
+    this.processAllQuotationMarks(text);
     this.handleUnmatchedQuotationMarks();
 
     return this.diagnosticList.toArray();
   }
 
-  private processAllQuotationMarks(textDocument: TextDocument): void {
-    const text = textDocument.getText();
+  private processAllQuotationMarks(text: string): void {
     const quotationIterator: QuotationIterator = new QuotationIterator(text);
     while (quotationIterator.hasNext() && !this.diagnosticList.isProblemThresholdReached()) {
       this.processQuotationMark(quotationIterator.next());
