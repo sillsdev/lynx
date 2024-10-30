@@ -5,12 +5,14 @@
   "private": true,
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "check-types": "turbo run check-types",
-    "lint": "turbo run lint",
+    "build": "turbo run build --no-update-notifier",
+    "dev": "turbo run dev --no-update-notifier",
+    "check-types": "turbo run check-types --no-update-notifier",
+    "lint": "turbo run lint --no-update-notifier",
     "format": "prettier --write .",
-    "test": "turbo run test"
+    "format:check": "prettier --check .",
+    "test": "turbo run test --no-update-notifier",
+    "coverage": "turbo run coverage --no-update-notifier"
   },
   "keywords": [],
   "author": "SIL Global",

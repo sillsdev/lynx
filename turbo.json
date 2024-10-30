@@ -16,6 +16,7 @@
       "dependsOn": ["topo"]
     },
     "lint": {},
-    "test": {}
+    "test": {},
+    "coverage": {}
   }
 }
