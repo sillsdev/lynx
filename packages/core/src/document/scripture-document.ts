@@ -1,6 +1,6 @@
 import { Range } from '../common';
 import { Document } from './document';
-import { ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { findNodes, ScriptureNode, ScriptureNodeType } from './scripture-node';
 import { TextDocument } from './text-document';
 
 export class ScriptureDocument extends TextDocument implements Document, ScriptureNode {
@@ -37,13 +37,10 @@ export class ScriptureDocument extends TextDocument implements Document, Scriptu
     throw new Error('The method is not supported.');
   }
 
-  *getNodes(filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean)): IterableIterator<ScriptureNode> {
-    for (const child of this._children) {
-      if (filter == null || child.type === filter || (typeof filter === 'function' && filter(child))) {
-        yield child;
-      }
-      yield* child.getNodes(filter);
-    }
+  findNodes(
+    filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean) | ScriptureNodeType[],
+  ): IterableIterator<ScriptureNode> {
+    return findNodes(this, filter);
   }
 
   appendChild(child: ScriptureNode): void {

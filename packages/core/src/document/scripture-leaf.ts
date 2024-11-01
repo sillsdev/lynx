@@ -38,7 +38,9 @@ export abstract class ScriptureLeaf implements ScriptureNode {
     return this.document.getText(this.range);
   }
 
-  *getNodes(_filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean)): IterableIterator<ScriptureNode> {
+  *findNodes(
+    _filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean) | ScriptureNodeType[],
+  ): IterableIterator<ScriptureNode> {
     // return nothing
   }
 

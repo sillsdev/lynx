@@ -31,28 +31,7 @@
           "USFM"
         ]
       }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Lynx Test",
-      "properties": {
-        "lynxTest.maxNumberOfProblems": {
-          "type": "number",
-          "default": 100,
-          "description": "Controls the maximum number of problems produced by the server."
-        },
-        "lynxTest.trace.server": {
-          "type": "string",
-          "enum": [
-            "off",
-            "messages",
-            "verbose"
-          ],
-          "default": "off",
-          "description": "Traces the communication between VS Code and the language server."
-        }
-      }
-    }
+    ]
   },
   "dependencies": {
     "lynx-core": "*",

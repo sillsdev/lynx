@@ -14,13 +14,7 @@ import {
 } from 'vscode-languageserver/node';
 
 import { SmartQuoteFormattingProvider } from './smart-quote-formatting-provider';
-import { TestDiagnosticProvider, TestDiagnosticProviderConfig } from './test-diagnostic-provider';
-
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
-const defaultSettings: TestDiagnosticProviderConfig = { maxNumberOfProblems: 1000 };
-let globalSettings: TestDiagnosticProviderConfig = defaultSettings;
+import { VerseOrderDiagnosticProvider } from './verse-order-diagnostic-provider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -29,7 +23,7 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const workspace = new Workspace({
   documentFactory: new UsfmDocumentFactory(new UsfmStylesheet('usfm.sty')),
-  diagnosticProviders: [TestDiagnosticProvider.factory(() => globalSettings)],
+  diagnosticProviders: [VerseOrderDiagnosticProvider],
   onTypeFormattingProviders: [SmartQuoteFormattingProvider],
 });
 
@@ -83,15 +77,6 @@ connection.onInitialized(() => {
   }
 });
 
-connection.onDidChangeConfiguration((change) => {
-  const settings = change.settings as Map<string, unknown>;
-  globalSettings = (settings.get('lynxTest') as TestDiagnosticProviderConfig | undefined) ?? defaultSettings;
-  // Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
-  // We could optimize things here and re-fetch the setting first can compare it
-  // to the existing setting, but this is out of scope for this example.
-  connection.languages.diagnostics.refresh();
-});
-
 connection.languages.diagnostics.on(async (params) => {
   return {
     kind: DocumentDiagnosticReportKind.Full,
@@ -141,11 +126,6 @@ connection.onDidChangeTextDocument((params) => {
 
 connection.onDocumentOnTypeFormatting(async (params) => {
   return await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch);
-});
-
-connection.onDidChangeWatchedFiles((_change) => {
-  // Monitored files have change in VSCode
-  connection.console.log('We received a file change event');
 });
 
 // Listen on the connection

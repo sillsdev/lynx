@@ -1,7 +1,7 @@
 import { Position } from '../common/position';
 import { Range } from '../common/range';
 import { ScriptureDocument } from './scripture-document';
-import { ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { findNodes, ScriptureNode, ScriptureNodeType } from './scripture-node';
 
 export abstract class ScriptureContainer implements ScriptureNode {
   private _parent?: ScriptureNode;
@@ -49,13 +49,10 @@ export abstract class ScriptureContainer implements ScriptureNode {
     return this.document.getText(this.range);
   }
 
-  *getNodes(filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean)): IterableIterator<ScriptureNode> {
-    for (const child of this._children) {
-      if (filter == null || child.type === filter || (typeof filter === 'function' && filter(child))) {
-        yield child;
-      }
-      yield* child.getNodes(filter);
-    }
+  findNodes(
+    filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean) | ScriptureNodeType[],
+  ): IterableIterator<ScriptureNode> {
+    return findNodes(this, filter);
   }
 
   positionAt(offset: number): Position {
