@@ -1,5 +1,5 @@
 {
-  "name": "lynx-usfm",
+  "name": "@sillsdev/lynx-usfm",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -8,9 +8,14 @@
   "module": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "scripts": {
@@ -26,7 +31,7 @@
   "license": "MIT",
   "dependencies": {
     "@sillsdev/machine": "^3.0.1",
-    "lynx-core": "*"
+    "@sillsdev/lynx": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

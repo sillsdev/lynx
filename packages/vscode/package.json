@@ -1,5 +1,5 @@
 {
-  "name": "lynx-vscode",
+  "name": "@sillsdev/lynx-vscode",
   "version": "1.0.0",
   "main": "./dist/extension.js",
   "scripts": {
@@ -34,8 +34,8 @@
     ]
   },
   "dependencies": {
-    "lynx-core": "*",
-    "lynx-usfm": "*",
+    "@sillsdev/lynx": "*",
+    "@sillsdev/lynx-usfm": "*",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1"
   },

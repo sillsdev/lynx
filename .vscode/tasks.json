@@ -12,15 +12,15 @@
         {
           "base": "$tsup",
           "background": {
-            "beginsPattern": "^lynx-(.+):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^lynx-(.+):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
+            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
+            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
           }
         },
         {
           "base": "$tsup-dts",
           "background": {
-            "beginsPattern": "^lynx-(.+):(.*): DTS Build start$",
-            "endsPattern": "^lynx-(.+):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
+            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
+            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
           }
         }
       ],
@@ -37,15 +37,15 @@
         {
           "base": "$tsup-watch",
           "background": {
-            "beginsPattern": "^lynx-(.+):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^lynx-(.+):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
+            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
+            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
           }
         },
         {
           "base": "$tsup-dts-watch",
           "background": {
-            "beginsPattern": "^lynx-(.+):(.*): DTS Build start$",
-            "endsPattern": "^lynx-(.+):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
+            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
+            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
           }
         }
       ],

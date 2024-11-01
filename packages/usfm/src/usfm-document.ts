@@ -1,13 +1,4 @@
 import {
-  UsfmAttribute,
-  UsfmParser,
-  UsfmParserHandlerBase,
-  UsfmParserState,
-  UsfmStylesheet,
-  UsfmTokenizer,
-  UsfmTokenType,
-} from '@sillsdev/machine/corpora';
-import {
   DocumentChange,
   Position,
   Range,
@@ -27,7 +18,16 @@ import {
   ScriptureTable,
   ScriptureText,
   ScriptureVerse,
-} from 'lynx-core';
+} from '@sillsdev/lynx';
+import {
+  UsfmAttribute,
+  UsfmParser,
+  UsfmParserHandlerBase,
+  UsfmParserState,
+  UsfmStylesheet,
+  UsfmTokenizer,
+  UsfmTokenType,
+} from '@sillsdev/machine/corpora';
 
 export class UsfmDocument extends ScriptureDocument {
   private lineChildren: number[] = [];

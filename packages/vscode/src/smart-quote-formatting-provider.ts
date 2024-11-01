@@ -1,4 +1,4 @@
-import { DocumentManager, OnTypeFormattingProvider, Position, TextDocument, TextEdit } from 'lynx-core';
+import { DocumentManager, OnTypeFormattingProvider, Position, TextDocument, TextEdit } from '@sillsdev/lynx';
 
 export class SmartQuoteFormattingProvider implements OnTypeFormattingProvider {
   readonly id = 'smart-quote';

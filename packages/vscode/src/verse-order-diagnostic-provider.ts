@@ -1,5 +1,6 @@
 import {
   Diagnostic,
+  DiagnosticFix,
   DiagnosticProvider,
   DiagnosticsChanged,
   DiagnosticSeverity,
@@ -8,8 +9,7 @@ import {
   ScriptureDocument,
   ScriptureNodeType,
   ScriptureVerse,
-} from 'lynx-core';
-import { DiagnosticFix } from 'lynx-core';
+} from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
 
 export class VerseOrderDiagnosticProvider implements DiagnosticProvider {

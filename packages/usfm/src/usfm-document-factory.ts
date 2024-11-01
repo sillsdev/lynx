@@ -1,5 +1,5 @@
+import { DocumentChange, DocumentFactory, ScriptureDocument } from '@sillsdev/lynx';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
-import { DocumentChange, DocumentFactory, ScriptureDocument } from 'lynx-core';
 
 import { UsfmDocument } from './usfm-document';
 

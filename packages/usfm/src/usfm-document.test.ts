@@ -1,5 +1,5 @@
+import { ScriptureBook, ScriptureParagraph, ScriptureText } from '@sillsdev/lynx';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
-import { ScriptureBook, ScriptureParagraph, ScriptureText } from 'lynx-core';
 import { describe, expect, it } from 'vitest';
 
 import { UsfmDocument } from './usfm-document';

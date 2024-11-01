@@ -1,6 +1,6 @@
+import { Diagnostic, Workspace } from '@sillsdev/lynx';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
-import { Diagnostic, Workspace } from 'lynx-core';
-import { UsfmDocumentFactory } from 'lynx-usfm';
 import {
   CodeAction,
   createConnection,
