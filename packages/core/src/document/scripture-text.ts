@@ -1,7 +1,8 @@
 import { Range } from '../common/range';
-import { ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { ScriptureLeaf } from './scripture-leaf';
+import { ScriptureNodeType } from './scripture-node';
 
-export class ScriptureText extends ScriptureNode {
+export class ScriptureText extends ScriptureLeaf {
   constructor(
     public readonly text: string,
     range?: Range,

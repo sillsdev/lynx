@@ -5,7 +5,12 @@ import { DocumentManager } from '../document/document-manager';
 import { Diagnostic } from './diagnostic';
 import { DiagnosticFix } from './diagnostic-fix';
 
-export type DiagnosticProviderFactory<T extends Document> = (DocumentManager: DocumentManager<T>) => DiagnosticProvider;
+export type DiagnosticProviderFactory<T extends Document = Document> = (
+  DocumentManager: DocumentManager<T>,
+) => DiagnosticProvider;
+export type DiagnosticProviderConstructor<T extends Document = Document> = new (
+  documentManager: DocumentManager<T>,
+) => DiagnosticProvider;
 
 export interface DiagnosticsChanged {
   uri: string;

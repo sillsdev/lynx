@@ -15,7 +15,6 @@ import {
   ScriptureCell,
   ScriptureChapter,
   ScriptureCharacterStyle,
-  ScriptureContainer,
   ScriptureDocument,
   ScriptureMilestone,
   ScriptureNode,
@@ -112,13 +111,13 @@ export class UsfmDocument extends ScriptureDocument {
     this.version = version;
   }
 
-  clear(): void {
-    super.clear();
+  clearChildren(): void {
+    super.clearChildren();
     this.lineChildren.length = 0;
   }
 
   private parseUsfm(content: string, start: Position = { line: 0, character: 0 }): void {
-    this.clear();
+    this.clearChildren();
     const handler = new UsfmDocumentBuilder(this);
     const tokenizer = new UsfmTokenizer(this.stylesheet);
     const tokens = tokenizer.tokenize(content, false, start.line + 1, start.character + 1);
@@ -139,15 +138,13 @@ export class UsfmDocument extends ScriptureDocument {
 function updateNodeLine(node: ScriptureNode, lineDiff: number): void {
   node.range.start.line += lineDiff;
   node.range.end.line += lineDiff;
-  if (node instanceof ScriptureContainer) {
-    for (const child of node.children) {
-      updateNodeLine(child, lineDiff);
-    }
+  for (const child of node.children) {
+    updateNodeLine(child, lineDiff);
   }
 }
 
 class UsfmDocumentBuilder extends UsfmParserHandlerBase {
-  private readonly containerStack: ScriptureContainer[] = [];
+  private readonly containerStack: ScriptureNode[] = [];
 
   constructor(public readonly document: UsfmDocument) {
     super();
@@ -309,7 +306,7 @@ class UsfmDocumentBuilder extends UsfmParserHandlerBase {
     );
   }
 
-  private startContainer(state: UsfmParserState, containerNode: ScriptureContainer): void {
+  private startContainer(state: UsfmParserState, containerNode: ScriptureNode): void {
     containerNode.range.start = { line: state.lineNumber - 1, character: state.columnNumber - 1 };
     this.peek()?.appendChild(containerNode);
     this.push(containerNode);
@@ -337,18 +334,18 @@ class UsfmDocumentBuilder extends UsfmParserHandlerBase {
     }
   }
 
-  private push(container: ScriptureContainer): void {
+  private push(container: ScriptureNode): void {
     this.containerStack.push(container);
   }
 
-  private peek(): ScriptureContainer | undefined {
+  private peek(): ScriptureNode | undefined {
     if (this.containerStack.length === 0) {
       return undefined;
     }
     return this.containerStack[this.containerStack.length - 1];
   }
 
-  private pop(): ScriptureContainer | undefined {
+  private pop(): ScriptureNode | undefined {
     return this.containerStack.pop();
   }
 

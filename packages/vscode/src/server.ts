@@ -1,5 +1,5 @@
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
-import { Diagnostic, ScriptureDocument, Workspace } from 'lynx-core';
+import { Diagnostic, Workspace } from 'lynx-core';
 import { UsfmDocumentFactory } from 'lynx-usfm';
 import {
   CodeAction,
@@ -13,6 +13,7 @@ import {
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node';
 
+import { SmartQuoteFormattingProvider } from './smart-quote-formatting-provider';
 import { TestDiagnosticProvider, TestDiagnosticProviderConfig } from './test-diagnostic-provider';
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
@@ -26,9 +27,10 @@ let globalSettings: TestDiagnosticProviderConfig = defaultSettings;
 const connection = createConnection(ProposedFeatures.all);
 
 // Create a simple text document manager.
-const workspace = new Workspace<ScriptureDocument>({
+const workspace = new Workspace({
   documentFactory: new UsfmDocumentFactory(new UsfmStylesheet('usfm.sty')),
   diagnosticProviders: [TestDiagnosticProvider.factory(() => globalSettings)],
+  onTypeFormattingProviders: [SmartQuoteFormattingProvider],
 });
 
 let hasConfigurationCapability = false;
@@ -52,6 +54,13 @@ connection.onInitialize((params: InitializeParams) => {
       codeActionProvider: true,
     },
   };
+  const onTypeTriggerCharacters = workspace.getOnTypeTriggerCharacters();
+  if (onTypeTriggerCharacters.length > 0) {
+    result.capabilities.documentOnTypeFormattingProvider = {
+      firstTriggerCharacter: onTypeTriggerCharacters[0],
+      moreTriggerCharacter: onTypeTriggerCharacters.slice(1),
+    };
+  }
   if (hasWorkspaceFolderCapability) {
     result.capabilities.workspace = {
       workspaceFolders: {
@@ -128,6 +137,10 @@ connection.onDidChangeTextDocument((params) => {
     params.contentChanges,
     params.textDocument.version,
   );
+});
+
+connection.onDocumentOnTypeFormatting(async (params) => {
+  return await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch);
 });
 
 connection.onDidChangeWatchedFiles((_change) => {

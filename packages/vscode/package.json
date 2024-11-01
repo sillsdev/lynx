@@ -4,7 +4,7 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build": "tsup-node src/extension.ts src/server.ts --format cjs --clean --sourcemap",
-    "dev": "tsup-node src/extension.ts src/server.ts --format cjs --watch",
+    "dev": "tsup-node src/extension.ts src/server.ts --format cjs --watch --sourcemap",
     "check-types": "tsc --noEmit",
     "lint": "eslint ."
   },

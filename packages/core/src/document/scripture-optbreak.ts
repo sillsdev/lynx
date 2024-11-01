@@ -1,7 +1,6 @@
-import { ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { ScriptureLeaf } from './scripture-leaf';
+import { ScriptureNodeType } from './scripture-node';
 
-export class ScriptureOptBreak extends ScriptureNode {
-  get type(): ScriptureNodeType {
-    return ScriptureNodeType.OptBreak;
-  }
+export class ScriptureOptBreak extends ScriptureLeaf {
+  readonly type = ScriptureNodeType.OptBreak;
 }

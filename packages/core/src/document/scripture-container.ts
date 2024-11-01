@@ -1,10 +1,15 @@
+import { Position } from '../common/position';
+import { Range } from '../common/range';
+import { ScriptureDocument } from './scripture-document';
 import { ScriptureNode, ScriptureNodeType } from './scripture-node';
 
-export abstract class ScriptureContainer extends ScriptureNode {
+export abstract class ScriptureContainer implements ScriptureNode {
+  private _parent?: ScriptureNode;
   private readonly _children: ScriptureNode[] = [];
+  readonly isLeaf = false;
+  range: Range = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
 
   constructor(children?: ScriptureNode[]) {
-    super();
     if (children != null) {
       for (const child of children) {
         this.appendChild(child);
@@ -12,8 +17,36 @@ export abstract class ScriptureContainer extends ScriptureNode {
     }
   }
 
+  abstract readonly type: ScriptureNodeType;
+
+  get document(): ScriptureDocument | undefined {
+    return this._parent?.document;
+  }
+
+  get parent(): ScriptureNode | undefined {
+    return this._parent;
+  }
+
   get children(): readonly ScriptureNode[] {
     return this._children;
+  }
+
+  updateParent(parent: ScriptureNode | undefined): void {
+    this._parent = parent;
+  }
+
+  remove(): void {
+    if (this._parent == null) {
+      throw new Error('The node does not have a parent.');
+    }
+    this._parent.removeChild(this);
+  }
+
+  getText(): string {
+    if (this.document == null) {
+      throw new Error('The node is not part of a document.');
+    }
+    return this.document.getText(this.range);
   }
 
   *getNodes(filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean)): IterableIterator<ScriptureNode> {
@@ -23,6 +56,13 @@ export abstract class ScriptureContainer extends ScriptureNode {
       }
       yield* child.getNodes(filter);
     }
+  }
+
+  positionAt(offset: number): Position {
+    if (this.document == null) {
+      throw new Error('The node is not part of a document.');
+    }
+    return this.document.positionAt(offset, this.range);
   }
 
   appendChild(child: ScriptureNode): void {
@@ -57,7 +97,7 @@ export abstract class ScriptureContainer extends ScriptureNode {
     }
   }
 
-  clear(): void {
+  clearChildren(): void {
     this._children.length = 0;
   }
 }

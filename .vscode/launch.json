@@ -14,7 +14,8 @@
         "${workspaceRoot}/packages/usfm/dist/**/*.cjs"
       ],
       "autoAttachChildProcesses": true,
-      "preLaunchTask": "npm: dev"
+      "preLaunchTask": "npm: dev",
+      "sourceMaps": true
     }
   ]
 }
