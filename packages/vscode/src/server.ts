@@ -4,7 +4,6 @@ import { UsfmDocumentFactory } from 'lynx-usfm';
 import {
   CodeAction,
   createConnection,
-  DidChangeConfigurationNotification,
   type DocumentDiagnosticReport,
   DocumentDiagnosticReportKind,
   InitializeParams,
@@ -27,15 +26,11 @@ const workspace = new Workspace({
   onTypeFormattingProviders: [SmartQuoteFormattingProvider],
 });
 
-let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 
 connection.onInitialize((params: InitializeParams) => {
   const capabilities = params.capabilities;
 
-  // Does the client support the `workspace/configuration` request?
-  // If not, we fall back using global settings.
-  hasConfigurationCapability = capabilities.workspace?.configuration ?? false;
   hasWorkspaceFolderCapability = capabilities.workspace?.workspaceFolders ?? false;
 
   const result: InitializeResult = {
@@ -63,18 +58,6 @@ connection.onInitialize((params: InitializeParams) => {
     };
   }
   return result;
-});
-
-connection.onInitialized(() => {
-  if (hasConfigurationCapability) {
-    // Register for all configuration changes.
-    void connection.client.register(DidChangeConfigurationNotification.type, undefined);
-  }
-  if (hasWorkspaceFolderCapability) {
-    connection.workspace.onDidChangeWorkspaceFolders((_event) => {
-      connection.console.log('Workspace folder change event received.');
-    });
-  }
 });
 
 connection.languages.diagnostics.on(async (params) => {
