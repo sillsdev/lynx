@@ -1,10 +1,5 @@
-import { Range } from '../common/range';
+import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from './diagnostic';
-
-export interface TextEdit {
-  range: Range;
-  newText: string;
-}
 
 export interface DiagnosticFix {
   title: string;
