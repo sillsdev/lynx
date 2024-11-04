@@ -8,6 +8,7 @@ import {
   ScriptureChapter,
   ScriptureDocument,
   ScriptureNodeType,
+  ScriptureSerializer,
   ScriptureVerse,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
@@ -16,7 +17,10 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
   public readonly id = 'verse-order';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
-  constructor(private readonly documentManager: DocumentManager<ScriptureDocument>) {
+  constructor(
+    private readonly documentManager: DocumentManager<ScriptureDocument>,
+    private readonly serializer: ScriptureSerializer,
+  ) {
     this.diagnosticsChanged$ = merge(
       documentManager.opened$.pipe(
         map((e) => ({
@@ -60,7 +64,7 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
         edits: [
           {
             range: { start: diagnostic.range.start, end: diagnostic.range.start },
-            newText: `\\v ${verseNumber.toString()} `,
+            newText: this.serializer.serialize(new ScriptureVerse(verseNumber.toString())),
           },
         ],
       });
@@ -72,9 +76,11 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
     const diagnostics: Diagnostic[] = [];
 
     const verseNodes: [number, ScriptureVerse][] = [];
+    let chapterNumber = '0';
     for (const node of doc.findNodes([ScriptureNodeType.Chapter, ScriptureNodeType.Verse])) {
       if (node instanceof ScriptureChapter) {
-        diagnostics.push(...this.findMissingVerse(verseNodes));
+        diagnostics.push(...this.findMissingVerse(chapterNumber, verseNodes));
+        chapterNumber = node.number;
         verseNodes.length = 0;
       } else if (node instanceof ScriptureVerse) {
         const verseNumber = parseInt(node.number);
@@ -85,7 +91,7 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
               range: prevVerseNode.range,
               severity: DiagnosticSeverity.Error,
               code: 1,
-              message: 'Verses are out of order.',
+              message: `Verse ${prevVerseNumber.toString()} occurs out of order in chapter ${chapterNumber}.`,
               source: this.id,
             });
           }
@@ -94,22 +100,23 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
       }
     }
 
-    diagnostics.push(...this.findMissingVerse(verseNodes));
+    diagnostics.push(...this.findMissingVerse(chapterNumber, verseNodes));
     return diagnostics;
   }
 
-  private findMissingVerse(verseNodes: [number, ScriptureVerse][]): Diagnostic[] {
+  private findMissingVerse(chapterNumber: string, verseNodes: [number, ScriptureVerse][]): Diagnostic[] {
     verseNodes.sort((a, b) => a[0] - b[0]);
     const diagnostics: Diagnostic[] = [];
     for (const [i, [number, node]] of verseNodes.entries()) {
       if (number !== i + 1) {
+        const missingVerse = number - 1;
         diagnostics.push({
           range: node.range,
           severity: DiagnosticSeverity.Warning,
           code: 2,
-          message: 'Verse is missing.',
+          message: `Verse ${missingVerse.toString()} is missing from chapter ${chapterNumber}. Insert the missing verse to fix.`,
           source: this.id,
-          data: number - 1,
+          data: missingVerse,
         });
       }
     }

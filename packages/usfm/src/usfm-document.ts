@@ -233,8 +233,8 @@ class UsfmDocumentBuilder extends UsfmParserHandlerBase {
     this.endContainer(state, false);
   }
 
-  startSidebar(state: UsfmParserState, marker: string, category: string | undefined): void {
-    this.startContainer(state, new ScriptureSidebar(marker, category));
+  startSidebar(state: UsfmParserState, _marker: string, category: string | undefined): void {
+    this.startContainer(state, new ScriptureSidebar(category));
   }
 
   endSidebar(state: UsfmParserState, _marker: string, closed: boolean): void {
@@ -279,12 +279,13 @@ class UsfmDocumentBuilder extends UsfmParserHandlerBase {
   milestone(
     state: UsfmParserState,
     marker: string,
-    _startMilestone: boolean,
+    startMilestone: boolean,
     attributes: readonly UsfmAttribute[] | undefined,
   ): void {
     this.appendChild(
       new ScriptureMilestone(
         marker,
+        startMilestone,
         undefined,
         undefined,
         UsfmDocumentBuilder.convertAttributes(attributes),

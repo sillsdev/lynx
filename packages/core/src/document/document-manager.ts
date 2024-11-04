@@ -34,8 +34,8 @@ export class DocumentManager<T extends Document> {
   private readonly changedSubject = new Subject<DocumentChanged<T>>();
 
   constructor(
-    private readonly reader: DocumentReader | undefined,
     private readonly factory: DocumentFactory<T>,
+    private readonly reader?: DocumentReader,
   ) {}
 
   get created$(): Observable<DocumentCreated<T>> {

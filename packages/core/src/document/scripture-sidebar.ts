@@ -2,8 +2,9 @@ import { ScriptureContainer } from './scripture-container';
 import { ScriptureNodeType } from './scripture-node';
 
 export class ScriptureSidebar extends ScriptureContainer {
+  public readonly style = 'esb';
+
   constructor(
-    public readonly style: string,
     public readonly category?: string,
     children?: ScriptureContainer[],
   ) {

@@ -7,11 +7,11 @@ export class ScriptureVerse extends ScriptureMilestone {
     public readonly number: string,
     public readonly altNumber?: string,
     public readonly pubNumber?: string,
-    public readonly sid?: string,
-    public readonly eid?: string,
+    sid?: string,
+    eid?: string,
     range?: Range,
   ) {
-    super('v', sid, eid, undefined, range);
+    super('v', true, sid, eid, undefined, range);
   }
 
   get type(): ScriptureNodeType {

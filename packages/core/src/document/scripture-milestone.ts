@@ -5,6 +5,7 @@ import { ScriptureNodeType } from './scripture-node';
 export class ScriptureMilestone extends ScriptureLeaf {
   constructor(
     public readonly style: string,
+    public readonly isStart: boolean,
     public readonly sid?: string,
     public readonly eid?: string,
     public readonly attributes: Record<string, string> = {},

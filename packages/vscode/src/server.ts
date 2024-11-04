@@ -1,8 +1,9 @@
-import { Diagnostic, Workspace } from '@sillsdev/lynx';
-import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { Diagnostic, DocumentManager, ScriptureDocument, Workspace } from '@sillsdev/lynx';
+import { UsfmDocumentFactory, UsfmScriptureSerializer } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import {
   CodeAction,
+  CodeActionKind,
   createConnection,
   type DocumentDiagnosticReport,
   DocumentDiagnosticReportKind,
@@ -19,11 +20,13 @@ import { VerseOrderDiagnosticProvider } from './verse-order-diagnostic-provider'
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
-// Create a simple text document manager.
+const stylesheet = new UsfmStylesheet('usfm.sty');
+const documentFactory = new UsfmDocumentFactory(stylesheet);
+const scriptureSerializer = new UsfmScriptureSerializer(stylesheet);
+const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
 const workspace = new Workspace({
-  documentFactory: new UsfmDocumentFactory(new UsfmStylesheet('usfm.sty')),
-  diagnosticProviders: [VerseOrderDiagnosticProvider],
-  onTypeFormattingProviders: [SmartQuoteFormattingProvider],
+  diagnosticProviders: [new VerseOrderDiagnosticProvider(documentManager, scriptureSerializer)],
+  onTypeFormattingProviders: [new SmartQuoteFormattingProvider(documentManager)],
 });
 
 let hasWorkspaceFolderCapability = false;
@@ -73,8 +76,9 @@ connection.onCodeAction(async (params) => {
     actions.push(
       ...(await workspace.getDiagnosticFixes(params.textDocument.uri, diagnostic as Diagnostic)).map((fix) => ({
         title: fix.title,
-        kind: 'quickfix',
+        kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
+        isPreferred: fix.isPreferred,
         edit: {
           changes: {
             [params.textDocument.uri]: fix.edits,
@@ -87,7 +91,7 @@ connection.onCodeAction(async (params) => {
 });
 
 connection.onDidOpenTextDocument((params) => {
-  void workspace.documentManager.fireOpened(
+  void documentManager.fireOpened(
     params.textDocument.uri,
     params.textDocument.languageId,
     params.textDocument.version,
@@ -96,15 +100,11 @@ connection.onDidOpenTextDocument((params) => {
 });
 
 connection.onDidCloseTextDocument((params) => {
-  void workspace.documentManager.fireClosed(params.textDocument.uri);
+  void documentManager.fireClosed(params.textDocument.uri);
 });
 
 connection.onDidChangeTextDocument((params) => {
-  void workspace.documentManager.fireChanged(
-    params.textDocument.uri,
-    params.contentChanges,
-    params.textDocument.version,
-  );
+  void documentManager.fireChanged(params.textDocument.uri, params.contentChanges, params.textDocument.version);
 });
 
 connection.onDocumentOnTypeFormatting(async (params) => {

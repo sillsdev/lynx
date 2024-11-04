@@ -113,6 +113,6 @@ class TestEnvironment {
       return { uri: document.uri, format: 'plaintext', version, content: changes[0].text };
     });
 
-    this.docManager = new DocumentManager(this.docReader, this.docFactory);
+    this.docManager = new DocumentManager(this.docFactory, this.docReader);
   }
 }

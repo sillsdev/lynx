@@ -17,6 +17,7 @@ export { ScriptureOptBreak } from './scripture-optbreak';
 export { ScriptureParagraph } from './scripture-paragraph';
 export { ScriptureRef } from './scripture-ref';
 export { ScriptureRow } from './scripture-row';
+export type { ScriptureSerializer } from './scripture-serializer';
 export { ScriptureSidebar } from './scripture-sidebar';
 export { ScriptureTable } from './scripture-table';
 export { ScriptureText } from './scripture-text';

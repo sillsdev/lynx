@@ -4,50 +4,23 @@ import { Position } from '../common/position';
 import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from '../diagnostic/diagnostic';
 import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
-import {
-  DiagnosticProvider,
-  DiagnosticProviderConstructor,
-  DiagnosticProviderFactory,
-  DiagnosticsChanged,
-} from '../diagnostic/diagnostic-provider';
-import { Document } from '../document/document';
-import { DocumentFactory } from '../document/document-factory';
-import { DocumentManager } from '../document/document-manager';
-import { DocumentReader } from '../document/document-reader';
-import {
-  OnTypeFormattingProvider,
-  OnTypeFormattingProviderConstructor,
-  OnTypeFormattingProviderFactory,
-} from '../formatting/on-type-formatting-provider';
+import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
+import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
 
-export interface WorkspaceConfig<T extends Document = Document> {
-  documentReader?: DocumentReader;
-  documentFactory: DocumentFactory<T>;
-  diagnosticProviders?: (DiagnosticProviderFactory<T> | DiagnosticProviderConstructor<T>)[];
-  onTypeFormattingProviders?: (OnTypeFormattingProviderFactory<T> | OnTypeFormattingProviderConstructor<T>)[];
+export interface WorkspaceConfig {
+  diagnosticProviders?: DiagnosticProvider[];
+  onTypeFormattingProviders?: OnTypeFormattingProvider[];
 }
 
-export class Workspace<T extends Document = Document> {
+export class Workspace {
   private readonly diagnosticProviders: Map<string, DiagnosticProvider>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider>;
   private readonly lastDiagnosticChangedEvents = new Map<string, DiagnosticsChanged[]>();
 
-  public readonly documentManager: DocumentManager<T>;
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
-  constructor(config: WorkspaceConfig<T>) {
-    this.documentManager = new DocumentManager(config.documentReader, config.documentFactory);
-    this.diagnosticProviders = new Map(
-      config.diagnosticProviders?.map((factory) => {
-        let provider: DiagnosticProvider;
-        try {
-          provider = new (factory as DiagnosticProviderConstructor<T>)(this.documentManager);
-        } catch {
-          provider = (factory as DiagnosticProviderFactory<T>)(this.documentManager);
-        }
-        return [provider.id, provider];
-      }),
-    );
+  constructor(config: WorkspaceConfig) {
+    this.diagnosticProviders = new Map(config.diagnosticProviders?.map((provider) => [provider.id, provider]));
     this.diagnosticsChanged$ = merge(
       ...Array.from(this.diagnosticProviders.values()).map((provider, i) =>
         provider.diagnosticsChanged$.pipe(
@@ -58,15 +31,7 @@ export class Workspace<T extends Document = Document> {
       ),
     ).pipe(map((e) => this.getCombinedDiagnosticChangedEvent(e.uri, e.version)));
     this.onTypeFormattingProviders = new Map(
-      config.onTypeFormattingProviders?.map((factory) => {
-        let provider: OnTypeFormattingProvider;
-        try {
-          provider = new (factory as OnTypeFormattingProviderConstructor<T>)(this.documentManager);
-        } catch {
-          provider = (factory as OnTypeFormattingProviderFactory<T>)(this.documentManager);
-        }
-        return [provider.id, provider];
-      }),
+      config.onTypeFormattingProviders?.map((provider) => [provider.id, provider]),
     );
   }
 

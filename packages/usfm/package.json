@@ -30,8 +30,8 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "@sillsdev/machine": "^3.0.1",
-    "@sillsdev/lynx": "*"
+    "@sillsdev/lynx": "*",
+    "@sillsdev/machine": "^3.0.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
