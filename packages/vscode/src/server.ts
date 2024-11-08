@@ -1,4 +1,5 @@
-import { Diagnostic, DocumentManager, ScriptureDocument, Workspace } from '@sillsdev/lynx';
+import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
+import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
 import { UsfmDocumentFactory, UsfmScriptureSerializer } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import {
@@ -13,25 +14,29 @@ import {
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node';
 
-import { SmartQuoteFormattingProvider } from './smart-quote-formatting-provider';
-import { VerseOrderDiagnosticProvider } from './verse-order-diagnostic-provider';
-
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
 
+const localizer = new Localizer();
 const stylesheet = new UsfmStylesheet('usfm.sty');
 const documentFactory = new UsfmDocumentFactory(stylesheet);
 const scriptureSerializer = new UsfmScriptureSerializer(stylesheet);
 const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
 const workspace = new Workspace({
-  diagnosticProviders: [new VerseOrderDiagnosticProvider(documentManager, scriptureSerializer)],
-  onTypeFormattingProviders: [new SmartQuoteFormattingProvider(documentManager)],
+  localizer,
+  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager, scriptureSerializer)],
+  onTypeFormattingProviders: [new SimpleQuoteFormattingProvider(documentManager)],
 });
 
 let hasWorkspaceFolderCapability = false;
 
-connection.onInitialize((params: InitializeParams) => {
+connection.onInitialize(async (params: InitializeParams) => {
+  await workspace.init();
+  if (params.locale != null) {
+    await workspace.changeLanguage(params.locale);
+  }
+
   const capabilities = params.capabilities;
 
   hasWorkspaceFolderCapability = capabilities.workspace?.workspaceFolders ?? false;

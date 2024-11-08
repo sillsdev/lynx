@@ -1,10 +1,14 @@
 import { DocumentManager, OnTypeFormattingProvider, Position, TextDocument, TextEdit } from '@sillsdev/lynx';
 
-export class SmartQuoteFormattingProvider implements OnTypeFormattingProvider {
-  readonly id = 'smart-quote';
+export class SimpleQuoteFormattingProvider implements OnTypeFormattingProvider {
+  readonly id = 'simple-quote';
   readonly onTypeTriggerCharacters: ReadonlySet<string> = new Set(['"', '“', '”']);
 
   constructor(private readonly documentManager: DocumentManager<TextDocument>) {}
+
+  init(): Promise<void> {
+    return Promise.resolve();
+  }
 
   async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<TextEdit[] | undefined> {
     const doc = await this.documentManager.get(uri);

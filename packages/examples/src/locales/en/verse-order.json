@@ -1,0 +1,9 @@
+{
+  "missingVerse": {
+    "description": "Verse {{verse}} is missing from chapter {{chapter}}. Insert the missing verse to fix.",
+    "fixTitle": "Insert missing verse"
+  },
+  "verseOutOfOrder": {
+    "description": "Verse {{verse}} occurs out of order in chapter {{chapter}}."
+  }
+}

@@ -6,13 +6,16 @@ import { Diagnostic } from '../diagnostic/diagnostic';
 import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
+import { Localizer } from './localizer';
 
 export interface WorkspaceConfig {
+  localizer: Localizer;
   diagnosticProviders?: DiagnosticProvider[];
   onTypeFormattingProviders?: OnTypeFormattingProvider[];
 }
 
 export class Workspace {
+  private readonly localizer: Localizer;
   private readonly diagnosticProviders: Map<string, DiagnosticProvider>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider>;
   private readonly lastDiagnosticChangedEvents = new Map<string, DiagnosticsChanged[]>();
@@ -20,6 +23,7 @@ export class Workspace {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(config: WorkspaceConfig) {
+    this.localizer = config.localizer;
     this.diagnosticProviders = new Map(config.diagnosticProviders?.map((provider) => [provider.id, provider]));
     this.diagnosticsChanged$ = merge(
       ...Array.from(this.diagnosticProviders.values()).map((provider, i) =>
@@ -33,6 +37,16 @@ export class Workspace {
     this.onTypeFormattingProviders = new Map(
       config.onTypeFormattingProviders?.map((provider) => [provider.id, provider]),
     );
+  }
+
+  async init(): Promise<void> {
+    await Promise.all(Array.from(this.diagnosticProviders.values()).map((provider) => provider.init()));
+    await Promise.all(Array.from(this.onTypeFormattingProviders.values()).map((provider) => provider.init()));
+    await this.localizer.init();
+  }
+
+  changeLanguage(language: string): Promise<void> {
+    return this.localizer.changeLanguage(language);
   }
 
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {

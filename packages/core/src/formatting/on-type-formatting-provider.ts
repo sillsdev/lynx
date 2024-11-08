@@ -6,5 +6,6 @@ export interface OnTypeFormattingProvider {
 
   readonly onTypeTriggerCharacters: ReadonlySet<string>;
 
+  init(): Promise<void>;
   getOnTypeEdits(uri: string, position: Position, ch: string): Promise<TextEdit[] | undefined>;
 }

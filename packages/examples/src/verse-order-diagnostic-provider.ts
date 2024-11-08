@@ -5,6 +5,7 @@ import {
   DiagnosticsChanged,
   DiagnosticSeverity,
   DocumentManager,
+  Localizer,
   ScriptureChapter,
   ScriptureDocument,
   ScriptureNodeType,
@@ -18,6 +19,7 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(
+    private readonly localizer: Localizer,
     private readonly documentManager: DocumentManager<ScriptureDocument>,
     private readonly serializer: ScriptureSerializer,
   ) {
@@ -45,6 +47,11 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
     );
   }
 
+  init(): Promise<void> {
+    this.localizer.addNamespace('verseOrder', (language: string) => import(`./locales/${language}/verse-order.json`));
+    return Promise.resolve();
+  }
+
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {
     const doc = await this.documentManager.get(uri);
     if (doc == null) {
@@ -58,7 +65,7 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
     if (diagnostic.code === 2) {
       const verseNumber = diagnostic.data as number;
       fixes.push({
-        title: `Insert missing verse`,
+        title: this.localizer.t('missingVerse.fixTitle', { ns: 'verseOrder' }),
         isPreferred: true,
         diagnostic,
         edits: [
@@ -79,32 +86,38 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
     let chapterNumber = '0';
     for (const node of doc.findNodes([ScriptureNodeType.Chapter, ScriptureNodeType.Verse])) {
       if (node instanceof ScriptureChapter) {
-        diagnostics.push(...this.findMissingVerse(chapterNumber, verseNodes));
+        diagnostics.push(...this.findMissingVerses(chapterNumber, verseNodes));
         chapterNumber = node.number;
         verseNodes.length = 0;
       } else if (node instanceof ScriptureVerse) {
         const verseNumber = parseInt(node.number);
-        if (verseNodes.length > 0) {
-          const [prevVerseNumber, prevVerseNode] = verseNodes[verseNodes.length - 1];
-          if (verseNumber <= prevVerseNumber) {
-            diagnostics.push({
-              range: prevVerseNode.range,
-              severity: DiagnosticSeverity.Error,
-              code: 1,
-              message: `Verse ${prevVerseNumber.toString()} occurs out of order in chapter ${chapterNumber}.`,
-              source: this.id,
-            });
+        if (!isNaN(verseNumber)) {
+          if (verseNodes.length > 0) {
+            const [prevVerseNumber, prevVerseNode] = verseNodes[verseNodes.length - 1];
+            if (verseNumber <= prevVerseNumber) {
+              diagnostics.push({
+                range: prevVerseNode.range,
+                severity: DiagnosticSeverity.Error,
+                code: 1,
+                message: this.localizer.t('verseOutOfOrder.description', {
+                  ns: 'verseOrder',
+                  chapter: chapterNumber,
+                  verse: prevVerseNumber.toString(),
+                }),
+                source: this.id,
+              });
+            }
           }
+          verseNodes.push([verseNumber, node]);
         }
-        verseNodes.push([verseNumber, node]);
       }
     }
 
-    diagnostics.push(...this.findMissingVerse(chapterNumber, verseNodes));
+    diagnostics.push(...this.findMissingVerses(chapterNumber, verseNodes));
     return diagnostics;
   }
 
-  private findMissingVerse(chapterNumber: string, verseNodes: [number, ScriptureVerse][]): Diagnostic[] {
+  private findMissingVerses(chapterNumber: string, verseNodes: [number, ScriptureVerse][]): Diagnostic[] {
     verseNodes.sort((a, b) => a[0] - b[0]);
     const diagnostics: Diagnostic[] = [];
     for (const [i, [number, node]] of verseNodes.entries()) {
@@ -114,7 +127,11 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
           range: node.range,
           severity: DiagnosticSeverity.Warning,
           code: 2,
-          message: `Verse ${missingVerse.toString()} is missing from chapter ${chapterNumber}. Insert the missing verse to fix.`,
+          message: this.localizer.t('missingVerse.description', {
+            ns: 'verseOrder',
+            chapter: chapterNumber,
+            verse: missingVerse.toString(),
+          }),
           source: this.id,
           data: missingVerse,
         });

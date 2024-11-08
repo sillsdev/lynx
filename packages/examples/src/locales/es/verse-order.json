@@ -1,0 +1,9 @@
+{
+  "missingVerse": {
+    "description": "Falta el versículo {{verse}} del capítulo {{chapter}}. Inserta el versículo que falta para arreglarlo.",
+    "fixTitle": "Inserta el versículo que falta"
+  },
+  "verseOutOfOrder": {
+    "description": "El versículo {{verse}} aparece fuera de orden en el capítulo {{chapter}}."
+  }
+}

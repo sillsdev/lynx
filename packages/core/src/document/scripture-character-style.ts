@@ -1,12 +1,13 @@
 import { ScriptureContainer } from './scripture-container';
-import { ScriptureNodeType } from './scripture-node';
+import { ScriptureNode, ScriptureNodeType } from './scripture-node';
 
 export class ScriptureCharacterStyle extends ScriptureContainer {
   constructor(
     public readonly style: string,
     public readonly attributes: Record<string, string> = {},
+    children?: ScriptureNode[],
   ) {
-    super();
+    super(children);
   }
 
   get type(): ScriptureNodeType {

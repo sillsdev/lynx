@@ -58,6 +58,11 @@ export class DocumentManager<T extends Document> {
     return this.changedSubject.asObservable();
   }
 
+  add(doc: T): void {
+    this.documents.set(doc.uri, doc);
+    this.activeDocuments.add(doc.uri);
+  }
+
   async get(uri: string): Promise<T | undefined> {
     let doc = this.documents.get(uri);
     if (doc == null) {
