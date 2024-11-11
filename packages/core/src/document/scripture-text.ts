@@ -1,6 +1,6 @@
 import { Range } from '../common/range';
+import { ScriptureNodeType } from './scripture-document';
 import { ScriptureLeaf } from './scripture-leaf';
-import { ScriptureNodeType } from './scripture-node';
 
 export class ScriptureText extends ScriptureLeaf {
   constructor(

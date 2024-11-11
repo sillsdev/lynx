@@ -1,5 +1,5 @@
 import { ScriptureContainer } from './scripture-container';
-import { ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { ScriptureNode, ScriptureNodeType } from './scripture-document';
 
 export class ScriptureCharacterStyle extends ScriptureContainer {
   constructor(

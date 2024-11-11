@@ -1,7 +1,7 @@
 import { Position } from '../common/position';
 import { Range } from '../common/range';
 import { ScriptureDocument } from './scripture-document';
-import { findNodes, ScriptureNode, ScriptureNodeType } from './scripture-node';
+import { findNodes, ScriptureNode, ScriptureNodeType } from './scripture-document';
 
 export abstract class ScriptureContainer implements ScriptureNode {
   private _parent?: ScriptureNode;

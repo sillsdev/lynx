@@ -1,5 +1,5 @@
 import { ScriptureContainer } from './scripture-container';
-import { ScriptureNodeType } from './scripture-node';
+import { ScriptureNodeType } from './scripture-document';
 
 export class ScriptureSidebar extends ScriptureContainer {
   public readonly style = 'esb';

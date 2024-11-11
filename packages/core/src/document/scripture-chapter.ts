@@ -1,6 +1,6 @@
 import { Range } from '../common/range';
+import { ScriptureNodeType } from './scripture-document';
 import { ScriptureMilestone } from './scripture-milestone';
-import { ScriptureNodeType } from './scripture-node';
 
 export class ScriptureChapter extends ScriptureMilestone {
   constructor(
