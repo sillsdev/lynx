@@ -15,8 +15,6 @@
     "check-types": {
       "dependsOn": ["topo"]
     },
-    "lint": {},
-    "test": {},
-    "coverage": {}
+    "lint": {}
   }
 }

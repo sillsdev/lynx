@@ -22,9 +22,7 @@
     "build": "tsup-node",
     "dev": "tsup-node --watch --sourcemap",
     "check-types": "tsc --noEmit",
-    "lint": "eslint .",
-    "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "SIL Global",

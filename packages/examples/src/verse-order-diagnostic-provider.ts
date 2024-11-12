@@ -50,7 +50,8 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
   init(): Promise<void> {
     this.localizer.addNamespace(
       'verseOrder',
-      (language: string) => import(`./locales/${language}/verse-order.json`, { with: { type: 'json' } }),
+      (language: string) =>
+        import(/* @vite-ignore */ `./locales/${language}/verse-order.json`, { with: { type: 'json' } }),
     );
     return Promise.resolve();
   }

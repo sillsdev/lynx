@@ -11,8 +11,8 @@
     "lint": "turbo run lint --no-update-notifier",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "turbo run test --no-update-notifier",
-    "coverage": "turbo run coverage --no-update-notifier"
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "SIL Global",
