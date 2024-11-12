@@ -26,7 +26,7 @@ export class Localizer {
     await this.i18n.loadNamespaces(Array.from(this.backend.namespaces));
   }
 
-  addNamespace(namespace: string, loader: (language: string) => Promise<unknown>): void {
+  addNamespace(namespace: string, loader: (language: string) => unknown): void {
     if (this.i18n.hasLoadedNamespace(namespace)) {
       return;
     }
@@ -43,7 +43,7 @@ export class Localizer {
 }
 
 class LocalBackend {
-  private readonly namespaceLoaders = new Map<string, (language: string) => Promise<unknown>>();
+  private readonly namespaceLoaders = new Map<string, (language: string) => unknown>();
   readonly type = 'backend';
 
   get namespaces(): Iterable<string> {
@@ -54,7 +54,7 @@ class LocalBackend {
     // do nothing
   }
 
-  addNamespace(namespace: string, loader: (language: string) => Promise<unknown>): void {
+  addNamespace(namespace: string, loader: (language: string) => unknown): void {
     this.namespaceLoaders.set(namespace, loader);
   }
 
@@ -64,8 +64,11 @@ class LocalBackend {
       callback(new Error(`No loader for namespace ${namespace}`));
       return;
     }
-    loader(language)
+    Promise.resolve(loader(language))
       .then((data) => {
+        if (data != null && typeof data === 'object' && 'default' in data) {
+          data = data.default;
+        }
         callback(null, data);
       })
       .catch(callback);
