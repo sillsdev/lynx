@@ -1,6 +1,6 @@
 {
   "name": "@sillsdev/lynx",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "type": "module",
   "types": "./dist/index.d.ts",
@@ -43,5 +43,10 @@
     "typescript": "^5.5.4",
     "vitest": "^2.1.4",
     "vitest-mock-extended": "^2.0.2"
-  }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }
