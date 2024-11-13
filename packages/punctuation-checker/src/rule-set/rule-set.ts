@@ -1,17 +1,23 @@
 import { DiagnosticProvider, DocumentManager, TextDocument } from '@sillsdev/lynx';
 
-import { AllowedCharacterChecker } from '../allowed-character-checker';
-import { AllowedCharacterSet } from './allowed-character-set';
+import { AllowedCharacterChecker } from '../allowed-character/allowed-character-checker';
+import { AllowedCharacterSet } from '../allowed-character/allowed-character-set';
+import { QuotationChecker } from '../quotation/quotation-checker';
+import { QuotationConfig } from '../quotation/quotation-config';
 
 export enum RuleType {
   AllowedCharacters = 1,
+  QuotationMarkPairing = 2,
 }
 
 export class RuleSet {
-  constructor(private readonly allowedCharacterSet: AllowedCharacterSet) {}
+  constructor(
+    private readonly allowedCharacterSet: AllowedCharacterSet,
+    private readonly quotationConfig: QuotationConfig,
+  ) {}
 
   public createDiagnosticProviders(documentManager: DocumentManager<TextDocument>): DiagnosticProvider[] {
-    return [this.createAllowedCharacterChecker(documentManager)];
+    return [this.createAllowedCharacterChecker(documentManager), this.createQuotationChecker(documentManager)];
   }
 
   public createSelectedDiagnosticProviders(
@@ -24,6 +30,10 @@ export class RuleSet {
       switch (rule) {
         case RuleType.AllowedCharacters:
           diagnosticProviderFactories.push(this.createAllowedCharacterChecker(documentManager));
+          break;
+        case RuleType.QuotationMarkPairing:
+          diagnosticProviderFactories.push(this.createQuotationChecker(documentManager));
+          break;
       }
     }
 
@@ -34,7 +44,15 @@ export class RuleSet {
     return new AllowedCharacterChecker(documentManager, this.allowedCharacterSet);
   }
 
+  private createQuotationChecker(documentManager: DocumentManager<TextDocument>): DiagnosticProvider {
+    return new QuotationChecker(documentManager, this.quotationConfig);
+  }
+
   _getAllowedCharacterSet(): AllowedCharacterSet {
     return this.allowedCharacterSet;
+  }
+
+  _getQuotationConfig(): QuotationConfig {
+    return this.quotationConfig;
   }
 }

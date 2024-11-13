@@ -1,19 +1,12 @@
-import {
-  Diagnostic,
-  DiagnosticProvider,
-  DiagnosticSeverity,
-  DocumentManager,
-  TextDocument,
-  TextDocumentFactory,
-} from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticProvider, DiagnosticSeverity, TextDocumentFactory } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
-import { _privateTestingClasses, AllowedCharacterChecker } from '../src/allowed-character-checker';
-import { DiagnosticFactory } from '../src/diagnostic-factory';
-import { AllowedCharacterSet, CharacterRegexWhitelist } from '../src/rule-set/allowed-character-set';
-import { RuleType } from '../src/rule-set/rule-set';
-import { StandardRuleSets } from '../src/rule-set/standard-rule-sets';
-import { StubDocumentManager, StubSingleLineTextDocument } from './test-utils';
+import { _privateTestingClasses, AllowedCharacterChecker } from '../../src/allowed-character/allowed-character-checker';
+import { DiagnosticFactory } from '../../src/diagnostic-factory';
+import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-character/allowed-character-set';
+import { RuleType } from '../../src/rule-set/rule-set';
+import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
+import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
 // passing an empty document is fine here since we don't use getText()
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
@@ -285,14 +278,6 @@ describe('AllowedCharacterIssueFinder tests', () => {
     });
   });
 });
-
-/*const mockPassThroughDocumentManager: DocumentManager<TextDocument> = new (class extends DocumentManager<TextDocument> {
-  get(text: string): Promise<TextDocument | undefined> {
-    return new Promise<TextDocument>((resolve) => {
-      resolve(new TextDocument('test', 1, text));
-    });
-  }
-})(new TextDocumentFactory());*/
 
 const stubDocumentManager: StubDocumentManager = new StubDocumentManager(new TextDocumentFactory());
 

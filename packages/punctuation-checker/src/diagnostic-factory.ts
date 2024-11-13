@@ -22,17 +22,17 @@ class DiagnosticBuilder {
     private readonly textDocument: TextDocument,
   ) {}
 
-  public setCode(code: string | number): DiagnosticBuilder {
+  public setCode(code: string | number): this {
     this.code = code;
     return this;
   }
 
-  public setSeverity(severity: DiagnosticSeverity): DiagnosticBuilder {
+  public setSeverity(severity: DiagnosticSeverity): this {
     this.severity = severity;
     return this;
   }
 
-  public setRange(startIndex: number, endIndex: number): DiagnosticBuilder {
+  public setRange(startIndex: number, endIndex: number): this {
     this.range = {
       start: this.textDocument.positionAt(startIndex),
       end: this.textDocument.positionAt(endIndex),
@@ -40,7 +40,7 @@ class DiagnosticBuilder {
     return this;
   }
 
-  public setMessage(message: string): DiagnosticBuilder {
+  public setMessage(message: string): this {
     this.message = message;
     return this;
   }

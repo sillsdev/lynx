@@ -1,9 +1,9 @@
 import { Diagnostic, DiagnosticFix, DiagnosticSeverity, DocumentManager, TextDocument } from '@sillsdev/lynx';
 
-import { AbstractChecker } from './abstract-checker';
-import { DiagnosticFactory } from './diagnostic-factory';
-import { DiagnosticList } from './diagnostic-list';
-import { AllowedCharacterSet } from './rule-set/allowed-character-set';
+import { AbstractChecker } from '../abstract-checker';
+import { DiagnosticFactory } from '../diagnostic-factory';
+import { DiagnosticList } from '../diagnostic-list';
+import { AllowedCharacterSet } from './allowed-character-set';
 
 export class AllowedCharacterChecker extends AbstractChecker {
   constructor(
@@ -43,7 +43,6 @@ class AllowedCharacterIssueFinder {
   public produceDiagnostics(text: string): Diagnostic[] {
     this.diagnosticList = new DiagnosticList();
 
-    // TODO: convert to a standard Unicode format like NFKC
     let match: RegExpExecArray | null;
     while ((match = this.characterRegex.exec(text))) {
       const character = match[0];

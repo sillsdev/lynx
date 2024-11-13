@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+
 import { DiagnosticFactory } from '../src/diagnostic-factory';
 import { Diagnostic, DiagnosticSeverity, TextDocument } from '@sillsdev/lynx';
 import { StubSingleLineTextDocument } from './test-utils';
