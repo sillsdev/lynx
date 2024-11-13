@@ -1,4 +1,4 @@
-import { fixImportsPlugin } from 'esbuild-fix-imports-plugin';
+import { esbuildPluginFilePathExtensions } from 'esbuild-plugin-file-path-extensions';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -6,6 +6,6 @@ export default defineConfig({
   dts: true,
   clean: true,
   format: ['esm', 'cjs'],
-  bundle: false,
-  esbuildPlugins: [fixImportsPlugin()],
+  bundle: true,
+  esbuildPlugins: [esbuildPluginFilePathExtensions({ esmExtension: 'js' })],
 });

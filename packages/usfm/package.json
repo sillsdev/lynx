@@ -35,7 +35,7 @@
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@vitest/coverage-v8": "^2.1.4",
-    "esbuild-fix-imports-plugin": "^1.0.6",
+    "esbuild-plugin-file-path-extensions": "^2.1.3",
     "eslint": "^9.9.1",
     "tsup": "^8.3.0",
     "typescript": "^5.5.4",
