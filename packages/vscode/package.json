@@ -1,6 +1,7 @@
 {
   "name": "@sillsdev/lynx-vscode",
   "version": "1.0.0",
+  "private": true,
   "main": "./dist/extension.js",
   "scripts": {
     "build": "tsup-node src/extension.ts src/server.ts --format cjs --clean --sourcemap",
