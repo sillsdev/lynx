@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
       - run: npm ci
+      - run: tree
       - run: npm run build
       - run: npm run lint
       - run: npm run format:check
