@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "turbo run build --no-update-notifier --force",
+    "build": "turbo run build --no-update-notifier",
     "dev": "turbo run dev --no-update-notifier",
     "check-types": "turbo run check-types --no-update-notifier",
     "lint": "turbo run lint --no-update-notifier",
