@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { QuotationConfig } from './quotation-config';
 import {
   QuotationDepth,

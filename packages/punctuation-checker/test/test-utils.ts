@@ -1,4 +1,4 @@
-import { TextDocument, Range, Position, DocumentManager } from '@sillsdev/lynx';
+import { DocumentManager, Position, Range, TextDocument } from '@sillsdev/lynx';
 
 // Just returns a document with the text of the URI
 // (allows for much more concise testing, since we avoid creating
@@ -16,7 +16,7 @@ export class StubSingleLineTextDocument extends TextDocument {
     super('test', 1, text);
   }
 
-  public getText(range?: Range): string {
+  public getText(_range?: Range): string {
     return this.text;
   }
 

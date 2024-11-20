@@ -9,9 +9,6 @@ import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubDocumentManager } from '../test-utils';
 
 describe('DiagnosticProviderFactory tests', () => {
-  const defaultDiagnosticSettings = {
-    maxNumberOfProblems: 100,
-  };
   const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
 
   const allowedCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(

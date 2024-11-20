@@ -2,8 +2,8 @@ import { Diagnostic, DiagnosticProvider, DiagnosticSeverity, TextDocumentFactory
 import { describe, expect, it } from 'vitest';
 
 import { _privateTestingClasses, AllowedCharacterChecker } from '../../src/allowed-character/allowed-character-checker';
-import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-character/allowed-character-set';
+import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';

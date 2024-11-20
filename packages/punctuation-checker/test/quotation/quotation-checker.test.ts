@@ -8,10 +8,6 @@ import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotatio
 import { StandardFixes } from '../../src/standard-fixes';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
-const defaultDiagnosticSettings = {
-  maxNumberOfProblems: 100,
-};
-
 // passing an empty document is fine here since we don't use getText()
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
   'quotation-mark-checker',
