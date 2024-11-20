@@ -1,4 +1,4 @@
-import library from '@repo/eslint-config/library.mjs';
+import library from '@repo/eslint-config/library.js';
 
 export default [
   {

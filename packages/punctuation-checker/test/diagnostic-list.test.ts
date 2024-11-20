@@ -1,7 +1,8 @@
-import { expect, it } from 'vitest';
-import { DiagnosticList } from '../src/diagnostic-list';
-import { DiagnosticFactory } from '../src/diagnostic-factory';
 import { DiagnosticSeverity, TextDocument } from '@sillsdev/lynx';
+import { expect, it } from 'vitest';
+
+import { DiagnosticFactory } from '../src/diagnostic-factory';
+import { DiagnosticList } from '../src/diagnostic-list';
 
 const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory('test-source', new TextDocument('test', 1, ''));
 const sampleDiagnostic1 = diagnosticFactory
