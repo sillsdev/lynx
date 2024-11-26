@@ -1,4 +1,12 @@
-import { Diagnostic, DiagnosticProvider, DiagnosticSeverity, TextDocumentFactory } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticProvider,
+  DiagnosticSeverity,
+  ScriptureDocument,
+  TextDocumentFactory,
+} from '@sillsdev/lynx';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
 import { _privateTestingClasses, AllowedCharacterChecker } from '../../src/allowed-character/allowed-character-checker';
@@ -6,6 +14,7 @@ import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
+import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
 // passing an empty document is fine here since we don't use getText()
@@ -365,5 +374,92 @@ describe('integration tests', () => {
         createExpectedDiagnostic('ﬁ', 5, 6),
       ]);
     });
+  });
+});
+
+describe('ScriptureDocument tests', () => {
+  const stylesheet = new UsfmStylesheet('usfm.sty');
+  const documentFactory = new UsfmDocumentFactory(stylesheet);
+  const standardAllowedCharacterSet = new CharacterRegexWhitelist(
+    new CharacterClassRegexBuilder()
+      .addRange('A', 'Z')
+      .addRange('a', 'z')
+      .addRange('0', '9')
+      .addCharacters(['.', ',', '?', '/', '\\', ':', ';', '(', ')', '-', '—', '!'])
+      .addCharacters(['"', "'", '\u2018', '\u2019', '\u201C', '\u201D'])
+      .addCharacters([' ', '\r', '\n', '\t'])
+      .build(),
+  );
+  const allowedCharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+    stubDiagnosticFactory,
+    standardAllowedCharacterSet,
+  );
+
+  it('produces no errors for well-formed text', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 Gen
+      \\toc2 Genesis
+      \\toc1 Genesis
+      \\mt2 Book of
+      \\mt1 Genesis
+      \\c 1
+      \\s Isaac and Rebekah
+      \\p
+      \\v 1 Now Abraham was old, well advanced in years. And the Lord had blessed Abraham in all things.`,
+    );
+
+    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
+  });
+
+  it('identifies disallowed characters in verse text', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 Gen
+      \\toc2 Genesis
+      \\toc1 Genesis
+      \\mt2 Book of
+      \\mt1 Genesis
+      \\c 1
+      \\s Isaac and Rebekah
+      \\p
+      \\v 1 The servant% said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
+    );
+
+    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      createExpectedDiagnostic('%', 171, 172),
+    ]);
+  });
+
+  it('identifies disallowed characters that occur in non-verse portions', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 G*n
+      \\toc2 Gene$is
+      \\toc1 Genesis
+      \\mt2 Book @f
+      \\mt1 Genesis
+      \\c 1
+      \\s |saac & Rebekah
+      \\p
+      \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
+    );
+
+    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      createExpectedDiagnostic('*', 21, 22),
+      createExpectedDiagnostic('$', 40, 41),
+      createExpectedDiagnostic('@', 80, 81),
+      createExpectedDiagnostic('|', 122, 123),
+      createExpectedDiagnostic('&', 128, 129),
+    ]);
   });
 });
