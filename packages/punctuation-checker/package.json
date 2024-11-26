@@ -24,7 +24,9 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "@sillsdev/lynx": "*",
+    "@sillsdev/lynx-usfm": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

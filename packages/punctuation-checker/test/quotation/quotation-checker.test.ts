@@ -1,4 +1,13 @@
-import { Diagnostic, DiagnosticSeverity, DocumentManager, TextDocument, TextDocumentFactory } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  DocumentManager,
+  ScriptureDocument,
+  TextDocument,
+  TextDocumentFactory,
+} from '@sillsdev/lynx';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
@@ -6,12 +15,13 @@ import { _privateTestingClasses, QuotationChecker } from '../../src/quotation/qu
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotation-utils';
 import { StandardFixes } from '../../src/standard-fixes';
+import { StringContextMatcher } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
-// passing an empty document is fine here since we don't use getText()
+// Functions/objects for creating expected output objects
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
   'quotation-mark-checker',
-  new StubSingleLineTextDocument(''),
+  new StubSingleLineTextDocument(''), // passing an empty document is fine here since we don't use getText()
 );
 
 function createUnmatchedOpeningQuoteDiagnostic(startOffset: number, endOffset: number): Diagnostic {
@@ -601,5 +611,137 @@ describe('QuotationChecker tests', () => {
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', tooDeeplyNestedDiagnostic)).toEqual([]);
+  });
+});
+
+describe('ScriptureDocument tests', () => {
+  const stylesheet = new UsfmStylesheet('usfm.sty');
+  const documentFactory = new UsfmDocumentFactory(stylesheet);
+  const quotationConfig = new QuotationConfig.Builder()
+    .setTopLevelQuotationMarks({
+      openingPunctuationMark: '\u201C',
+      closingPunctuationMark: '\u201D',
+    })
+    .addNestedQuotationMarks({
+      openingPunctuationMark: '\u2018',
+      closingPunctuationMark: '\u2019',
+    })
+    .addNestedQuotationMarks({
+      openingPunctuationMark: '\u201C',
+      closingPunctuationMark: '\u201D',
+    })
+    .addNestedQuotationMarks({
+      openingPunctuationMark: '\u2018',
+      closingPunctuationMark: '\u2019',
+    })
+    .mapAmbiguousQuotationMark('"', '\u201C')
+    .mapAmbiguousQuotationMark('"', '\u201D')
+    .mapAmbiguousQuotationMark("'", '\u2018')
+    .mapAmbiguousQuotationMark("'", '\u2019')
+    .ignoreMatchingQuotationMarks(
+      // possessives and contractions
+      new StringContextMatcher.Builder()
+        .setCenterContent(/^['\u2019]$/)
+        .setLeftContext(/\w$/)
+        .setRightContext(/^\w/)
+        .build(),
+    )
+    .ignoreMatchingQuotationMarks(
+      // for possessives ending in "s", e.g. "Moses'"
+      new StringContextMatcher.Builder()
+        .setCenterContent(/^['\u2019]$/)
+        .setLeftContext(/\ws$/)
+        .setRightContext(/^[ \n,.:;]/)
+        .build(),
+    )
+    .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+    .build();
+  const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(quotationConfig, stubDiagnosticFactory);
+
+  it('produces no errors for well-formed text', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 Gen
+      \\toc2 Genesis
+      \\toc1 Genesis
+      \\mt2 Book of
+      \\mt1 Genesis
+      \\c 1
+      \\s Isaac and Rebekah
+      \\p
+      \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
+    );
+
+    expect(quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
+  });
+
+  it('identifies quotation errors in a single verse', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 Gen
+      \\toc2 Genesis
+      \\toc1 Genesis
+      \\mt2 Book of
+      \\mt1 Genesis
+      \\c 1
+      \\s Isaac and Rebekah
+      \\p
+      \\v 1 The servant said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
+    );
+
+    expect(quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      createUnmatchedOpeningQuoteDiagnostic(215, 216),
+    ]);
+  });
+
+  it('identifies quotation errors that occur in non-verse portions', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 “Gen
+      \\toc2 Genesis”
+      \\toc1 “Genesis
+      \\mt2 Book of”
+      \\mt1 “Genesis”
+      \\c 1
+      \\s “Isaac and Rebekah
+      \\p
+      \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
+    );
+
+    expect(quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      createUnmatchedOpeningQuoteDiagnostic(128, 129),
+      createIncorrectlyNestedDiagnostic(192, 193, QuotationDepth.Primary),
+    ]);
+  });
+
+  it('produces no issues for well-formed quotes that span across verses', () => {
+    const scriptureDocument: ScriptureDocument = documentFactory.create(
+      'test-uri',
+      'usfm',
+      1,
+      `\\id GEN
+      \\toc3 Gen
+      \\toc2 Genesis
+      \\toc1 Genesis
+      \\mt2 Book of
+      \\mt1 Genesis
+      \\c 1
+      \\s Isaac and Rebekah
+      \\p
+      \v 1 Abraham said to him, “See to it that you do not take my son back there. 
+      \v 2 The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land’, he will send his angel before you, and you shall take a wife for my son from there. 
+      \v 3 But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”`,
+    );
+
+    expect(quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
   });
 });
