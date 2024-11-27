@@ -1,9 +1,9 @@
-# Lynx Core
+# Lynx USFM
 
-Lynx Core defines the foundational interfaces, data types, and classes for integrating Lynx providers into a translation app.
+Lynx USFM includes support for serializing/deserializing USFM documents for use in Lynx providers.
 
 ## Installation
 
 ```sh
-npm install @sillsdev/lynx
+npm install @sillsdev/lynx-usfm
 ```
