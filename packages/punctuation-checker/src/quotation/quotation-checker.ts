@@ -4,9 +4,10 @@ import { AbstractChecker } from '../abstract-checker';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { StandardFixes } from '../standard-fixes';
+import { PairedPunctuationDirection } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
-import { QuotationDepth, QuotationDirection, QuoteCorrection, QuoteMetadata } from './quotation-utils';
+import { QuotationDepth, QuoteCorrection, QuoteMetadata } from './quotation-utils';
 
 const UNMATCHED_OPENING_QUOTE_DIAGNOSTIC_CODE = 'unmatched-opening-quotation-mark';
 const UNMATCHED_OPENING_QUOTE_MESSAGE = 'Opening quotation mark with no closing mark.';
@@ -77,10 +78,13 @@ export class QuotationChecker extends AbstractChecker {
       const expectedQuotationDepth = Number(match[1]) + 1;
       return this.quotationConfig.getUnambiguousQuotationMarkByType(
         QuotationDepth.fromNumber(expectedQuotationDepth),
-        QuotationDirection.Opening,
+        PairedPunctuationDirection.Opening,
       );
     }
-    return this.quotationConfig.getUnambiguousQuotationMarkByType(QuotationDepth.Primary, QuotationDirection.Opening);
+    return this.quotationConfig.getUnambiguousQuotationMarkByType(
+      QuotationDepth.Primary,
+      PairedPunctuationDirection.Opening,
+    );
   }
 
   private getExpectedQuotationMarkFromAmbiguousCode(code: string): string | undefined {
@@ -159,9 +163,9 @@ class QuotationErrorFinder {
   }
 
   private addUnmatchedQuoteError(quotationMark: QuoteMetadata): void {
-    if (quotationMark.direction === QuotationDirection.Opening) {
+    if (quotationMark.direction === PairedPunctuationDirection.Opening) {
       this.addUnmatchedOpeningQuoteError(quotationMark);
-    } else if (quotationMark.direction === QuotationDirection.Closing) {
+    } else if (quotationMark.direction === PairedPunctuationDirection.Closing) {
       this.addUnmatchedClosingQuoteError(quotationMark);
     }
   }

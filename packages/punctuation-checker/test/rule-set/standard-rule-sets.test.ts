@@ -7,9 +7,10 @@ import {
 } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
-import { QuotationDepth, QuotationDirection } from '../../src/quotation/quotation-utils';
+import { QuotationDepth } from '../../src/quotation/quotation-utils';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
+import { PairedPunctuationDirection } from '../../src/utils';
 import { StubDocumentManager } from '../test-utils';
 
 describe('Standard English rule set tests', () => {
@@ -139,17 +140,17 @@ describe('Standard English rule set tests', () => {
       ]);
       expect(quotationConfig.getPossibleQuoteDepths('\u201E')).toEqual([]);
 
-      expect(quotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([QuotationDirection.Opening]);
-      expect(quotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([QuotationDirection.Closing]);
-      expect(quotationConfig.getPossibleQuoteDirections('\u2018')).toEqual([QuotationDirection.Opening]);
-      expect(quotationConfig.getPossibleQuoteDirections('\u2019')).toEqual([QuotationDirection.Closing]);
+      expect(quotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([PairedPunctuationDirection.Opening]);
+      expect(quotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([PairedPunctuationDirection.Closing]);
+      expect(quotationConfig.getPossibleQuoteDirections('\u2018')).toEqual([PairedPunctuationDirection.Opening]);
+      expect(quotationConfig.getPossibleQuoteDirections('\u2019')).toEqual([PairedPunctuationDirection.Closing]);
       expect(quotationConfig.getPossibleQuoteDirections('"')).toEqual([
-        QuotationDirection.Opening,
-        QuotationDirection.Closing,
+        PairedPunctuationDirection.Opening,
+        PairedPunctuationDirection.Closing,
       ]);
       expect(quotationConfig.getPossibleQuoteDirections('"')).toEqual([
-        QuotationDirection.Opening,
-        QuotationDirection.Closing,
+        PairedPunctuationDirection.Opening,
+        PairedPunctuationDirection.Closing,
       ]);
       expect(quotationConfig.getPossibleQuoteDirections('\u201E')).toEqual([]);
 
@@ -487,6 +488,149 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+        },
+      ]);
+    });
+  });
+
+  describe('Paired punctuation checking', () => {
+    const standardEnglishRuleSet = StandardRuleSets.English;
+    const pairedPunctuationConfig = standardEnglishRuleSet._getPairedPunctuationConfig();
+
+    it('specifies standard paired punctuation for English', () => {
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('(')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test(')')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('[')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test(']')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('{')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('}')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u201C')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u201D')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2018')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2019')).toBe(true);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('"')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test("'")).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u201E')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u201F')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u201A')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('<')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('>')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('`')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('/')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\\')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2039')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u203A')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u00AB')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u00BB')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2985')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2986')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFE59')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFE5A')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2E28')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2E29')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3008')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3009')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300A')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300B')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300C')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300D')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300E')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u300F')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3010')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3011')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3014')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3015')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3016')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3017')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3018')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u3019')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2997')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2998')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF08')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF09')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF3B')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF3D')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF5B')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF5D')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF5F')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF60')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF62')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\uFF63')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23DC')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23DD')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23B4')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23B5')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23DE')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23DF')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23E0')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u23E1')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u275B')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u275C')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u275D')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u275E')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2768')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2769')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u276A')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u276B')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2774')).toBe(false);
+      expect(pairedPunctuationConfig.createAllPairedMarksRegex().test('\u2775')).toBe(false);
+    });
+
+    it('identifies no issues with well-formed English Biblical text', async () => {
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        stubDocumentManager,
+        [RuleType.PairedPunctuation],
+      )[0];
+
+      expect(
+        await pairedPunctuationChecker.getDiagnostics(`So Achish gave him the town of Ziklag (which still belongs to the kings of 
+        Judah to this day), and they lived there among the Philistines for a year and four months.`),
+      ).toEqual([]);
+
+      expect(
+        await pairedPunctuationChecker.getDiagnostics(`But there were some scoundrels who complained, “How can this man save us?” 
+        And they scorned him and refused to bring him gifts. But Saul ignored them. [Nahash, king of the Ammonites, had been grievously 
+        oppressing the people of Gad and Reuben who lived east of the Jordan River. He gouged out the right eye of each of the Israelites 
+        living there, and he didn’t allow anyone to come and rescue them. In fact, of all the Israelites east of the Jordan, there wasn’t a 
+        single one whose right eye Nahash had not gouged out. But there were 7,000 men who had escaped from the Ammonites, and they had 
+        settled in Jabesh-gilead.]`),
+      ).toEqual([]);
+
+      expect(
+        await pairedPunctuationChecker.getDiagnostics(`So David went to Baal-perazim and defeated the Philistines there. “The Lord did 
+        it!” David exclaimed. “He burst through my enemies like a raging flood!” So he named that place Baal-perazim (which means 
+        “the Lord who bursts through”).`),
+      ).toEqual([]);
+    });
+
+    it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        stubDocumentManager,
+        [RuleType.PairedPunctuation],
+      )[0];
+
+      expect(
+        await pairedPunctuationChecker.getDiagnostics(`So David went to Baal-perazim and defeated the Philistines there. “The Lord did 
+        it!” David exclaimed. “He burst through my enemies like a raging flood!” So he named that place Baal-perazim which means 
+        “the Lord who bursts through”).`),
+      ).toEqual([
+        {
+          code: 'unmatched-closing-parenthesis',
+          source: 'paired-punctuation-checker',
+          severity: DiagnosticSeverity.Error,
+          range: {
+            start: {
+              line: 0,
+              character: 248,
+            },
+            end: {
+              line: 0,
+              character: 249,
+            },
+          },
+          message: 'Closing parenthesis with no opening parenthesis.',
         },
       ]);
     });

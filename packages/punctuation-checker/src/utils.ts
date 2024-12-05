@@ -1,3 +1,19 @@
+export interface PunctuationMetadata {
+  startIndex: number;
+  endIndex: number;
+  text: string;
+}
+
+export interface PairedPunctuationMetadata extends PunctuationMetadata {
+  direction: PairedPunctuationDirection;
+}
+
+export enum PairedPunctuationDirection {
+  Opening = 1,
+  Closing = 2,
+  Ambiguous = 3,
+}
+
 export class CharacterClassRegexBuilder {
   private characterClass = '';
   private isGlobal = false;

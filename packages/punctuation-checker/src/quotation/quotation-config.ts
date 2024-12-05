@@ -1,9 +1,9 @@
-import { AmbiguousPunctuationMap, PairedPunctuationConfig } from '../rule-set/rule-utils';
-import { CharacterClassRegexBuilder, StringContextMatcher } from '../utils';
-import { QuotationDepth, QuotationDirection } from './quotation-utils';
+import { AmbiguousPunctuationMap, PairedPunctuationRule } from '../rule-set/rule-utils';
+import { CharacterClassRegexBuilder, PairedPunctuationDirection, StringContextMatcher } from '../utils';
+import { QuotationDepth } from './quotation-utils';
 
 export class QuotationConfig {
-  private quotationLevels: PairedPunctuationConfig[] = [];
+  private quotationLevels: PairedPunctuationRule[] = [];
   private ambiguousQuoteMap: AmbiguousPunctuationMap = new AmbiguousPunctuationMap();
   private quotationsToIgnore: StringContextMatcher[] = [];
   private nestingWarningDepth: QuotationDepth = QuotationDepth.fromNumber(4);
@@ -58,13 +58,13 @@ export class QuotationConfig {
     return quoteRegexBuilder.makeGlobal().build();
   }
 
-  public getPossibleQuoteDirections(quotationMark: string): QuotationDirection[] {
-    const directions: Set<QuotationDirection> = new Set<QuotationDirection>();
+  public getPossibleQuoteDirections(quotationMark: string): PairedPunctuationDirection[] {
+    const directions: Set<PairedPunctuationDirection> = new Set<PairedPunctuationDirection>();
     if (this.openingQuoteRegex.test(quotationMark)) {
-      directions.add(QuotationDirection.Opening);
+      directions.add(PairedPunctuationDirection.Opening);
     }
     if (this.closingQuoteRegex.test(quotationMark)) {
-      directions.add(QuotationDirection.Closing);
+      directions.add(PairedPunctuationDirection.Closing);
     }
     if (this.ambiguousQuoteRegex.test(quotationMark)) {
       for (const unambiguousMark of this.ambiguousQuoteMap.lookUpAmbiguousMark(quotationMark)) {
@@ -101,13 +101,16 @@ export class QuotationConfig {
     return this.ambiguousQuoteRegex.test(quotationMark);
   }
 
-  public getUnambiguousQuotationMarkByType(depth: QuotationDepth, direction: QuotationDirection): string | undefined {
+  public getUnambiguousQuotationMarkByType(
+    depth: QuotationDepth,
+    direction: PairedPunctuationDirection,
+  ): string | undefined {
     if (depth.asNumber() > this.quotationLevels.length) {
       return undefined;
     }
 
     const unambiguousMark: string =
-      direction === QuotationDirection.Opening
+      direction === PairedPunctuationDirection.Opening
         ? this.quotationLevels[depth.asNumber() - 1].openingPunctuationMark
         : this.quotationLevels[depth.asNumber() - 1].closingPunctuationMark;
     return unambiguousMark;
@@ -142,7 +145,7 @@ export class QuotationConfig {
   public static Builder = class {
     readonly quotationConfig: QuotationConfig = new QuotationConfig();
 
-    public setTopLevelQuotationMarks(quotationPairConfig: PairedPunctuationConfig): this {
+    public setTopLevelQuotationMarks(quotationPairConfig: PairedPunctuationRule): this {
       if (this.quotationConfig.quotationLevels.length > 0) {
         this.quotationConfig.quotationLevels[0] = quotationPairConfig;
       }
@@ -151,7 +154,7 @@ export class QuotationConfig {
       return this;
     }
 
-    public addNestedQuotationMarks(quotationPairConfig: PairedPunctuationConfig): this {
+    public addNestedQuotationMarks(quotationPairConfig: PairedPunctuationRule): this {
       if (this.quotationConfig.quotationLevels.length === 0) {
         throw new Error('You must set the top-level quotation marks before adding next quotation marks.');
       }

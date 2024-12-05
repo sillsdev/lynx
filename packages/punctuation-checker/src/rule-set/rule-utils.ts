@@ -1,4 +1,4 @@
-export interface PairedPunctuationConfig {
+export interface PairedPunctuationRule {
   openingPunctuationMark: string;
   closingPunctuationMark: string;
 }
