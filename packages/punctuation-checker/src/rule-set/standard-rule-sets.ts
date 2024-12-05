@@ -1,4 +1,5 @@
 import { CharacterRegexWhitelist } from '../allowed-character/allowed-character-set';
+import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuation-config';
 import { QuotationConfig } from '../quotation/quotation-config';
 import { QuotationDepth } from '../quotation/quotation-utils';
 import { CharacterClassRegexBuilder, StringContextMatcher } from '../utils';
@@ -56,6 +57,28 @@ export class StandardRuleSets {
       )
       .setNestingWarningDepth(QuotationDepth.fromNumber(4))
       .disallowContinuers()
+      .build(),
+    new PairedPunctuationConfig.Builder()
+      .addQuotationRule({
+        openingPunctuationMark: '\u201C',
+        closingPunctuationMark: '\u201D',
+      })
+      .addQuotationRule({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .addRule({
+        openingPunctuationMark: '(',
+        closingPunctuationMark: ')',
+      })
+      .addRule({
+        openingPunctuationMark: '[',
+        closingPunctuationMark: ']',
+      })
+      .addRule({
+        openingPunctuationMark: '{',
+        closingPunctuationMark: '}',
+      })
       .build(),
   );
 }

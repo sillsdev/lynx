@@ -4,11 +4,11 @@ import { _privateTestingClasses, QuotationAnalysis, QuotationAnalyzer } from '..
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import {
   QuotationDepth,
-  QuotationDirection,
   QuotationRootLevel,
   QuoteMetadata,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
+import { PairedPunctuationDirection } from '../../src/utils';
 
 describe('QuotationAnalyzer tests', () => {
   describe('Miscellaneous tests', () => {
@@ -25,7 +25,7 @@ describe('QuotationAnalyzer tests', () => {
       expect(danglingQuotationAnalysis.getUnmatchedQuotes()).toEqual([
         {
           depth: QuotationDepth.Primary,
-          direction: QuotationDirection.Opening,
+          direction: PairedPunctuationDirection.Opening,
           startIndex: 0,
           endIndex: 1,
           text: '\u201C',
@@ -100,7 +100,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(isolatedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -114,7 +114,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(singleOpeningQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '\u201C',
@@ -128,7 +128,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 19,
               endIndex: 20,
               text: '\u201C',
@@ -142,7 +142,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleNestedQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -156,7 +156,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(isolatedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 0,
               endIndex: 1,
               text: '\u201D',
@@ -170,7 +170,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(singleClosingQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 16,
               endIndex: 17,
               text: '\u201D',
@@ -184,7 +184,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 16,
               endIndex: 17,
               text: '\u201D',
@@ -198,7 +198,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleNestedQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 35,
               endIndex: 36,
               text: '\u201D',
@@ -216,7 +216,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleNestedQuotesAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '\u201C',
@@ -317,7 +317,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unclosedPrimaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -331,7 +331,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unclosedSecondaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 13,
               endIndex: 14,
               text: '\u2018',
@@ -345,7 +345,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unclosedTertiaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 14,
               endIndex: 15,
               text: '\u201C',
@@ -359,7 +359,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleUnclosedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -367,7 +367,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 14,
               endIndex: 15,
               text: '\u2018',
@@ -381,7 +381,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleUnclosedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -389,7 +389,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 14,
               endIndex: 15,
               text: '\u2018',
@@ -403,7 +403,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(ambiguousUnclosedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '"',
@@ -417,7 +417,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(ambiguousUnclosedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 13,
               endIndex: 14,
               text: "'",
@@ -448,7 +448,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unpairedThirdAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 26,
               endIndex: 27,
               text: '\u201E',
@@ -456,7 +456,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '\u2018',
@@ -470,7 +470,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unpairedThirdInSecondAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 26,
               endIndex: 27,
               text: '\u201E',
@@ -486,7 +486,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unpairedPrimaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 37,
               endIndex: 38,
               text: '\u201D',
@@ -500,7 +500,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unpairedSecondaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 22,
               endIndex: 23,
               text: '\u2019',
@@ -530,7 +530,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(unpairedTertiaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 23,
               endIndex: 24,
               text: '\u201F',
@@ -544,7 +544,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleUnpairedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 22,
               endIndex: 23,
               text: '\u2019',
@@ -552,7 +552,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 39,
               endIndex: 40,
               text: '\u201D',
@@ -566,7 +566,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(multipleUnpairedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 33,
               endIndex: 34,
               text: '\u2019',
@@ -574,7 +574,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 41,
               endIndex: 42,
               text: '\u201D',
@@ -588,7 +588,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(ambiguousUnpairedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 37,
               endIndex: 38,
               text: '"',
@@ -602,7 +602,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(ambiguousUnpairedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 37,
               endIndex: 38,
               text: "'",
@@ -617,7 +617,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(secondInFirstAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 16,
               endIndex: 17,
               text: '\u2019',
@@ -631,7 +631,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(thirdInSecondAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 32,
               endIndex: 33,
               text: '\u201F',
@@ -645,7 +645,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(thirdInFirstAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 31,
               endIndex: 32,
               text: '\u201F',
@@ -665,7 +665,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(secondInSecondAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
@@ -680,7 +680,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(secondInSecondAnalysis2.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
@@ -695,7 +695,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(thirdInThirdAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 42,
               endIndex: 43,
               text: '\u201C',
@@ -710,7 +710,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(secondInSecondAmbiguousAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
@@ -742,7 +742,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(tertiaryInPrimaryAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '\u201E',
@@ -789,7 +789,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -797,7 +797,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 24,
               endIndex: 25,
               text: '\u201D',
@@ -812,7 +812,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
@@ -820,7 +820,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 11,
               endIndex: 12,
               text: '\u2018',
@@ -828,7 +828,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 24,
               endIndex: 25,
               text: '\u2019',
@@ -836,7 +836,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Primary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 32,
               endIndex: 33,
               text: '\u201D',
@@ -862,7 +862,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 11,
               endIndex: 12,
               text: '\u2018',
@@ -870,7 +870,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 24,
               endIndex: 25,
               text: '\u2019',
@@ -885,7 +885,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 8,
               endIndex: 9,
               text: '\u2018',
@@ -893,7 +893,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 21,
               endIndex: 22,
               text: '\u201C',
@@ -901,7 +901,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 27,
               endIndex: 28,
               text: '\u201D',
@@ -909,7 +909,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Secondary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 34,
               endIndex: 35,
               text: '\u2019',
@@ -941,7 +941,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 21,
               endIndex: 22,
               text: '\u201C',
@@ -949,7 +949,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 27,
               endIndex: 28,
               text: '\u201D',
@@ -964,7 +964,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '\u201C',
@@ -972,7 +972,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 29,
               endIndex: 30,
               text: '\u2018',
@@ -980,7 +980,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 36,
               endIndex: 37,
               text: '\u2019',
@@ -988,7 +988,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 37,
               endIndex: 38,
               text: '\u201D',
@@ -1026,7 +1026,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 29,
               endIndex: 30,
               text: '\u2018',
@@ -1034,7 +1034,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 36,
               endIndex: 37,
               text: '\u2019',
@@ -1066,7 +1066,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 21,
               endIndex: 22,
               text: '"',
@@ -1074,7 +1074,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 27,
               endIndex: 28,
               text: '"',
@@ -1089,7 +1089,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 17,
               endIndex: 18,
               text: '"',
@@ -1097,7 +1097,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 29,
               endIndex: 30,
               text: "'",
@@ -1105,7 +1105,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 36,
               endIndex: 37,
               text: "'",
@@ -1113,7 +1113,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.Tertiary,
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 37,
               endIndex: 38,
               text: '"',
@@ -1149,7 +1149,7 @@ describe('QuotationAnalyzer tests', () => {
           ).toEqual([
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Opening,
+              direction: PairedPunctuationDirection.Opening,
               startIndex: 29,
               endIndex: 30,
               text: "'",
@@ -1157,7 +1157,7 @@ describe('QuotationAnalyzer tests', () => {
             },
             {
               depth: QuotationDepth.fromNumber(4),
-              direction: QuotationDirection.Closing,
+              direction: PairedPunctuationDirection.Closing,
               startIndex: 36,
               endIndex: 37,
               text: "'",
@@ -1202,7 +1202,7 @@ describe('QuotationAnalyzer tests', () => {
         {
           existingQuotationMark: {
             depth: QuotationDepth.Primary,
-            direction: QuotationDirection.Opening,
+            direction: PairedPunctuationDirection.Opening,
             startIndex: 0,
             endIndex: 1,
             text: '"',
@@ -1210,7 +1210,7 @@ describe('QuotationAnalyzer tests', () => {
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Primary,
-            direction: QuotationDirection.Opening,
+            direction: PairedPunctuationDirection.Opening,
             startIndex: 0,
             endIndex: 1,
             text: '\u201C',
@@ -1227,7 +1227,7 @@ describe('QuotationAnalyzer tests', () => {
         {
           existingQuotationMark: {
             depth: QuotationDepth.Primary,
-            direction: QuotationDirection.Opening,
+            direction: PairedPunctuationDirection.Opening,
             startIndex: 0,
             endIndex: 1,
             text: '"',
@@ -1235,7 +1235,7 @@ describe('QuotationAnalyzer tests', () => {
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Primary,
-            direction: QuotationDirection.Opening,
+            direction: PairedPunctuationDirection.Opening,
             startIndex: 0,
             endIndex: 1,
             text: '\u201C',
@@ -1245,7 +1245,7 @@ describe('QuotationAnalyzer tests', () => {
         {
           existingQuotationMark: {
             depth: QuotationDepth.Secondary,
-            direction: QuotationDirection.Closing,
+            direction: PairedPunctuationDirection.Closing,
             startIndex: 34,
             endIndex: 35,
             text: "'",
@@ -1253,7 +1253,7 @@ describe('QuotationAnalyzer tests', () => {
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
-            direction: QuotationDirection.Closing,
+            direction: PairedPunctuationDirection.Closing,
             startIndex: 34,
             endIndex: 35,
             text: '\u2019',
@@ -1273,7 +1273,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepth(QuotationDepth.Primary)
-          .addDirection(QuotationDirection.Opening)
+          .addDirection(PairedPunctuationDirection.Opening)
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('\u201C')
@@ -1281,7 +1281,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
       text: '\u201C',
@@ -1296,7 +1296,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(0)
           .setEndIndex(1)
           .setText('"')
@@ -1305,7 +1305,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '"',
@@ -1316,7 +1316,7 @@ describe('QuotationResolver tests', () => {
   it('resolves ambiguous English-style quotes based on the deepest quote in the quote stack', () => {
     const deepestQuotePrimaryOpening: QuoteMetadata = {
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '\u201C',
@@ -1328,7 +1328,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(2), QuotationDepth.fromNumber(4)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
@@ -1337,7 +1337,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(2),
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
       text: "'",
@@ -1348,7 +1348,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(1), QuotationDepth.fromNumber(3)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('"')
@@ -1357,7 +1357,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(1),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 5,
       endIndex: 6,
       text: '"',
@@ -1366,7 +1366,7 @@ describe('QuotationResolver tests', () => {
 
     const deepestQuoteSecondaryOpening: QuoteMetadata = {
       depth: QuotationDepth.Secondary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '\u201C',
@@ -1378,7 +1378,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(2), QuotationDepth.fromNumber(4)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
@@ -1387,7 +1387,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(2),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 5,
       endIndex: 6,
       text: "'",
@@ -1398,7 +1398,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(1), QuotationDepth.fromNumber(3)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('"')
@@ -1407,7 +1407,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(3),
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
       text: '"',
@@ -1416,7 +1416,7 @@ describe('QuotationResolver tests', () => {
 
     quotationResolver = new _privateTestingClasses.QuotationResolver({
       depth: QuotationDepth.Tertiary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 3,
       endIndex: 4,
       text: '\u201C',
@@ -1427,7 +1427,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(1), QuotationDepth.fromNumber(3)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
@@ -1436,7 +1436,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(3),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 5,
       endIndex: 6,
       text: "'",
@@ -1451,7 +1451,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepth(QuotationDepth.Primary)
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(0)
           .setEndIndex(1)
           .setText('\u201D')
@@ -1459,7 +1459,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '\u201D',
@@ -1468,7 +1468,7 @@ describe('QuotationResolver tests', () => {
 
     const deepestQuotePrimaryOpening: QuoteMetadata = {
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '\u201D',
@@ -1480,7 +1480,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepth(QuotationDepth.fromNumber(1))
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('\u201D')
@@ -1488,7 +1488,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(1),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 5,
       endIndex: 6,
       text: '\u201D',
@@ -1499,7 +1499,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(2), QuotationDepth.fromNumber(3)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('\u2019')
@@ -1507,7 +1507,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(2),
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
       text: '\u2019',
@@ -1516,7 +1516,7 @@ describe('QuotationResolver tests', () => {
 
     const deepestQuoteSecondaryOpening: QuoteMetadata = {
       depth: QuotationDepth.Secondary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 10,
       endIndex: 11,
       text: '\u2019',
@@ -1530,7 +1530,7 @@ describe('QuotationResolver tests', () => {
       quotationResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.fromNumber(2), QuotationDepth.fromNumber(3)])
-          .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+          .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
           .setStartIndex(15)
           .setEndIndex(16)
           .setText('\u2019')
@@ -1538,7 +1538,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(2),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 15,
       endIndex: 16,
       text: '\u2019',
@@ -1550,7 +1550,7 @@ describe('QuotationResolver tests', () => {
     // “example of ‘this case”<--
     const closingDoubleInSingleResolver = new _privateTestingClasses.QuotationResolver({
       depth: QuotationDepth.Secondary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
       text: '\u2018',
@@ -1560,7 +1560,7 @@ describe('QuotationResolver tests', () => {
       closingDoubleInSingleResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Closing)
+          .addDirection(PairedPunctuationDirection.Closing)
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201D')
@@ -1568,7 +1568,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(1),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 10,
       endIndex: 11,
       text: '\u201D',
@@ -1578,7 +1578,7 @@ describe('QuotationResolver tests', () => {
     // “example of this case“<--
     const doubleOpeningInDoubleResolver = new _privateTestingClasses.QuotationResolver({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
       text: '\u201C',
@@ -1588,7 +1588,7 @@ describe('QuotationResolver tests', () => {
       doubleOpeningInDoubleResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Opening)
+          .addDirection(PairedPunctuationDirection.Opening)
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201C')
@@ -1596,7 +1596,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(3),
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 10,
       endIndex: 11,
       text: '\u201C',
@@ -1609,7 +1609,7 @@ describe('QuotationResolver tests', () => {
       doubleClosingResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Closing)
+          .addDirection(PairedPunctuationDirection.Closing)
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201D')
@@ -1617,7 +1617,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(1),
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 10,
       endIndex: 11,
       text: '\u201D',
@@ -1627,7 +1627,7 @@ describe('QuotationResolver tests', () => {
     // “example ‘of “this case“<--
     const doubleOpeningInThirdLevelResolver = new _privateTestingClasses.QuotationResolver({
       depth: QuotationDepth.Tertiary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 10,
       endIndex: 11,
       text: '\u201C',
@@ -1637,7 +1637,7 @@ describe('QuotationResolver tests', () => {
       doubleOpeningInThirdLevelResolver.resolve(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Opening)
+          .addDirection(PairedPunctuationDirection.Opening)
           .setStartIndex(15)
           .setEndIndex(16)
           .setText('\u201C')
@@ -1645,7 +1645,7 @@ describe('QuotationResolver tests', () => {
       ),
     ).toEqual({
       depth: QuotationDepth.fromNumber(3),
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 15,
       endIndex: 16,
       text: '\u201C',

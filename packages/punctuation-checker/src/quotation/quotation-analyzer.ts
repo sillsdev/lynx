@@ -1,7 +1,7 @@
+import { PairedPunctuationDirection } from '../utils';
 import { QuotationConfig } from './quotation-config';
 import {
   QuotationDepth,
-  QuotationDirection,
   QuotationIterator,
   QuotationRootLevel,
   QuoteCorrection,
@@ -48,9 +48,9 @@ export class QuotationAnalyzer {
   }
 
   private processQuotationMarkByDirection(quotationMark: QuoteMetadata) {
-    if (quotationMark.direction === QuotationDirection.Opening) {
+    if (quotationMark.direction === PairedPunctuationDirection.Opening) {
       this.processOpeningQuotationMark(quotationMark);
-    } else if (quotationMark.direction === QuotationDirection.Closing) {
+    } else if (quotationMark.direction === PairedPunctuationDirection.Closing) {
       this.processClosingQuotationMark(quotationMark);
     }
   }
@@ -147,13 +147,13 @@ class QuotationResolver {
 
   private triviallyResolve(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
     const chosenDepth: QuotationDepth = unresolvedQuotationMark.findBestDepth(() => 1);
-    const chosenDirection: QuotationDirection = unresolvedQuotationMark.findBestDirection(() => 1);
+    const chosenDirection: PairedPunctuationDirection = unresolvedQuotationMark.findBestDirection(() => 1);
     return unresolvedQuotationMark.resolve(chosenDepth, chosenDirection);
   }
 
   private resolveTopLevelOpeningQuoteIfPossible(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
     return this.resolveWithPreferences(unresolvedQuotationMark, [
-      { direction: QuotationDirection.Opening, depth: QuotationDepth.Primary },
+      { direction: PairedPunctuationDirection.Opening, depth: QuotationDepth.Primary },
     ]);
   }
 
@@ -166,7 +166,7 @@ class QuotationResolver {
         return unresolvedQuotationMark.resolve(preference.depth, preference.direction);
       }
     }
-    const bestDefaultDirection: QuotationDirection = this.chooseBestDefaultDirection(unresolvedQuotationMark);
+    const bestDefaultDirection: PairedPunctuationDirection = this.chooseBestDefaultDirection(unresolvedQuotationMark);
     const bestDefaultDepth: QuotationDepth = this.chooseBestDefaultDepth(unresolvedQuotationMark, bestDefaultDirection);
     return unresolvedQuotationMark.resolve(bestDefaultDepth, bestDefaultDirection);
   }
@@ -184,17 +184,19 @@ class QuotationResolver {
   // If we get to the default functions, we've already checked that
   // it can't be a legal closing quote, so we assume that the user is
   // more likely to have meant to open a new quote
-  private chooseBestDefaultDirection(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuotationDirection {
-    return unresolvedQuotationMark.findBestDirection((direction) => (direction === QuotationDirection.Opening ? 1 : 0));
+  private chooseBestDefaultDirection(unresolvedQuotationMark: UnresolvedQuoteMetadata): PairedPunctuationDirection {
+    return unresolvedQuotationMark.findBestDirection((direction) =>
+      direction === PairedPunctuationDirection.Opening ? 1 : 0,
+    );
   }
 
   private chooseBestDefaultDepth(
     unresolvedQuotationMark: UnresolvedQuoteMetadata,
-    chosenDirection: QuotationDirection,
+    chosenDirection: PairedPunctuationDirection,
   ): QuotationDepth {
     // Choose a shallower depth for a closing quote and deeper for an opening quote,
     // but as close the ideal depth as possible
-    if (chosenDirection === QuotationDirection.Opening) {
+    if (chosenDirection === PairedPunctuationDirection.Opening) {
       const idealDepth: QuotationDepth = this.deepestOpenQuote?.depth.deeper() ?? QuotationDepth.Primary;
       return unresolvedQuotationMark.findBestDepth(
         (depth) =>
@@ -212,15 +214,15 @@ class QuotationResolver {
   // this function is only called if deepestOpenQuote is not null
   private resolveAllowedQuoteIfPossible(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
     return this.resolveWithPreferences(unresolvedQuotationMark, [
-      { direction: QuotationDirection.Closing, depth: this.deepestOpenQuote!.depth },
-      { direction: QuotationDirection.Opening, depth: this.deepestOpenQuote!.depth.deeper() },
+      { direction: PairedPunctuationDirection.Closing, depth: this.deepestOpenQuote!.depth },
+      { direction: PairedPunctuationDirection.Opening, depth: this.deepestOpenQuote!.depth.deeper() },
     ]);
   }
 }
 
 interface DepthAndDirectionPreference {
   depth: QuotationDepth;
-  direction: QuotationDirection;
+  direction: PairedPunctuationDirection;
 }
 
 export class QuotationAnalysis {

@@ -1,18 +1,15 @@
+import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { QuotationConfig } from './quotation-config';
 
-export interface QuoteMetadata {
+export interface QuoteMetadata extends PairedPunctuationMetadata {
   depth: QuotationDepth;
-  direction: QuotationDirection;
-  startIndex: number;
-  endIndex: number;
-  text: string;
   isAutocorrectable: boolean;
   parentDepth?: QuotationDepth;
 }
 
 export class UnresolvedQuoteMetadata {
   private depths: Set<number> = new Set<number>();
-  private directions: Set<QuotationDirection> = new Set<QuotationDirection>();
+  private directions: Set<PairedPunctuationDirection> = new Set<PairedPunctuationDirection>();
   private startIndex = 0;
   private endIndex = 0;
   private text = '';
@@ -25,7 +22,7 @@ export class UnresolvedQuoteMetadata {
     return this.depths.has(possibleDepth.asNumber());
   }
 
-  public isDirectionPossible(possibleDirection: QuotationDirection): boolean {
+  public isDirectionPossible(possibleDirection: PairedPunctuationDirection): boolean {
     return this.directions.has(possibleDirection);
   }
 
@@ -51,9 +48,9 @@ export class UnresolvedQuoteMetadata {
     return bestDepth;
   }
 
-  public findBestDirection(directionScoringFunction: (depth: QuotationDirection) => number) {
+  public findBestDirection(directionScoringFunction: (depth: PairedPunctuationDirection) => number) {
     let bestScore = Number.NEGATIVE_INFINITY;
-    let bestDirection: QuotationDirection = QuotationDirection.Opening;
+    let bestDirection: PairedPunctuationDirection = PairedPunctuationDirection.Opening;
     for (const direction of this.directions) {
       const score: number = directionScoringFunction(direction);
       if (score > bestScore) {
@@ -64,7 +61,7 @@ export class UnresolvedQuoteMetadata {
     return bestDirection;
   }
 
-  public resolve(chosenDepth: QuotationDepth, chosenDirection: QuotationDirection): QuoteMetadata {
+  public resolve(chosenDepth: QuotationDepth, chosenDirection: PairedPunctuationDirection): QuoteMetadata {
     this.checkForValidResolution(chosenDepth, chosenDirection);
     return {
       depth: chosenDepth,
@@ -76,7 +73,7 @@ export class UnresolvedQuoteMetadata {
     };
   }
 
-  private checkForValidResolution(chosenDepth: QuotationDepth, chosenDirection: QuotationDirection) {
+  private checkForValidResolution(chosenDepth: QuotationDepth, chosenDirection: PairedPunctuationDirection) {
     if (!this.isDepthPossible(chosenDepth)) {
       throw new Error(
         `Cannot resolve quote metadata with depth ${chosenDepth.asNumber().toFixed()}, as this depth is not possible.`,
@@ -114,12 +111,12 @@ export class UnresolvedQuoteMetadata {
       return this;
     }
 
-    public addDirection(direction: QuotationDirection): this {
+    public addDirection(direction: PairedPunctuationDirection): this {
       this.objectInstance.directions.add(direction);
       return this;
     }
 
-    public addDirections(directions: QuotationDirection[]): this {
+    public addDirections(directions: PairedPunctuationDirection[]): this {
       for (const direction of directions) {
         this.addDirection(direction);
       }
@@ -230,12 +227,6 @@ export class QuotationRootLevel extends QuotationDepth {
   public name(): string {
     return 'Root level';
   }
-}
-
-export enum QuotationDirection {
-  Opening = 1,
-  Closing = 2,
-  Ambiguous = 3,
 }
 
 export interface QuoteCorrection {

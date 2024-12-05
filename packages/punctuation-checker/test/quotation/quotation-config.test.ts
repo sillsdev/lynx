@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { QuotationConfig } from '../../src/quotation/quotation-config';
-import { QuotationDepth, QuotationDirection } from '../../src/quotation/quotation-utils';
-import { StringContextMatcher } from '../../src/utils';
+import { QuotationDepth } from '../../src/quotation/quotation-utils';
+import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationConfig tests', () => {
   it('enumerates the possible directions for a quotation mark', () => {
@@ -13,8 +13,12 @@ describe('QuotationConfig tests', () => {
       })
       .build();
 
-    expect(basicEnglishQuotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([QuotationDirection.Opening]);
-    expect(basicEnglishQuotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([QuotationDirection.Closing]);
+    expect(basicEnglishQuotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([
+      PairedPunctuationDirection.Opening,
+    ]);
+    expect(basicEnglishQuotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([
+      PairedPunctuationDirection.Closing,
+    ]);
 
     const fullEnglishQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
       .setTopLevelQuotationMarks({
@@ -31,10 +35,18 @@ describe('QuotationConfig tests', () => {
       })
       .build();
 
-    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([QuotationDirection.Opening]);
-    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([QuotationDirection.Closing]);
-    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u2018')).toEqual([QuotationDirection.Opening]);
-    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u2019')).toEqual([QuotationDirection.Closing]);
+    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([
+      PairedPunctuationDirection.Opening,
+    ]);
+    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([
+      PairedPunctuationDirection.Closing,
+    ]);
+    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u2018')).toEqual([
+      PairedPunctuationDirection.Opening,
+    ]);
+    expect(fullEnglishQuotationConfig.getPossibleQuoteDirections('\u2019')).toEqual([
+      PairedPunctuationDirection.Closing,
+    ]);
 
     const multipleDirectionsQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
       .setTopLevelQuotationMarks({
@@ -52,12 +64,12 @@ describe('QuotationConfig tests', () => {
       .build();
 
     expect(multipleDirectionsQuotationConfig.getPossibleQuoteDirections('\u201D')).toEqual([
-      QuotationDirection.Opening,
-      QuotationDirection.Closing,
+      PairedPunctuationDirection.Opening,
+      PairedPunctuationDirection.Closing,
     ]);
     expect(multipleDirectionsQuotationConfig.getPossibleQuoteDirections('\u2019')).toEqual([
-      QuotationDirection.Opening,
-      QuotationDirection.Closing,
+      PairedPunctuationDirection.Opening,
+      PairedPunctuationDirection.Closing,
     ]);
     expect(multipleDirectionsQuotationConfig.getPossibleQuoteDirections('\u201C')).toEqual([]);
   });
@@ -172,13 +184,22 @@ describe('QuotationConfig tests', () => {
       .build();
 
     expect(
-      englishQuotationConfig.getUnambiguousQuotationMarkByType(QuotationDepth.Primary, QuotationDirection.Opening),
+      englishQuotationConfig.getUnambiguousQuotationMarkByType(
+        QuotationDepth.Primary,
+        PairedPunctuationDirection.Opening,
+      ),
     ).toEqual('\u201C');
     expect(
-      englishQuotationConfig.getUnambiguousQuotationMarkByType(QuotationDepth.Secondary, QuotationDirection.Closing),
+      englishQuotationConfig.getUnambiguousQuotationMarkByType(
+        QuotationDepth.Secondary,
+        PairedPunctuationDirection.Closing,
+      ),
     ).toEqual('\u2019');
     expect(
-      englishQuotationConfig.getUnambiguousQuotationMarkByType(QuotationDepth.Tertiary, QuotationDirection.Closing),
+      englishQuotationConfig.getUnambiguousQuotationMarkByType(
+        QuotationDepth.Tertiary,
+        PairedPunctuationDirection.Closing,
+      ),
     ).toEqual('\u201D');
   });
 

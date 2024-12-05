@@ -3,12 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import {
   QuotationDepth,
-  QuotationDirection,
   QuotationIterator,
   QuotationRootLevel,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
-import { StringContextMatcher } from '../../src/utils';
+import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationIterator tests', () => {
   describe('Top-level English quotation marks', () => {
@@ -37,7 +36,7 @@ describe('QuotationIterator tests', () => {
         expect(openingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -53,7 +52,7 @@ describe('QuotationIterator tests', () => {
         expect(closingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201D')
@@ -71,7 +70,7 @@ describe('QuotationIterator tests', () => {
         expect(previousContextOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(12)
             .setEndIndex(13)
             .setText('\u201C')
@@ -87,7 +86,7 @@ describe('QuotationIterator tests', () => {
         expect(trailingContextOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -103,7 +102,7 @@ describe('QuotationIterator tests', () => {
         expect(twoSidedContextOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(19)
             .setEndIndex(20)
             .setText('\u201C')
@@ -119,7 +118,7 @@ describe('QuotationIterator tests', () => {
         expect(previousContextClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(14)
             .setEndIndex(15)
             .setText('\u201D')
@@ -135,7 +134,7 @@ describe('QuotationIterator tests', () => {
         expect(trailingContextClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201D')
@@ -151,7 +150,7 @@ describe('QuotationIterator tests', () => {
         expect(twoSidedContextClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(11)
             .setEndIndex(12)
             .setText('\u201D')
@@ -169,7 +168,7 @@ describe('QuotationIterator tests', () => {
         expect(noWhitespaceOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(22)
             .setEndIndex(23)
             .setText('\u201C')
@@ -185,7 +184,7 @@ describe('QuotationIterator tests', () => {
         expect(reversedWhitespaceOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(17)
             .setEndIndex(18)
             .setText('\u201C')
@@ -201,7 +200,7 @@ describe('QuotationIterator tests', () => {
         expect(noWhitespaceClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(22)
             .setEndIndex(23)
             .setText('\u201D')
@@ -217,7 +216,7 @@ describe('QuotationIterator tests', () => {
         expect(reversedWhitespaceClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(17)
             .setEndIndex(18)
             .setText('\u201D')
@@ -235,7 +234,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -245,7 +244,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(1)
             .setEndIndex(2)
             .setText('\u201D')
@@ -263,7 +262,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -273,7 +272,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(13)
             .setEndIndex(14)
             .setText('\u201D')
@@ -289,7 +288,7 @@ describe('QuotationIterator tests', () => {
         expect(previousContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(21)
             .setEndIndex(22)
             .setText('\u201C')
@@ -299,7 +298,7 @@ describe('QuotationIterator tests', () => {
         expect(previousContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(34)
             .setEndIndex(35)
             .setText('\u201D')
@@ -315,7 +314,7 @@ describe('QuotationIterator tests', () => {
         expect(trailingContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -325,7 +324,7 @@ describe('QuotationIterator tests', () => {
         expect(trailingContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(13)
             .setEndIndex(14)
             .setText('\u201D')
@@ -341,7 +340,7 @@ describe('QuotationIterator tests', () => {
         expect(twoSidedContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(21)
             .setEndIndex(22)
             .setText('\u201C')
@@ -351,7 +350,7 @@ describe('QuotationIterator tests', () => {
         expect(twoSidedContextQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(34)
             .setEndIndex(35)
             .setText('\u201D')
@@ -369,7 +368,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -379,7 +378,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(13)
             .setEndIndex(14)
             .setText('\u201D')
@@ -389,7 +388,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(20)
             .setEndIndex(21)
             .setText('\u201C')
@@ -399,7 +398,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(37)
             .setEndIndex(38)
             .setText('\u201D')
@@ -428,8 +427,8 @@ describe('QuotationIterator tests', () => {
         expect(singleQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(6)
             .setEndIndex(7)
             .setText('"')
@@ -446,8 +445,8 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('"')
@@ -458,8 +457,8 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(13)
             .setEndIndex(14)
             .setText('"')
@@ -478,7 +477,7 @@ describe('QuotationIterator tests', () => {
         expect(mixedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(10)
             .setEndIndex(11)
             .setText('\u201C')
@@ -488,8 +487,8 @@ describe('QuotationIterator tests', () => {
         expect(mixedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(20)
             .setEndIndex(21)
             .setText('"')
@@ -500,8 +499,8 @@ describe('QuotationIterator tests', () => {
         expect(mixedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(29)
             .setEndIndex(30)
             .setText('"')
@@ -512,7 +511,7 @@ describe('QuotationIterator tests', () => {
         expect(mixedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(48)
             .setEndIndex(49)
             .setText('\u201D')
@@ -532,7 +531,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -542,7 +541,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(18)
             .setEndIndex(19)
             .setText('\u201C')
@@ -552,7 +551,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(53)
             .setEndIndex(54)
             .setText('\u201D')
@@ -568,7 +567,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -578,7 +577,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(18)
             .setEndIndex(19)
             .setText('\u201D')
@@ -588,7 +587,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(53)
             .setEndIndex(54)
             .setText('\u201D')
@@ -606,7 +605,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -616,7 +615,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(26)
             .setEndIndex(27)
             .setText('\u201D')
@@ -626,7 +625,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(31)
             .setEndIndex(32)
             .setText('\u201C')
@@ -642,7 +641,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(10)
             .setEndIndex(11)
             .setText('\u201D')
@@ -652,7 +651,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(27)
             .setEndIndex(28)
             .setText('\u201C')
@@ -662,7 +661,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(40)
             .setEndIndex(41)
             .setText('\u201D')
@@ -687,7 +686,7 @@ describe('QuotationIterator tests', () => {
         expect(singleAndDoubleQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -697,7 +696,7 @@ describe('QuotationIterator tests', () => {
         expect(singleAndDoubleQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(31)
             .setEndIndex(32)
             .setText('\u201D')
@@ -726,7 +725,7 @@ describe('QuotationIterator tests', () => {
         expect(curlyAndStraightDoubleQuoteIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -741,7 +740,7 @@ describe('QuotationIterator tests', () => {
         expect(curlyDoubleAndStraightSingleQuoteIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepth(QuotationDepth.Primary)
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -837,7 +836,7 @@ describe('QuotationIterator tests', () => {
       expect(quotedApostropheIterator.next()).toEqual(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Opening)
+          .addDirection(PairedPunctuationDirection.Opening)
           .setStartIndex(0)
           .setEndIndex(1)
           .setText('\u201C')
@@ -847,7 +846,7 @@ describe('QuotationIterator tests', () => {
       expect(quotedApostropheIterator.next()).toEqual(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-          .addDirection(QuotationDirection.Closing)
+          .addDirection(PairedPunctuationDirection.Closing)
           .setStartIndex(38)
           .setEndIndex(39)
           .setText('\u201D')
@@ -867,7 +866,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -877,7 +876,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(1)
             .setEndIndex(2)
             .setText('\u2018')
@@ -887,7 +886,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(2)
             .setEndIndex(3)
             .setText('\u2019')
@@ -897,7 +896,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(3)
             .setEndIndex(4)
             .setText('\u201D')
@@ -914,7 +913,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -924,7 +923,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(1)
             .setEndIndex(2)
             .setText('\u2018')
@@ -934,7 +933,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(2)
             .setEndIndex(3)
             .setText('\u201C')
@@ -944,7 +943,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(3)
             .setEndIndex(4)
             .setText('\u201D')
@@ -954,7 +953,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(4)
             .setEndIndex(5)
             .setText('\u2019')
@@ -964,7 +963,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(5)
             .setEndIndex(6)
             .setText('\u201D')
@@ -983,7 +982,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -993,7 +992,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(11)
             .setEndIndex(12)
             .setText('\u2018')
@@ -1003,7 +1002,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(29)
             .setEndIndex(30)
             .setText('\u2019')
@@ -1013,7 +1012,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(43)
             .setEndIndex(44)
             .setText('\u201D')
@@ -1030,7 +1029,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -1040,7 +1039,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(11)
             .setEndIndex(12)
             .setText('\u2018')
@@ -1050,7 +1049,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(16)
             .setEndIndex(17)
             .setText('\u201C')
@@ -1060,7 +1059,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(29)
             .setEndIndex(30)
             .setText('\u201D')
@@ -1070,7 +1069,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(44)
             .setEndIndex(45)
             .setText('\u2019')
@@ -1080,7 +1079,7 @@ describe('QuotationIterator tests', () => {
         expect(threeLevelQuotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(45)
             .setEndIndex(46)
             .setText('\u201D')
@@ -1101,7 +1100,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(10)
             .setEndIndex(11)
             .setText('"')
@@ -1112,7 +1111,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(15)
             .setEndIndex(16)
             .setText("'")
@@ -1123,7 +1122,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(35)
             .setEndIndex(36)
             .setText('"')
@@ -1134,7 +1133,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(45)
             .setEndIndex(46)
             .setText('"')
@@ -1145,7 +1144,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(57)
             .setEndIndex(58)
             .setText("'")
@@ -1156,7 +1155,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(58)
             .setEndIndex(59)
             .setText('"')
@@ -1175,7 +1174,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(10)
             .setEndIndex(11)
             .setText('"')
@@ -1186,7 +1185,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(15)
             .setEndIndex(16)
             .setText('\u2018')
@@ -1196,7 +1195,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(35)
             .setEndIndex(36)
             .setText('\u201C')
@@ -1206,7 +1205,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(45)
             .setEndIndex(46)
             .setText('"')
@@ -1217,7 +1216,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
+            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
             .setStartIndex(57)
             .setEndIndex(58)
             .setText("'")
@@ -1228,7 +1227,7 @@ describe('QuotationIterator tests', () => {
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(58)
             .setEndIndex(59)
             .setText('\u201D')
@@ -1247,7 +1246,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(17)
             .setEndIndex(18)
             .setText('\u2018')
@@ -1257,7 +1256,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(42)
             .setEndIndex(43)
             .setText('\u2019')
@@ -1273,7 +1272,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -1283,7 +1282,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(18)
             .setEndIndex(19)
             .setText('\u201C')
@@ -1293,7 +1292,7 @@ describe('QuotationIterator tests', () => {
         expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(53)
             .setEndIndex(54)
             .setText('\u201D')
@@ -1311,7 +1310,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -1321,7 +1320,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(16)
             .setEndIndex(17)
             .setText('\u2018')
@@ -1331,7 +1330,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(26)
             .setEndIndex(27)
             .setText('\u201C')
@@ -1347,7 +1346,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(8)
             .setEndIndex(9)
             .setText('\u201D')
@@ -1357,7 +1356,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(15)
             .setEndIndex(16)
             .setText('\u2019')
@@ -1367,7 +1366,7 @@ describe('QuotationIterator tests', () => {
         expect(unpairedClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(25)
             .setEndIndex(26)
             .setText('\u201D')
@@ -1385,7 +1384,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
@@ -1395,7 +1394,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(10)
             .setEndIndex(11)
             .setText('\u2018')
@@ -1405,7 +1404,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(16)
             .setEndIndex(17)
             .setText('\u201C')
@@ -1415,7 +1414,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Opening)
+            .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(27)
             .setEndIndex(28)
             .setText('\u2018')
@@ -1425,7 +1424,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(43)
             .setEndIndex(44)
             .setText('\u2019')
@@ -1435,7 +1434,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(44)
             .setEndIndex(45)
             .setText('\u201D')
@@ -1445,7 +1444,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(45)
             .setEndIndex(46)
             .setText('\u2019')
@@ -1455,7 +1454,7 @@ describe('QuotationIterator tests', () => {
         expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
             .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(QuotationDirection.Closing)
+            .addDirection(PairedPunctuationDirection.Closing)
             .setStartIndex(46)
             .setEndIndex(47)
             .setText('\u201D')
@@ -1474,7 +1473,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(5)
         .setEndIndex(5)
         .addDepth(QuotationDepth.Primary)
-        .addDirection(QuotationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Opening)
         .setText('\u201C');
 
       expect(() => equalIndicesBuilder.build()).toThrowError(
@@ -1485,7 +1484,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(-1)
         .setEndIndex(5)
         .addDepth(QuotationDepth.Primary)
-        .addDirection(QuotationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Opening)
         .setText('\u201C');
 
       expect(() => negativeStartIndexBuilder.build()).toThrowError(
@@ -1496,7 +1495,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(5)
         .setEndIndex(-1)
         .addDepth(QuotationDepth.Primary)
-        .addDirection(QuotationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Opening)
         .setText('\u201C');
 
       expect(() => negativeEndIndexBuilder.build()).toThrowError(
@@ -1506,7 +1505,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       const noDepthsBuilder = new UnresolvedQuoteMetadata.Builder()
         .setStartIndex(4)
         .setEndIndex(5)
-        .addDirection(QuotationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Opening)
         .setText('\u201C');
 
       expect(() => noDepthsBuilder.build()).toThrowError(
@@ -1527,7 +1526,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(4)
         .setEndIndex(5)
         .addDepth(QuotationDepth.Primary)
-        .addDirection(QuotationDirection.Opening);
+        .addDirection(PairedPunctuationDirection.Opening);
 
       expect(() => noTextBuilder.build()).toThrowError(/UnresolvedQuoteMetadata object has no text specified\./);
     });
@@ -1535,96 +1534,100 @@ describe('UnresolvedQuoteMetadata tests', () => {
     it('builds unambiguous objects correctly', () => {
       const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
         .addDepth(QuotationDepth.fromNumber(3))
-        .addDirection(QuotationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Opening)
         .setStartIndex(3)
         .setEndIndex(6)
         .setText('\u201C')
         .build();
 
-      expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Opening)).toBe(true);
-      expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Closing)).toBe(false);
+      expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Opening)).toBe(true);
+      expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Closing)).toBe(false);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(3))).toBe(true);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
       expect(unresolvedQuoteMetadata.numPossibleDepths()).toEqual(1);
       expect(unresolvedQuoteMetadata.numPossibleDirections()).toEqual(1);
-      expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Opening)).toEqual({
-        depth: QuotationDepth.Tertiary,
-        direction: QuotationDirection.Opening,
-        startIndex: 3,
-        endIndex: 6,
-        text: '\u201C',
-        isAutocorrectable: false,
-      });
+      expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening)).toEqual(
+        {
+          depth: QuotationDepth.Tertiary,
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 3,
+          endIndex: 6,
+          text: '\u201C',
+          isAutocorrectable: false,
+        },
+      );
     });
 
     it('builds ambiguous objects correctly', () => {
       const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
         .addDepth(QuotationDepth.fromNumber(3))
         .addDepth(QuotationDepth.fromNumber(1))
-        .addDirection(QuotationDirection.Opening)
-        .addDirection(QuotationDirection.Closing)
+        .addDirection(PairedPunctuationDirection.Opening)
+        .addDirection(PairedPunctuationDirection.Closing)
         .setStartIndex(3)
         .setEndIndex(6)
         .setText('"')
         .markAsAutocorrectable()
         .build();
 
-      expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Opening)).toBe(true);
-      expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Closing)).toBe(true);
-      expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Ambiguous)).toBe(false);
+      expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Opening)).toBe(true);
+      expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Closing)).toBe(true);
+      expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Ambiguous)).toBe(false);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(3))).toBe(true);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(1))).toBe(true);
       expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
       expect(unresolvedQuoteMetadata.numPossibleDepths()).toEqual(2);
       expect(unresolvedQuoteMetadata.numPossibleDirections()).toEqual(2);
-      expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Opening)).toEqual({
-        depth: QuotationDepth.Tertiary,
-        direction: QuotationDirection.Opening,
-        startIndex: 3,
-        endIndex: 6,
-        text: '"',
-        isAutocorrectable: true,
-      });
-
-      // also test adding multiple depths and directions at once
-      const groupAddUnresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
-        .addDepths([QuotationDepth.fromNumber(3), QuotationDepth.fromNumber(1)])
-        .addDirections([QuotationDirection.Opening, QuotationDirection.Closing])
-        .setStartIndex(3)
-        .setEndIndex(6)
-        .setText('"')
-        .markAsAutocorrectable()
-        .build();
-
-      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Opening)).toBe(true);
-      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Closing)).toBe(true);
-      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Ambiguous)).toBe(false);
-      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
-      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(3))).toBe(true);
-      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(1))).toBe(true);
-      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
-      expect(groupAddUnresolvedQuoteMetadata.numPossibleDepths()).toEqual(2);
-      expect(groupAddUnresolvedQuoteMetadata.numPossibleDirections()).toEqual(2);
-      expect(groupAddUnresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Opening)).toEqual(
+      expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening)).toEqual(
         {
           depth: QuotationDepth.Tertiary,
-          direction: QuotationDirection.Opening,
+          direction: PairedPunctuationDirection.Opening,
           startIndex: 3,
           endIndex: 6,
           text: '"',
           isAutocorrectable: true,
         },
       );
+
+      // also test adding multiple depths and directions at once
+      const groupAddUnresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+        .addDepths([QuotationDepth.fromNumber(3), QuotationDepth.fromNumber(1)])
+        .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+        .setStartIndex(3)
+        .setEndIndex(6)
+        .setText('"')
+        .markAsAutocorrectable()
+        .build();
+
+      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Opening)).toBe(true);
+      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Closing)).toBe(true);
+      expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Ambiguous)).toBe(false);
+      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
+      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(3))).toBe(true);
+      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(1))).toBe(true);
+      expect(groupAddUnresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
+      expect(groupAddUnresolvedQuoteMetadata.numPossibleDepths()).toEqual(2);
+      expect(groupAddUnresolvedQuoteMetadata.numPossibleDirections()).toEqual(2);
+      expect(
+        groupAddUnresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening),
+      ).toEqual({
+        depth: QuotationDepth.Tertiary,
+        direction: PairedPunctuationDirection.Opening,
+        startIndex: 3,
+        endIndex: 6,
+        text: '"',
+        isAutocorrectable: true,
+      });
     });
   });
 
   const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
     .addDepth(QuotationDepth.fromNumber(3))
     .addDepth(QuotationDepth.fromNumber(1))
-    .addDirection(QuotationDirection.Opening)
-    .addDirection(QuotationDirection.Closing)
+    .addDirection(PairedPunctuationDirection.Opening)
+    .addDirection(PairedPunctuationDirection.Closing)
     .setStartIndex(3)
     .setEndIndex(6)
     .setText('"')
@@ -1639,8 +1642,8 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .addDepth(QuotationDepth.fromNumber(3))
       .addDepth(QuotationDepth.fromNumber(1))
       .addDepth(QuotationDepth.fromNumber(2))
-      .addDirection(QuotationDirection.Opening)
-      .addDirection(QuotationDirection.Closing)
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
@@ -1655,39 +1658,39 @@ describe('UnresolvedQuoteMetadata tests', () => {
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.fromNumber(4))).toBe(false);
-    expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Opening)).toBe(true);
-    expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Closing)).toBe(true);
-    expect(unresolvedQuoteMetadata.isDirectionPossible(QuotationDirection.Ambiguous)).toBe(false);
+    expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Opening)).toBe(true);
+    expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Closing)).toBe(true);
+    expect(unresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Ambiguous)).toBe(false);
   });
 
   it('resolves into a QuoteMetadata object with the choices specified', () => {
-    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), QuotationDirection.Opening)).toEqual({
+    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), PairedPunctuationDirection.Opening)).toEqual({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 3,
       endIndex: 6,
       text: '"',
       isAutocorrectable: true,
     });
-    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Opening)).toEqual({
+    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening)).toEqual({
       depth: QuotationDepth.Tertiary,
-      direction: QuotationDirection.Opening,
+      direction: PairedPunctuationDirection.Opening,
       startIndex: 3,
       endIndex: 6,
       text: '"',
       isAutocorrectable: true,
     });
-    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), QuotationDirection.Closing)).toEqual({
+    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), PairedPunctuationDirection.Closing)).toEqual({
       depth: QuotationDepth.Primary,
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 3,
       endIndex: 6,
       text: '"',
       isAutocorrectable: true,
     });
-    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Closing)).toEqual({
+    expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Closing)).toEqual({
       depth: QuotationDepth.Tertiary,
-      direction: QuotationDirection.Closing,
+      direction: PairedPunctuationDirection.Closing,
       startIndex: 3,
       endIndex: 6,
       text: '"',
@@ -1708,28 +1711,28 @@ describe('UnresolvedQuoteMetadata tests', () => {
 
   it('selects the best direction when given a scoring function', () => {
     expect(
-      unresolvedQuoteMetadata.findBestDirection((direction: QuotationDirection) =>
-        direction === QuotationDirection.Opening ? 1 : 0,
+      unresolvedQuoteMetadata.findBestDirection((direction: PairedPunctuationDirection) =>
+        direction === PairedPunctuationDirection.Opening ? 1 : 0,
       ),
-    ).toEqual(QuotationDirection.Opening);
+    ).toEqual(PairedPunctuationDirection.Opening);
     expect(
-      unresolvedQuoteMetadata.findBestDirection((direction: QuotationDirection) =>
-        direction === QuotationDirection.Opening ? -55 : -50,
+      unresolvedQuoteMetadata.findBestDirection((direction: PairedPunctuationDirection) =>
+        direction === PairedPunctuationDirection.Opening ? -55 : -50,
       ),
-    ).toEqual(QuotationDirection.Closing);
+    ).toEqual(PairedPunctuationDirection.Closing);
     // In the case of a tie, the earliest inserted direction should win
-    expect(unresolvedQuoteMetadata.findBestDirection((_direction: QuotationDirection) => 0)).toEqual(
-      QuotationDirection.Opening,
+    expect(unresolvedQuoteMetadata.findBestDirection((_direction: PairedPunctuationDirection) => 0)).toEqual(
+      PairedPunctuationDirection.Opening,
     );
   });
 
   it('errors when it cannot be resolved as called', () => {
     expect(() =>
-      unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(2), QuotationDirection.Opening),
+      unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(2), PairedPunctuationDirection.Opening),
     ).toThrowError('Cannot resolve quote metadata with depth 2, as this depth is not possible.');
-    expect(() => unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), QuotationDirection.Ambiguous)).toThrow(
-      'Cannot resolve quote metadata with direction 3 as this direction is not possible',
-    );
+    expect(() =>
+      unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Ambiguous),
+    ).toThrow('Cannot resolve quote metadata with direction 3 as this direction is not possible');
   });
 });
 
