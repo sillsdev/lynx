@@ -1,44 +1,35 @@
 import { Observable, Subject } from 'rxjs';
 
 import { Document } from './document';
-import { DocumentChange, DocumentFactory } from './document-factory';
+import {
+  DocumentAccessor,
+  DocumentChanged,
+  DocumentClosed,
+  DocumentCreated,
+  DocumentDeleted,
+  DocumentOpened,
+} from './document-accessor';
+import { DocumentFactory } from './document-factory';
 import { DocumentReader } from './document-reader';
+import { TextDocumentChange } from './text-document-change';
 
-export interface DocumentCreated<T extends Document> {
-  document: T;
-}
-
-export interface DocumentClosed {
-  uri: string;
-}
-
-export interface DocumentOpened<T extends Document> {
-  document: T;
-}
-
-export interface DocumentDeleted {
-  uri: string;
-}
-
-export interface DocumentChanged<T extends Document> {
-  document: T;
-}
-
-export class DocumentManager<T extends Document> {
-  private readonly documents = new Map<string, T>();
+export class DocumentManager<TDoc extends Document = Document, TChange = TextDocumentChange, TContent = string>
+  implements DocumentAccessor<TDoc>
+{
+  private readonly documents = new Map<string, TDoc>();
   private readonly activeDocuments = new Set<string>();
-  private readonly createdSubject = new Subject<DocumentCreated<T>>();
+  private readonly createdSubject = new Subject<DocumentCreated<TDoc>>();
   private readonly closedSubject = new Subject<DocumentClosed>();
-  private readonly openedSubject = new Subject<DocumentOpened<T>>();
+  private readonly openedSubject = new Subject<DocumentOpened<TDoc>>();
   private readonly deletedSubject = new Subject<DocumentDeleted>();
-  private readonly changedSubject = new Subject<DocumentChanged<T>>();
+  private readonly changedSubject = new Subject<DocumentChanged<TDoc>>();
 
   constructor(
-    private readonly factory: DocumentFactory<T>,
-    private readonly reader?: DocumentReader,
+    private readonly factory: DocumentFactory<TDoc, TChange, TContent>,
+    private readonly reader?: DocumentReader<TContent>,
   ) {}
 
-  get created$(): Observable<DocumentCreated<T>> {
+  get created$(): Observable<DocumentCreated<TDoc>> {
     return this.createdSubject.asObservable();
   }
 
@@ -46,7 +37,7 @@ export class DocumentManager<T extends Document> {
     return this.closedSubject.asObservable();
   }
 
-  get opened$(): Observable<DocumentOpened<T>> {
+  get opened$(): Observable<DocumentOpened<TDoc>> {
     return this.openedSubject.asObservable();
   }
 
@@ -54,16 +45,16 @@ export class DocumentManager<T extends Document> {
     return this.deletedSubject.asObservable();
   }
 
-  get changed$(): Observable<DocumentChanged<T>> {
+  get changed$(): Observable<DocumentChanged<TDoc>> {
     return this.changedSubject.asObservable();
   }
 
-  add(doc: T): void {
+  add(doc: TDoc): void {
     this.documents.set(doc.uri, doc);
     this.activeDocuments.add(doc.uri);
   }
 
-  async get(uri: string): Promise<T | undefined> {
+  async get(uri: string): Promise<TDoc | undefined> {
     let doc = this.documents.get(uri);
     if (doc == null) {
       doc = await this.reload(uri);
@@ -71,7 +62,7 @@ export class DocumentManager<T extends Document> {
     return doc;
   }
 
-  async all(): Promise<T[]> {
+  async all(): Promise<TDoc[]> {
     const docs = Array.from(this.documents.values());
     if (this.reader != null) {
       for (const id of this.reader.keys()) {
@@ -85,8 +76,8 @@ export class DocumentManager<T extends Document> {
     return docs;
   }
 
-  async active(): Promise<T[]> {
-    const docs: T[] = [];
+  async active(): Promise<TDoc[]> {
+    const docs: TDoc[] = [];
     for (const uri of this.activeDocuments) {
       const doc = await this.get(uri);
       if (doc != null) {
@@ -110,7 +101,7 @@ export class DocumentManager<T extends Document> {
     return Promise.resolve();
   }
 
-  fireOpened(uri: string, format: string, version: number, content: string): Promise<void> {
+  fireOpened(uri: string, format: string, version: number, content: TContent): Promise<void> {
     const doc = this.factory.create(uri, format, version, content);
     this.documents.set(uri, doc);
     this.activeDocuments.add(uri);
@@ -124,8 +115,8 @@ export class DocumentManager<T extends Document> {
     return Promise.resolve();
   }
 
-  async fireChanged(uri: string, changes?: readonly DocumentChange[], version?: number): Promise<void> {
-    let doc: T | undefined = undefined;
+  async fireChanged(uri: string, changes?: readonly TChange[], version?: number): Promise<void> {
+    let doc: TDoc | undefined = undefined;
     if (changes == null) {
       doc = await this.reload(uri);
     } else {
@@ -140,7 +131,7 @@ export class DocumentManager<T extends Document> {
     }
   }
 
-  private async reload(uri: string): Promise<T | undefined> {
+  private async reload(uri: string): Promise<TDoc | undefined> {
     const data = await this.reader?.read(uri);
     const doc = data == null ? undefined : this.factory.create(uri, data.format, data.version, data.content);
     if (doc != null) {

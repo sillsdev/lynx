@@ -1,12 +1,7 @@
-import { Range } from '../common/range';
 import { Document } from './document';
+import { TextDocumentChange } from './text-document-change';
 
-export interface DocumentChange {
-  range?: Range;
-  text: string;
-}
-
-export interface DocumentFactory<T extends Document> {
-  create(uri: string, format: string, version: number, content: string): T;
-  update(document: T, changes: readonly DocumentChange[], version: number): T;
+export interface DocumentFactory<TDoc extends Document = Document, TChange = TextDocumentChange, TContent = string> {
+  create(uri: string, format: string, version: number, content: TContent): TDoc;
+  update(document: TDoc, changes: readonly TChange[], version: number): TDoc;
 }

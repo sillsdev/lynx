@@ -1,6 +1,6 @@
 import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
 import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
-import { UsfmDocumentFactory, UsfmScriptureSerializer } from '@sillsdev/lynx-usfm';
+import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import {
   CodeAction,
@@ -21,12 +21,12 @@ const connection = createConnection(ProposedFeatures.all);
 const localizer = new Localizer();
 const stylesheet = new UsfmStylesheet('usfm.sty');
 const documentFactory = new UsfmDocumentFactory(stylesheet);
-const scriptureSerializer = new UsfmScriptureSerializer(stylesheet);
+const editFactory = new UsfmEditFactory(stylesheet);
 const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
 const workspace = new Workspace({
   localizer,
-  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager, scriptureSerializer)],
-  onTypeFormattingProviders: [new SimpleQuoteFormattingProvider(documentManager)],
+  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory)],
+  onTypeFormattingProviders: [new SimpleQuoteFormattingProvider(documentManager, editFactory)],
 });
 
 let hasWorkspaceFolderCapability = false;

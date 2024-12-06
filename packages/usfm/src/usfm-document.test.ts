@@ -15,7 +15,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     expect(document.children.length).toEqual(4);
 
@@ -45,7 +45,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     expect(document.children.length).toEqual(4);
 
@@ -90,7 +90,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     document.update(
       [{ range: { start: { line: 4, character: 15 }, end: { line: 4, character: 19 } }, text: 'test again' }],
@@ -119,7 +119,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     document.update(
       [
@@ -151,7 +151,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     document.update(
       [
@@ -183,7 +183,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 'usfm', 1, usfm, stylesheet);
 
     document.update(
       [

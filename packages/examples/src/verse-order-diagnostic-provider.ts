@@ -4,43 +4,44 @@ import {
   DiagnosticProvider,
   DiagnosticsChanged,
   DiagnosticSeverity,
-  DocumentManager,
+  DocumentAccessor,
   Localizer,
   ScriptureChapter,
   ScriptureDocument,
+  ScriptureEditFactory,
   ScriptureNodeType,
-  ScriptureSerializer,
   ScriptureVerse,
+  TextEdit,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
 
-export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
+export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticProvider<T> {
   public readonly id = 'verse-order';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(
     private readonly localizer: Localizer,
-    private readonly documentManager: DocumentManager<ScriptureDocument>,
-    private readonly serializer: ScriptureSerializer,
+    private readonly documents: DocumentAccessor<ScriptureDocument>,
+    private readonly editFactory: ScriptureEditFactory<ScriptureDocument, T>,
   ) {
     this.diagnosticsChanged$ = merge(
-      documentManager.opened$.pipe(
+      documents.opened$.pipe(
         map((e) => ({
           uri: e.document.uri,
           version: e.document.version,
           diagnostics: this.validateDocument(e.document),
         })),
       ),
-      documentManager.changed$.pipe(
+      documents.changed$.pipe(
         map((e) => ({
           uri: e.document.uri,
           version: e.document.version,
           diagnostics: this.validateDocument(e.document),
         })),
       ),
-      documentManager.closed$.pipe(
+      documents.closed$.pipe(
         switchMap(async (e) => {
-          const doc = await this.documentManager.get(e.uri);
+          const doc = await this.documents.get(e.uri);
           return { uri: e.uri, version: doc?.version, diagnostics: [] };
         }),
       ),
@@ -56,30 +57,33 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
   }
 
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {
-    const doc = await this.documentManager.get(uri);
+    const doc = await this.documents.get(uri);
     if (doc == null) {
       return [];
     }
     return this.validateDocument(doc);
   }
 
-  getDiagnosticFixes(_uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
-    const fixes: DiagnosticFix[] = [];
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]> {
+    const doc = await this.documents.get(uri);
+    if (doc == null) {
+      return [];
+    }
+    const fixes: DiagnosticFix<T>[] = [];
     if (diagnostic.code === 2) {
       const verseNumber = diagnostic.data as number;
       fixes.push({
         title: this.localizer.t('missingVerse.fixTitle', { ns: 'verseOrder' }),
         isPreferred: true,
         diagnostic,
-        edits: [
-          {
-            range: { start: diagnostic.range.start, end: diagnostic.range.start },
-            newText: this.serializer.serialize(new ScriptureVerse(verseNumber.toString())),
-          },
-        ],
+        edits: this.editFactory.createScriptureEdit(
+          doc,
+          { start: diagnostic.range.start, end: diagnostic.range.start },
+          new ScriptureVerse(verseNumber.toString()),
+        ),
       });
     }
-    return Promise.resolve(fixes);
+    return fixes;
   }
 
   private validateDocument(doc: ScriptureDocument): Diagnostic[] {
