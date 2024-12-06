@@ -1,32 +1,24 @@
 import { Position } from '../common/position';
 import { Range } from '../common/range';
+import { TextEdit } from '../common/text-edit';
 import { Document } from './document';
-import { DocumentChange } from './document-factory';
+import { TextDocumentChange } from './text-document-change';
 
 export class TextDocument implements Document {
   private _lineOffsets: number[] | undefined = undefined;
   private _content: string;
-  private _version: number;
 
   constructor(
     public readonly uri: string,
-    version: number,
+    public readonly format: string,
+    public version: number,
     content: string,
   ) {
-    this._version = version;
     this._content = content;
   }
 
   get content(): string {
     return this._content;
-  }
-
-  get version(): number {
-    return this._version;
-  }
-
-  protected set version(value: number) {
-    this._version = value;
   }
 
   getText(range?: Range): string {
@@ -95,14 +87,14 @@ export class TextDocument implements Document {
     return { line, character: contentOffset - lineOffsets[line] };
   }
 
-  update(changes: readonly DocumentChange[], version: number): void {
+  update(changes: TextDocumentChange[], version: number): void {
     for (const change of changes) {
       this.updateContent(change);
     }
     this.version = version;
   }
 
-  protected updateContent(change: DocumentChange): void {
+  updateContent(change: TextDocumentChange): void {
     if (change.range == null) {
       this._content = change.text;
       this._lineOffsets = undefined;
@@ -143,14 +135,18 @@ export class TextDocument implements Document {
     }
   }
 
-  public getLineOffsets(): number[] {
+  createTextEdit(startOffset: number, endOffset: number, newText: string): TextEdit[] {
+    return [{ range: { start: this.positionAt(startOffset), end: this.positionAt(endOffset) }, newText }];
+  }
+
+  private getLineOffsets(): number[] {
     if (this._lineOffsets === undefined) {
       this._lineOffsets = computeLineOffsets(this._content, true);
     }
     return this._lineOffsets;
   }
 
-  public ensureBeforeEndOfLine(offset: number, lineOffset: number): number {
+  private ensureBeforeEndOfLine(offset: number, lineOffset: number): number {
     while (offset > lineOffset && (this._content[offset - 1] === '\r' || this._content[offset - 1] === '\n')) {
       offset--;
     }

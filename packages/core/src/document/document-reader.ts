@@ -1,10 +1,10 @@
-export interface DocumentData {
+export interface DocumentData<T = string> {
   format: string;
   version: number;
-  content: string;
+  content: T;
 }
 
-export interface DocumentReader {
+export interface DocumentReader<T = string> {
   keys(): string[];
-  read(uri: string): Promise<DocumentData | undefined>;
+  read(uri: string): Promise<DocumentData<T> | undefined>;
 }

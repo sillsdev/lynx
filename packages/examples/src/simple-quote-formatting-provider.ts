@@ -1,30 +1,43 @@
-import { DocumentManager, OnTypeFormattingProvider, Position, TextDocument, TextEdit } from '@sillsdev/lynx';
+import { Document, DocumentAccessor, EditFactory, OnTypeFormattingProvider, Position, TextEdit } from '@sillsdev/lynx';
 
-export class SimpleQuoteFormattingProvider implements OnTypeFormattingProvider {
+export class SimpleQuoteFormattingProvider<T = TextEdit> implements OnTypeFormattingProvider<T> {
   readonly id = 'simple-quote';
   readonly onTypeTriggerCharacters: ReadonlySet<string> = new Set(['"', '“', '”']);
 
-  constructor(private readonly documentManager: DocumentManager<TextDocument>) {}
+  constructor(
+    private readonly documents: DocumentAccessor,
+    private readonly editFactory: EditFactory<Document, T>,
+  ) {}
 
   init(): Promise<void> {
     return Promise.resolve();
   }
 
-  async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<TextEdit[] | undefined> {
-    const doc = await this.documentManager.get(uri);
+  async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<T[] | undefined> {
+    const doc = await this.documents.get(uri);
     if (doc == null) {
       return undefined;
     }
 
-    const edits: TextEdit[] = [];
+    const edits: T[] = [];
     const text = doc.getText();
     for (const match of text.matchAll(/["“”]/g)) {
       if ((match.index === 0 || text[match.index - 1].trim() === '') && match[0] !== '“') {
-        const pos = doc.positionAt(match.index);
-        edits.push({ range: { start: pos, end: { line: pos.line, character: pos.character + 1 } }, newText: '“' });
+        edits.push(
+          ...this.editFactory.createTextEdit(
+            doc,
+            { start: doc.positionAt(match.index), end: doc.positionAt(match.index + 1) },
+            '“',
+          ),
+        );
       } else if ((match.index === text.length - 1 || text[match.index + 1].trim() === '') && match[0] !== '”') {
-        const pos = doc.positionAt(match.index);
-        edits.push({ range: { start: pos, end: { line: pos.line, character: pos.character + 1 } }, newText: '”' });
+        edits.push(
+          ...this.editFactory.createTextEdit(
+            doc,
+            { start: doc.positionAt(match.index), end: doc.positionAt(match.index + 1) },
+            '”',
+          ),
+        );
       }
     }
 

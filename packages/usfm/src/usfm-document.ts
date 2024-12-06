@@ -1,12 +1,10 @@
 import {
-  DocumentChange,
   Position,
   Range,
   ScriptureBook,
   ScriptureCell,
   ScriptureChapter,
   ScriptureCharacterStyle,
-  ScriptureDocument,
   ScriptureMilestone,
   ScriptureNode,
   ScriptureNote,
@@ -17,7 +15,9 @@ import {
   ScriptureSidebar,
   ScriptureTable,
   ScriptureText,
+  ScriptureTextDocument,
   ScriptureVerse,
+  TextDocumentChange,
 } from '@sillsdev/lynx';
 import {
   UsfmAttribute,
@@ -29,21 +29,22 @@ import {
   UsfmTokenType,
 } from '@sillsdev/machine/corpora';
 
-export class UsfmDocument extends ScriptureDocument {
+export class UsfmDocument extends ScriptureTextDocument {
   private lineChildren: number[] = [];
 
   constructor(
     uri: string,
+    format: string,
     version: number,
     content: string,
     private readonly stylesheet: UsfmStylesheet,
     start: Position = { line: 0, character: 0 },
   ) {
-    super(uri, version, content);
+    super(uri, format, version, content);
     this.parseUsfm(content, start);
   }
 
-  update(changes: readonly DocumentChange[], version: number): void {
+  update(changes: TextDocumentChange[], version: number): void {
     for (const change of changes) {
       if (change.range == null) {
         this.parseUsfm(change.text);
@@ -71,7 +72,14 @@ export class UsfmDocument extends ScriptureDocument {
           this.content.substring(childStartOffset, changeStartOffset) +
           change.text +
           this.content.substring(changeEndOffset, childEndOffset);
-        const subDocument = new UsfmDocument(this.uri, version, usfm, this.stylesheet, startChild.range.start);
+        const subDocument = new UsfmDocument(
+          this.uri,
+          this.format,
+          version,
+          usfm,
+          this.stylesheet,
+          startChild.range.start,
+        );
 
         // update nodes
         this.spliceChildren(startChildIndex, endChildIndex - startChildIndex + 1, ...subDocument.children);
