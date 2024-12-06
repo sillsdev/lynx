@@ -3,10 +3,12 @@ import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
 import { UsfmDocument } from './usfm-document';
+import { UsfmScriptureSerializer } from './usfm-scripture-serializer';
 
 describe('UsfmDocument', () => {
   it('create', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -15,7 +17,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     expect(document.children.length).toEqual(4);
 
@@ -37,6 +39,7 @@ describe('UsfmDocument', () => {
 
   it('update full document', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -45,7 +48,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     expect(document.children.length).toEqual(4);
 
@@ -82,6 +85,7 @@ describe('UsfmDocument', () => {
 
   it('update single line in a paragraph', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -90,7 +94,7 @@ describe('UsfmDocument', () => {
 \\p
 \\v 2 This is a test.
 `;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     document.update(
       [{ range: { start: { line: 4, character: 15 }, end: { line: 4, character: 19 } }, text: 'test again' }],
@@ -112,6 +116,7 @@ describe('UsfmDocument', () => {
 
   it('add new paragraph', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -119,7 +124,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     document.update(
       [
@@ -144,6 +149,7 @@ describe('UsfmDocument', () => {
 
   it('add line at end of a paragraph', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -151,7 +157,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     document.update(
       [
@@ -176,6 +182,7 @@ describe('UsfmDocument', () => {
 
   it('update multiple paragraphs', () => {
     const stylesheet = new UsfmStylesheet('usfm.sty');
+    const serializer = new UsfmScriptureSerializer(stylesheet);
     const usfm = `\\id MAT
 \\c 1
 
@@ -183,7 +190,7 @@ describe('UsfmDocument', () => {
 \\v 1 This is a test.
 \\p
 \\v 2 This is a test.`;
-    const document = new UsfmDocument('uri', 1, usfm, stylesheet);
+    const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
     document.update(
       [

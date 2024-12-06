@@ -1,6 +1,6 @@
 import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
 import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
-import { UsfmDocumentFactory, UsfmScriptureSerializer } from '@sillsdev/lynx-usfm';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import {
   CodeAction,
@@ -12,6 +12,7 @@ import {
   InitializeResult,
   ProposedFeatures,
   TextDocumentSyncKind,
+  TextEdit,
 } from 'vscode-languageserver/node';
 
 // Create a connection for the server, using Node's IPC as a transport.
@@ -21,11 +22,10 @@ const connection = createConnection(ProposedFeatures.all);
 const localizer = new Localizer();
 const stylesheet = new UsfmStylesheet('usfm.sty');
 const documentFactory = new UsfmDocumentFactory(stylesheet);
-const scriptureSerializer = new UsfmScriptureSerializer(stylesheet);
 const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
 const workspace = new Workspace({
   localizer,
-  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager, scriptureSerializer)],
+  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager)],
   onTypeFormattingProviders: [new SimpleQuoteFormattingProvider(documentManager)],
 });
 
@@ -86,7 +86,7 @@ connection.onCodeAction(async (params) => {
         isPreferred: fix.isPreferred,
         edit: {
           changes: {
-            [params.textDocument.uri]: fix.edits,
+            [params.textDocument.uri]: fix.edits as TextEdit[],
           },
         },
       })),
@@ -113,7 +113,7 @@ connection.onDidChangeTextDocument((params) => {
 });
 
 connection.onDocumentOnTypeFormatting(async (params) => {
-  return await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch);
+  return (await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch)) as TextEdit[];
 });
 
 // Listen on the connection

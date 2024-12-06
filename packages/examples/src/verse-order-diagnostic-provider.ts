@@ -9,7 +9,6 @@ import {
   ScriptureChapter,
   ScriptureDocument,
   ScriptureNodeType,
-  ScriptureSerializer,
   ScriptureVerse,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
@@ -21,7 +20,6 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
   constructor(
     private readonly localizer: Localizer,
     private readonly documentManager: DocumentManager<ScriptureDocument>,
-    private readonly serializer: ScriptureSerializer,
   ) {
     this.diagnosticsChanged$ = merge(
       documentManager.opened$.pipe(
@@ -63,20 +61,20 @@ export class VerseOrderDiagnosticProvider implements DiagnosticProvider {
     return this.validateDocument(doc);
   }
 
-  getDiagnosticFixes(_uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
+    const doc = await this.documentManager.get(uri);
+    if (doc == null) {
+      return [];
+    }
     const fixes: DiagnosticFix[] = [];
     if (diagnostic.code === 2) {
       const verseNumber = diagnostic.data as number;
+      const offset = doc.offsetAt(diagnostic.range.start);
       fixes.push({
         title: this.localizer.t('missingVerse.fixTitle', { ns: 'verseOrder' }),
         isPreferred: true,
         diagnostic,
-        edits: [
-          {
-            range: { start: diagnostic.range.start, end: diagnostic.range.start },
-            newText: this.serializer.serialize(new ScriptureVerse(verseNumber.toString())),
-          },
-        ],
+        edits: doc.createScriptureEdit(offset, offset, new ScriptureVerse(verseNumber.toString())),
       });
     }
     return Promise.resolve(fixes);

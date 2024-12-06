@@ -1,7 +1,6 @@
 import { map, merge, Observable, tap } from 'rxjs';
 
 import { Position } from '../common/position';
-import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from '../diagnostic/diagnostic';
 import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
@@ -75,7 +74,7 @@ export class Workspace {
     return Array.from(characters);
   }
 
-  async getOnTypeEdits(uri: string, position: Position, ch: string): Promise<TextEdit[] | undefined> {
+  async getOnTypeEdits(uri: string, position: Position, ch: string): Promise<unknown[] | undefined> {
     for (const provider of this.onTypeFormattingProviders.values()) {
       if (provider.onTypeTriggerCharacters.has(ch)) {
         const edits = await provider.getOnTypeEdits(uri, position, ch);

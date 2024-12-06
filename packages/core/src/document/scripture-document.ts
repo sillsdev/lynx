@@ -1,23 +1,20 @@
 import { Position } from '../common/position';
 import { Range } from '../common/range';
 import { Document } from './document';
-import { TextDocument } from './text-document';
 
-export class ScriptureDocument extends TextDocument implements Document, ScriptureNode {
+export abstract class ScriptureDocument implements Document, ScriptureNode {
   private readonly _children: ScriptureNode[] = [];
   readonly parent: undefined = undefined;
   readonly isLeaf = false;
   readonly type = ScriptureNodeType.Document;
   readonly document = this;
+  abstract readonly version: number;
   range: Range = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
 
   constructor(
     public readonly uri: string,
-    version: number,
-    content: string,
     children?: ScriptureNode[],
   ) {
-    super(uri, version, content);
     if (children != null) {
       for (const child of children) {
         this.appendChild(child);
@@ -78,6 +75,16 @@ export class ScriptureDocument extends TextDocument implements Document, Scriptu
   clearChildren(): void {
     this._children.length = 0;
   }
+
+  abstract getText(range?: Range): string;
+  abstract offsetAt(position: Position): number;
+  abstract positionAt(offset: number, range?: Range): Position;
+  abstract createTextEdit(startOffset: number, endOffset: number, newText: string): unknown[];
+  abstract createScriptureEdit(
+    startOffset: number,
+    endOffset: number,
+    nodes: ScriptureNode[] | ScriptureNode,
+  ): unknown[];
 }
 
 export enum ScriptureNodeType {

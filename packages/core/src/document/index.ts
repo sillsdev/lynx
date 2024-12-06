@@ -1,5 +1,5 @@
 export type { Document } from './document';
-export type { DocumentChange, DocumentFactory } from './document-factory';
+export type { DocumentFactory } from './document-factory';
 export { DocumentManager } from './document-manager';
 export type { DocumentReader } from './document-reader';
 export { ScriptureBook } from './scripture-book';
@@ -22,4 +22,7 @@ export { ScriptureTable } from './scripture-table';
 export { ScriptureText } from './scripture-text';
 export { ScriptureVerse } from './scripture-verse';
 export { TextDocument } from './text-document';
+export type { TextDocumentChange } from './text-document-change';
+export type { TextDocumentEdit } from './text-document-edit';
 export { TextDocumentFactory } from './text-document-factory';
+export { TextScriptureDocument } from './text-scripture-document';

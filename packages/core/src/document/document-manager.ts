@@ -1,7 +1,7 @@
 import { Observable, Subject } from 'rxjs';
 
 import { Document } from './document';
-import { DocumentChange, DocumentFactory } from './document-factory';
+import { DocumentFactory } from './document-factory';
 import { DocumentReader } from './document-reader';
 
 export interface DocumentCreated<T extends Document> {
@@ -24,7 +24,7 @@ export interface DocumentChanged<T extends Document> {
   document: T;
 }
 
-export class DocumentManager<T extends Document> {
+export class DocumentManager<T extends Document = Document> {
   private readonly documents = new Map<string, T>();
   private readonly activeDocuments = new Set<string>();
   private readonly createdSubject = new Subject<DocumentCreated<T>>();
@@ -124,7 +124,7 @@ export class DocumentManager<T extends Document> {
     return Promise.resolve();
   }
 
-  async fireChanged(uri: string, changes?: readonly DocumentChange[], version?: number): Promise<void> {
+  async fireChanged(uri: string, changes?: readonly unknown[], version?: number): Promise<void> {
     let doc: T | undefined = undefined;
     if (changes == null) {
       doc = await this.reload(uri);
