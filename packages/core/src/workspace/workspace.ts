@@ -8,21 +8,21 @@ import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
 import { Localizer } from './localizer';
 
-export interface WorkspaceConfig {
+export interface WorkspaceConfig<T = TextEdit> {
   localizer: Localizer;
-  diagnosticProviders?: DiagnosticProvider[];
-  onTypeFormattingProviders?: OnTypeFormattingProvider[];
+  diagnosticProviders?: DiagnosticProvider<T>[];
+  onTypeFormattingProviders?: OnTypeFormattingProvider<T>[];
 }
 
-export class Workspace {
+export class Workspace<T = TextEdit> {
   private readonly localizer: Localizer;
-  private readonly diagnosticProviders: Map<string, DiagnosticProvider>;
-  private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider>;
+  private readonly diagnosticProviders: Map<string, DiagnosticProvider<T>>;
+  private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider<T>>;
   private readonly lastDiagnosticChangedEvents = new Map<string, DiagnosticsChanged[]>();
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
-  constructor(config: WorkspaceConfig) {
+  constructor(config: WorkspaceConfig<T>) {
     this.localizer = config.localizer;
     this.diagnosticProviders = new Map(config.diagnosticProviders?.map((provider) => [provider.id, provider]));
     this.diagnosticsChanged$ = merge(
@@ -57,7 +57,7 @@ export class Workspace {
     return diagnostics;
   }
 
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]> {
     const provider = this.diagnosticProviders.get(diagnostic.source);
     if (provider == null) {
       return [];
@@ -75,7 +75,7 @@ export class Workspace {
     return Array.from(characters);
   }
 
-  async getOnTypeEdits(uri: string, position: Position, ch: string): Promise<TextEdit[] | undefined> {
+  async getOnTypeEdits(uri: string, position: Position, ch: string): Promise<T[] | undefined> {
     for (const provider of this.onTypeFormattingProviders.values()) {
       if (provider.onTypeTriggerCharacters.has(ch)) {
         const edits = await provider.getOnTypeEdits(uri, position, ch);

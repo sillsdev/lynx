@@ -11,7 +11,6 @@ import {
   ScriptureParagraph,
   ScriptureRef,
   ScriptureRow,
-  ScriptureSerializer,
   ScriptureSidebar,
   ScriptureTable,
   ScriptureText,
@@ -19,7 +18,7 @@ import {
 } from '@sillsdev/lynx';
 import { UsfmAttribute, UsfmStylesheet, UsfmToken, UsfmTokenizer, UsfmTokenType } from '@sillsdev/machine/corpora';
 
-export class UsfmScriptureSerializer implements ScriptureSerializer {
+export class UsfmScriptureSerializer {
   private readonly tokenizer: UsfmTokenizer;
 
   constructor(private readonly stylesheet: UsfmStylesheet) {
