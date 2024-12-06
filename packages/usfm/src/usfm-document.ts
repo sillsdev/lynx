@@ -1,12 +1,10 @@
 import {
-  DocumentChange,
   Position,
   Range,
   ScriptureBook,
   ScriptureCell,
   ScriptureChapter,
   ScriptureCharacterStyle,
-  ScriptureDocument,
   ScriptureMilestone,
   ScriptureNode,
   ScriptureNote,
@@ -17,7 +15,9 @@ import {
   ScriptureSidebar,
   ScriptureTable,
   ScriptureText,
+  ScriptureTextDocument,
   ScriptureVerse,
+  TextDocumentChange,
 } from '@sillsdev/lynx';
 import {
   UsfmAttribute,
@@ -29,7 +29,7 @@ import {
   UsfmTokenType,
 } from '@sillsdev/machine/corpora';
 
-export class UsfmDocument extends ScriptureDocument {
+export class UsfmDocument extends ScriptureTextDocument {
   private lineChildren: number[] = [];
 
   constructor(
@@ -39,11 +39,11 @@ export class UsfmDocument extends ScriptureDocument {
     private readonly stylesheet: UsfmStylesheet,
     start: Position = { line: 0, character: 0 },
   ) {
-    super(uri, version, content);
+    super(uri, 'usfm', version, content);
     this.parseUsfm(content, start);
   }
 
-  update(changes: readonly DocumentChange[], version: number): void {
+  update(changes: readonly TextDocumentChange[], version: number): void {
     for (const change of changes) {
       if (change.range == null) {
         this.parseUsfm(change.text);

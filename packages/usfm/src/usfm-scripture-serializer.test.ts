@@ -57,8 +57,8 @@ describe('UsfmScriptureSerializer', () => {
 
 function serialize(usfm: string): string {
   const stylesheet = new UsfmStylesheet('usfm.sty');
-  const document = new UsfmDocument('uri', 1, usfm, stylesheet);
   const serializer = new UsfmScriptureSerializer(stylesheet);
+  const document = new UsfmDocument('uri', 1, usfm, stylesheet, serializer);
 
   return normalize(serializer.serialize(document));
 }
