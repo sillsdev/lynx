@@ -1,4 +1,4 @@
-import { DiagnosticProvider, DocumentManager, TextDocument } from '@sillsdev/lynx';
+import { DiagnosticProvider, DocumentManager, OnTypeFormattingProvider, TextDocument } from '@sillsdev/lynx';
 
 import { AllowedCharacterChecker } from '../allowed-character/allowed-character-checker';
 import { AllowedCharacterSet } from '../allowed-character/allowed-character-set';
@@ -6,6 +6,7 @@ import { PairedPunctuationChecker } from '../paired-punctuation/paired-punctuati
 import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuation-config';
 import { QuotationChecker } from '../quotation/quotation-checker';
 import { QuotationConfig } from '../quotation/quotation-config';
+import { QuotationCorrector } from '../quotation/quotation-corrector';
 
 export enum RuleType {
   AllowedCharacters = 1,
@@ -61,6 +62,14 @@ export class RuleSet {
 
   private createPairedPunctuationChecker(documentManager: DocumentManager<TextDocument>): DiagnosticProvider {
     return new PairedPunctuationChecker(documentManager, this.pairedPunctuationConfig);
+  }
+
+  public createOnTypeFormattingProviders(documentManager: DocumentManager<TextDocument>): OnTypeFormattingProvider[] {
+    return [this.createQuoteCorrector(documentManager)];
+  }
+
+  private createQuoteCorrector(documentManager: DocumentManager<TextDocument>): OnTypeFormattingProvider {
+    return new QuotationCorrector(documentManager, this.quotationConfig);
   }
 
   _getAllowedCharacterSet(): AllowedCharacterSet {
