@@ -58,6 +58,10 @@ export class QuotationConfig {
     return quoteRegexBuilder.makeGlobal().build();
   }
 
+  public createAmbiguousQuotationMarkSet(): Set<string> {
+    return new Set<string>(this.ambiguousQuoteMap.getAmbiguousMarks());
+  }
+
   public getPossibleQuoteDirections(quotationMark: string): PairedPunctuationDirection[] {
     const directions: Set<PairedPunctuationDirection> = new Set<PairedPunctuationDirection>();
     if (this.openingQuoteRegex.test(quotationMark)) {
