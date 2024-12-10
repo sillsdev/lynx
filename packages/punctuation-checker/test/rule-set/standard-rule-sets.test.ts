@@ -2,6 +2,7 @@ import {
   DiagnosticProvider,
   DiagnosticSeverity,
   DocumentManager,
+  OnTypeFormattingProvider,
   TextDocument,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
@@ -631,6 +632,62 @@ describe('Standard English rule set tests', () => {
             },
           },
           message: 'Closing parenthesis with no opening parenthesis.',
+        },
+      ]);
+    });
+  });
+
+  describe('Smart quotes (a.k.a. quote correction)', () => {
+    const standardEnglishRuleSet = StandardRuleSets.English;
+
+    it('makes no corrections for well-formed English Biblical text', async () => {
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const quoteCorrector: OnTypeFormattingProvider =
+        standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
+      expect(
+        await quoteCorrector.getOnTypeEdits(
+          `So Pharaoh summoned Abram and said, “What is this you have done to me? Why didn't you tell me that she was your wife?
+           Why did you say, ‘She is my sister,’ so that I took her to be my wife? Here is your wife! Take her and go!”`,
+          { line: 0, character: 0 },
+          'x',
+        ),
+      ).toBe(undefined);
+    });
+
+    it('corrects intentionally placed ambiguities in otherwise well-formed English Biblical text', async () => {
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const quoteCorrector: OnTypeFormattingProvider =
+        standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
+
+      expect(
+        await quoteCorrector.getOnTypeEdits(
+          `The LORD who rules over all says this: “These people have said, 'The time for rebuilding the LORD's temple has not yet come.’”`,
+          { line: 0, character: 0 },
+          't',
+        ),
+      ).toEqual([
+        {
+          range: {
+            start: { line: 0, character: 64 },
+            end: { line: 0, character: 65 },
+          },
+          newText: '\u2018',
+        },
+      ]);
+
+      expect(
+        await quoteCorrector.getOnTypeEdits(
+          `The LORD who rules over all says this: “These people have said, ‘The time for rebuilding the LORD's temple has not yet come.’"`,
+          { line: 0, character: 0 },
+          't',
+        ),
+      ).toEqual([
+        {
+          range: {
+            start: { line: 0, character: 125 },
+            end: { line: 0, character: 126 },
+          },
+          newText: '\u201D',
         },
       ]);
     });

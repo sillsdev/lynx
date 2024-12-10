@@ -1,4 +1,10 @@
-import { DiagnosticProvider, DocumentManager, TextDocument, TextDocumentFactory } from '@sillsdev/lynx';
+import {
+  DiagnosticProvider,
+  DocumentManager,
+  OnTypeFormattingProvider,
+  TextDocument,
+  TextDocumentFactory,
+} from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { RuleSet } from '../../src';
@@ -20,6 +26,8 @@ describe('DiagnosticProviderFactory tests', () => {
       openingPunctuationMark: '\u201E',
       closingPunctuationMark: '\u201F',
     })
+    .mapAmbiguousQuotationMark('+', '\u201E')
+    .mapAmbiguousQuotationMark('+', '\u201F')
     .build();
   const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
     .addRule({
@@ -116,5 +124,18 @@ describe('DiagnosticProviderFactory tests', () => {
         .createSelectedDiagnosticProviders(stubDocumentManager, [RuleType.PairedPunctuation])[0]
         .getDiagnostics('<'),
     ).toHaveLength(1);
+  });
+
+  it('creates all known on-type formatters when createOnTypeFormattingProviders is called', async () => {
+    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const onTypeFormatters: OnTypeFormattingProvider[] = ruleSet.createOnTypeFormattingProviders(stubDocumentManager);
+
+    expect(onTypeFormatters.length).toEqual(1);
+
+    expect(onTypeFormatters[0].id).toEqual('quote-corrector');
+
+    expect(await onTypeFormatters[0].getOnTypeEdits('A', { line: 0, character: 0 }, '')).toBe(undefined);
+    expect(await onTypeFormatters[0].getOnTypeEdits('+A', { line: 0, character: 0 }, '')).toHaveLength(1);
+    expect(await onTypeFormatters[0].getOnTypeEdits('+A+', { line: 0, character: 0 }, '')).toHaveLength(2);
   });
 });
