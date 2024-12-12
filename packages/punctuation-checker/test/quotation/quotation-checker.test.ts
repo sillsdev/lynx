@@ -24,8 +24,8 @@ defaultLocalizer.addNamespace('quotation', (_language: string) => {
     diagnosticMessagesByCode: {
       'unmatched-opening-quotation-mark': 'Opening quotation mark with no closing mark.',
       'unmatched-closing-quotation-mark': 'Closing quotation mark with no opening mark.',
-      'incorrectly-nested-quotation-mark-level-': 'Incorrectly nested quotation mark.',
-      'ambiguous-quotation-mark-': 'This quotation mark is ambiguous.',
+      'incorrectly-nested-quotation-mark': 'Incorrectly nested quotation mark.',
+      'ambiguous-quotation-mark': 'This quotation mark is ambiguous.',
       'deeply-nested-quotation-mark': 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
     },
   };
@@ -84,7 +84,7 @@ function createIncorrectlyNestedDiagnostic(
   parentDepth: QuotationDepth,
 ): Diagnostic {
   return {
-    code: 'incorrectly-nested-quotation-mark-level-' + parentDepth.asNumber().toFixed(),
+    code: 'incorrectly-nested-quotation-mark',
     severity: DiagnosticSeverity.Warning,
     range: {
       start: {
@@ -98,7 +98,9 @@ function createIncorrectlyNestedDiagnostic(
     },
     source: 'quotation-mark-checker',
     message: `Incorrectly nested quotation mark.`,
-    data: '',
+    data: {
+      depth: parentDepth.asNumber(),
+    },
   };
 }
 
@@ -109,7 +111,7 @@ function createAmbiguousDiagnostic(
   unambiguousMark: string,
 ): Diagnostic {
   return {
-    code: 'ambiguous-quotation-mark-' + ambiguousMark + '-to-' + unambiguousMark,
+    code: 'ambiguous-quotation-mark',
     severity: DiagnosticSeverity.Warning,
     range: {
       start: {
@@ -123,7 +125,10 @@ function createAmbiguousDiagnostic(
     },
     source: 'quotation-mark-checker',
     message: `This quotation mark is ambiguous.`,
-    data: '',
+    data: {
+      existingQuotationMark: ambiguousMark,
+      correctedQuotationMark: unambiguousMark,
+    },
   };
 }
 
@@ -599,7 +604,7 @@ describe('QuotationChecker tests', () => {
     await localizer.init();
 
     const incorrectlyNestedDiagnostic: Diagnostic = {
-      code: 'incorrectly-nested-quotation-mark-level-2',
+      code: 'incorrectly-nested-quotation-mark',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -613,6 +618,9 @@ describe('QuotationChecker tests', () => {
       },
       source: 'quotation-mark-checker',
       message: `Incorrectly nested quotation mark.`,
+      data: {
+        depth: 2,
+      },
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', incorrectlyNestedDiagnostic)).toEqual([
@@ -648,7 +656,7 @@ describe('QuotationChecker tests', () => {
     await localizer.init();
 
     const ambiguousDiagnostic: Diagnostic = {
-      code: 'ambiguous-quotation-mark-"-to-\u201C',
+      code: 'ambiguous-quotation-mark',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -662,6 +670,10 @@ describe('QuotationChecker tests', () => {
       },
       source: 'quotation-mark-checker',
       message: `This quotation mark is ambiguous.`,
+      data: {
+        existingQuotationMark: '"',
+        correctedQuotationMark: '\u201C',
+      },
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', ambiguousDiagnostic)).toEqual([

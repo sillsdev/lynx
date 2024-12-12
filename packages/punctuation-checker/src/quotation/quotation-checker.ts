@@ -20,10 +20,8 @@ const LOCALIZER_NAMESPACE = 'quotation';
 
 const UNMATCHED_OPENING_QUOTE_DIAGNOSTIC_CODE = 'unmatched-opening-quotation-mark';
 const UNMATCHED_CLOSING_QUOTE_DIAGNOSTIC_CODE = 'unmatched-closing-quotation-mark';
-const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'incorrectly-nested-quotation-mark-level-';
-const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE_REGEX = /incorrectly-nested-quotation-mark-level-(\d+)/;
-const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE = 'ambiguous-quotation-mark-';
-const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE_REGEX = /ambiguous-quotation-mark-(.)-to-(.)/;
+const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'incorrectly-nested-quotation-mark';
+const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE = 'ambiguous-quotation-mark';
 const TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'deeply-nested-quotation-mark';
 
 export class QuotationChecker extends AbstractChecker {
@@ -72,10 +70,13 @@ export class QuotationChecker extends AbstractChecker {
       return [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
     }
 
-    if (typeof diagnostic.code === 'string' && diagnostic.code.startsWith(INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE)) {
+    if (diagnostic.code === INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE) {
       const fixes: DiagnosticFix[] = [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
-      const expectedQuotationMark: string | undefined = this.getExpectedQuotationMarkFromIncorrectlyNestedCode(
-        diagnostic.code,
+      interface QuoteParentDepth {
+        depth: number;
+      }
+      const expectedQuotationMark: string | undefined = this.getExpectedQuotationMarkForDepth(
+        (diagnostic.data as QuoteParentDepth).depth,
       );
       if (expectedQuotationMark !== undefined) {
         fixes.push(this.standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark));
@@ -84,36 +85,23 @@ export class QuotationChecker extends AbstractChecker {
       return fixes;
     }
 
-    if (typeof diagnostic.code === 'string' && diagnostic.code.startsWith(AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE)) {
-      const expectedQuotationMark: string | undefined = this.getExpectedQuotationMarkFromAmbiguousCode(diagnostic.code);
-      if (expectedQuotationMark !== undefined) {
-        return [this.standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
+    if (diagnostic.code === AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE) {
+      interface QuotationMarkCorrection {
+        existingQuotationMark: string;
+        correctedQuotationMark: string;
       }
+      const expectedQuotationMark: string = (diagnostic.data as QuotationMarkCorrection).correctedQuotationMark;
+      return [this.standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
     }
     return [];
   }
 
-  private getExpectedQuotationMarkFromIncorrectlyNestedCode(code: string): string | undefined {
-    const match: RegExpMatchArray | null = INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE_REGEX.exec(code);
-    if (match !== null) {
-      const expectedQuotationDepth = Number(match[1]) + 1;
-      return this.quotationConfig.getUnambiguousQuotationMarkByType(
-        QuotationDepth.fromNumber(expectedQuotationDepth),
-        PairedPunctuationDirection.Opening,
-      );
-    }
+  private getExpectedQuotationMarkForDepth(parentDepth: number): string | undefined {
+    const expectedQuotationDepth = parentDepth + 1;
     return this.quotationConfig.getUnambiguousQuotationMarkByType(
-      QuotationDepth.Primary,
+      QuotationDepth.fromNumber(expectedQuotationDepth),
       PairedPunctuationDirection.Opening,
     );
-  }
-
-  private getExpectedQuotationMarkFromAmbiguousCode(code: string): string | undefined {
-    const match: RegExpMatchArray | null = AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE_REGEX.exec(code);
-    if (match !== null) {
-      return match[2];
-    }
-    return undefined;
   }
 }
 
@@ -177,10 +165,11 @@ class QuotationErrorFinder {
 
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(code + (quotationMark.parentDepth?.asNumber().toFixed() ?? '0'))
+      .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(quotationMark.startIndex, quotationMark.endIndex)
       .setMessage(this.getErrorMessageByCode(code))
+      .setData({ depth: quotationMark.parentDepth?.asNumber() ?? 0 })
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);
@@ -228,10 +217,14 @@ class QuotationErrorFinder {
     const code: string = AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE;
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(code + quoteCorrection.existingQuotationMark.text + '-to-' + quoteCorrection.correctedQuotationMark.text)
+      .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(quoteCorrection.existingQuotationMark.startIndex, quoteCorrection.existingQuotationMark.endIndex)
       .setMessage(this.getErrorMessageByCode(code))
+      .setData({
+        existingQuotationMark: quoteCorrection.existingQuotationMark.text,
+        correctedQuotationMark: quoteCorrection.correctedQuotationMark.text,
+      })
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
