@@ -2,6 +2,7 @@ import {
   DiagnosticProvider,
   DiagnosticSeverity,
   DocumentManager,
+  Localizer,
   OnTypeFormattingProvider,
   TextDocument,
   TextDocumentFactory,
@@ -201,10 +202,14 @@ describe('Standard English rule set tests', () => {
 
     it('identifies no issues with well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const localizer: Localizer = new Localizer();
       const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        localizer,
         stubDocumentManager,
         [RuleType.QuotationMarkPairing],
       )[0];
+      await quotationChecker.init();
+      await localizer.init();
 
       expect(
         await quotationChecker.getDiagnostics(
@@ -250,10 +255,14 @@ describe('Standard English rule set tests', () => {
 
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const localizer: Localizer = new Localizer();
       const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        localizer,
         stubDocumentManager,
         [RuleType.QuotationMarkPairing],
       )[0];
+      await quotationChecker.init();
+      await localizer.init();
 
       // The top-level closing quote has been removed
       expect(
@@ -283,6 +292,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Opening quotation mark with no closing mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
       ]);
 
@@ -314,6 +324,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Closing quotation mark with no opening mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
       ]);
 
@@ -345,6 +356,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Opening quotation mark with no closing mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'incorrectly-nested-quotation-mark-level-2',
@@ -361,6 +373,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'incorrectly-nested-quotation-mark-level-2',
@@ -377,6 +390,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'incorrectly-nested-quotation-mark-level-2',
@@ -393,6 +407,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -409,6 +424,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -425,6 +441,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -441,6 +458,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -457,6 +475,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -473,6 +492,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
         {
           code: 'deeply-nested-quotation-mark',
@@ -489,6 +509,7 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
+          data: '',
         },
       ]);
     });
@@ -578,11 +599,15 @@ describe('Standard English rule set tests', () => {
     });
 
     it('identifies no issues with well-formed English Biblical text', async () => {
+      const localizer: Localizer = new Localizer();
       const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
       const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        localizer,
         stubDocumentManager,
         [RuleType.PairedPunctuation],
       )[0];
+      await pairedPunctuationChecker.init();
+      await localizer.init();
 
       expect(
         await pairedPunctuationChecker.getDiagnostics(`So Achish gave him the town of Ziklag (which still belongs to the kings of 
@@ -606,11 +631,15 @@ describe('Standard English rule set tests', () => {
     });
 
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
+      const localizer: Localizer = new Localizer();
       const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
       const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
+        localizer,
         stubDocumentManager,
         [RuleType.PairedPunctuation],
       )[0];
+      await pairedPunctuationChecker.init();
+      await localizer.init();
 
       expect(
         await pairedPunctuationChecker.getDiagnostics(`So David went to Baal-perazim and defeated the Philistines there. “The Lord did 
@@ -632,6 +661,7 @@ describe('Standard English rule set tests', () => {
             },
           },
           message: 'Closing parenthesis with no opening parenthesis.',
+          data: '',
         },
       ]);
     });

@@ -4,6 +4,7 @@ import {
   DiagnosticProvider,
   DiagnosticsChanged,
   DocumentManager,
+  Localizer,
   TextDocument,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
@@ -13,6 +14,7 @@ export abstract class AbstractChecker implements DiagnosticProvider {
 
   constructor(
     public readonly id: string,
+    protected readonly localizer: Localizer,
     protected readonly documentManager: DocumentManager<TextDocument>,
   ) {
     this.diagnosticsChanged$ = merge(

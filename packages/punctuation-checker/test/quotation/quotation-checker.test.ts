@@ -2,6 +2,7 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   DocumentManager,
+  Localizer,
   ScriptureDocument,
   TextDocument,
   TextDocumentFactory,
@@ -14,9 +15,22 @@ import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { _privateTestingClasses, QuotationChecker } from '../../src/quotation/quotation-checker';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotation-utils';
-import { StandardFixes } from '../../src/standard-fixes';
 import { StringContextMatcher } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
+
+const defaultLocalizer: Localizer = new Localizer();
+defaultLocalizer.addNamespace('quotation', (_language: string) => {
+  return {
+    diagnosticMessagesByCode: {
+      'unmatched-opening-quotation-mark': 'Opening quotation mark with no closing mark.',
+      'unmatched-closing-quotation-mark': 'Closing quotation mark with no opening mark.',
+      'incorrectly-nested-quotation-mark-level-': 'Incorrectly nested quotation mark.',
+      'ambiguous-quotation-mark-': 'This quotation mark is ambiguous.',
+      'deeply-nested-quotation-mark': 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
+    },
+  };
+});
+await defaultLocalizer.init();
 
 // Functions/objects for creating expected output objects
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
@@ -40,6 +54,7 @@ function createUnmatchedOpeningQuoteDiagnostic(startOffset: number, endOffset: n
     },
     source: 'quotation-mark-checker',
     message: `Opening quotation mark with no closing mark.`,
+    data: '',
   };
 }
 
@@ -59,6 +74,7 @@ function createUnmatchedClosingQuoteDiagnostic(startOffset: number, endOffset: n
     },
     source: 'quotation-mark-checker',
     message: `Closing quotation mark with no opening mark.`,
+    data: '',
   };
 }
 
@@ -82,6 +98,7 @@ function createIncorrectlyNestedDiagnostic(
     },
     source: 'quotation-mark-checker',
     message: `Incorrectly nested quotation mark.`,
+    data: '',
   };
 }
 
@@ -106,6 +123,7 @@ function createAmbiguousDiagnostic(
     },
     source: 'quotation-mark-checker',
     message: `This quotation mark is ambiguous.`,
+    data: '',
   };
 }
 
@@ -125,6 +143,7 @@ function createTooDeeplyNestedDiagnostic(startOffset: number, endOffset: number)
     },
     source: 'quotation-mark-checker',
     message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
+    data: '',
   };
 }
 
@@ -139,6 +158,7 @@ describe('QuotationErrorFinder tests', () => {
       .mapAmbiguousQuotationMark('"', '\u201D')
       .build();
     const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+      defaultLocalizer,
       quotationConfig,
       stubDiagnosticFactory,
     );
@@ -163,6 +183,7 @@ describe('QuotationErrorFinder tests', () => {
 
     it('creates Diagnostics for unmatched quotation marks', () => {
       const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+        defaultLocalizer,
         quotationConfig,
         stubDiagnosticFactory,
       );
@@ -183,6 +204,7 @@ describe('QuotationErrorFinder tests', () => {
 
     it('creates Diagnostics for incorrectly nested quotation marks', () => {
       const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+        defaultLocalizer,
         quotationConfig,
         stubDiagnosticFactory,
       );
@@ -195,6 +217,7 @@ describe('QuotationErrorFinder tests', () => {
 
     it('creates Diagnostics for ambiguous quotation marks', () => {
       const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+        defaultLocalizer,
         quotationConfig,
         stubDiagnosticFactory,
       );
@@ -232,6 +255,7 @@ describe('QuotationErrorFinder tests', () => {
       .build();
 
     const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+      defaultLocalizer,
       quotationConfig,
       stubDiagnosticFactory,
     );
@@ -404,6 +428,7 @@ describe('QuotationErrorFinder tests', () => {
       })
       .build();
     const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+      defaultLocalizer,
       quotationConfig,
       stubDiagnosticFactory,
     );
@@ -484,7 +509,6 @@ describe('QuotationErrorFinder tests', () => {
 
 describe('QuotationChecker tests', () => {
   const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
-
   const quotationConfig: QuotationConfig = new QuotationConfig.Builder()
     .setTopLevelQuotationMarks({
       openingPunctuationMark: '\u201C',
@@ -499,9 +523,12 @@ describe('QuotationChecker tests', () => {
       closingPunctuationMark: '\u201F',
     })
     .build();
-  const quotationChecker: QuotationChecker = new QuotationChecker(stubDocumentManager, quotationConfig);
 
   it('provides DiagnosticFixes to remove the character for mismatched quotes', async () => {
+    const localizer: Localizer = new Localizer();
+    const quotationChecker: QuotationChecker = new QuotationChecker(localizer, stubDocumentManager, quotationConfig);
+    await quotationChecker.init();
+    await localizer.init();
     const unmatchedOpeningQuoteDiagnostic: Diagnostic = {
       code: 'unmatched-opening-quotation-mark',
       severity: DiagnosticSeverity.Error,
@@ -537,15 +564,40 @@ describe('QuotationChecker tests', () => {
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', unmatchedOpeningQuoteDiagnostic)).toEqual([
-      StandardFixes.punctuationRemovalFix(unmatchedOpeningQuoteDiagnostic),
+      {
+        title: 'Delete punctuation mark',
+        isPreferred: false,
+        diagnostic: unmatchedOpeningQuoteDiagnostic,
+        edits: [
+          {
+            range: unmatchedOpeningQuoteDiagnostic.range,
+            newText: '',
+          },
+        ],
+      },
     ]);
 
     expect(await quotationChecker.getDiagnosticFixes('', unmatchedClosingQuoteDiagnostic)).toEqual([
-      StandardFixes.punctuationRemovalFix(unmatchedClosingQuoteDiagnostic),
+      {
+        title: 'Delete punctuation mark',
+        isPreferred: false,
+        diagnostic: unmatchedClosingQuoteDiagnostic,
+        edits: [
+          {
+            range: unmatchedClosingQuoteDiagnostic.range,
+            newText: '',
+          },
+        ],
+      },
     ]);
   });
 
   it('provides DiagnosticFixes to remove or replace the character for incorrectly nested quotes', async () => {
+    const localizer: Localizer = new Localizer();
+    const quotationChecker: QuotationChecker = new QuotationChecker(localizer, stubDocumentManager, quotationConfig);
+    await quotationChecker.init();
+    await localizer.init();
+
     const incorrectlyNestedDiagnostic: Diagnostic = {
       code: 'incorrectly-nested-quotation-mark-level-2',
       severity: DiagnosticSeverity.Warning,
@@ -564,12 +616,37 @@ describe('QuotationChecker tests', () => {
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', incorrectlyNestedDiagnostic)).toEqual([
-      StandardFixes.punctuationRemovalFix(incorrectlyNestedDiagnostic),
-      StandardFixes.punctuationReplacementFix(incorrectlyNestedDiagnostic, '\u201E'),
+      {
+        title: 'Delete punctuation mark',
+        isPreferred: false,
+        diagnostic: incorrectlyNestedDiagnostic,
+        edits: [
+          {
+            range: incorrectlyNestedDiagnostic.range,
+            newText: '',
+          },
+        ],
+      },
+      {
+        title: 'Replace this character with \u201E',
+        isPreferred: true,
+        diagnostic: incorrectlyNestedDiagnostic,
+        edits: [
+          {
+            range: incorrectlyNestedDiagnostic.range,
+            newText: '\u201E',
+          },
+        ],
+      },
     ]);
   });
 
   it('provides DiagnosticFixes to replace the character for ambiguous quotes', async () => {
+    const localizer: Localizer = new Localizer();
+    const quotationChecker: QuotationChecker = new QuotationChecker(localizer, stubDocumentManager, quotationConfig);
+    await quotationChecker.init();
+    await localizer.init();
+
     const ambiguousDiagnostic: Diagnostic = {
       code: 'ambiguous-quotation-mark-"-to-\u201C',
       severity: DiagnosticSeverity.Warning,
@@ -588,11 +665,28 @@ describe('QuotationChecker tests', () => {
     };
 
     expect(await quotationChecker.getDiagnosticFixes('', ambiguousDiagnostic)).toEqual([
-      StandardFixes.punctuationReplacementFix(ambiguousDiagnostic, '\u201C'),
+      {
+        title: 'Replace this character with \u201C',
+        isPreferred: true,
+        diagnostic: ambiguousDiagnostic,
+        edits: [
+          {
+            range: ambiguousDiagnostic.range,
+            newText: '\u201C',
+          },
+        ],
+      },
     ]);
   });
 
   it('provides no DiagnosticFixes for too deeply nested quotes', async () => {
+    const quotationChecker: QuotationChecker = new QuotationChecker(
+      defaultLocalizer,
+      stubDocumentManager,
+      quotationConfig,
+    );
+    await quotationChecker.init();
+
     const tooDeeplyNestedDiagnostic: Diagnostic = {
       code: 'deeply-nested-quotation-mark',
       severity: DiagnosticSeverity.Warning,
@@ -656,7 +750,11 @@ describe('ScriptureDocument tests', () => {
     )
     .setNestingWarningDepth(QuotationDepth.fromNumber(4))
     .build();
-  const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(quotationConfig, stubDiagnosticFactory);
+  const quotationErrorFinder = new _privateTestingClasses.QuotationErrorFinder(
+    defaultLocalizer,
+    quotationConfig,
+    stubDiagnosticFactory,
+  );
 
   it('produces no errors for well-formed text', () => {
     const scriptureDocument: ScriptureDocument = documentFactory.create(

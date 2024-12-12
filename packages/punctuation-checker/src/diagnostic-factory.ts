@@ -16,6 +16,7 @@ class DiagnosticBuilder {
   private severity: DiagnosticSeverity | undefined;
   private range: Range | undefined;
   private message: string | undefined;
+  private data: unknown = '';
 
   constructor(
     private readonly sourceId: string,
@@ -45,6 +46,11 @@ class DiagnosticBuilder {
     return this;
   }
 
+  public setData(data: unknown): this {
+    this.data = data;
+    return this;
+  }
+
   public build(): Diagnostic {
     if (this.code === undefined) {
       throw new Error('Diagnostic code was not initialized');
@@ -65,6 +71,7 @@ class DiagnosticBuilder {
       severity: this.severity,
       range: this.range,
       message: this.message,
+      data: this.data,
     };
   }
 }

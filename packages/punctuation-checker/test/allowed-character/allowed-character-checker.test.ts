@@ -2,6 +2,7 @@ import {
   Diagnostic,
   DiagnosticProvider,
   DiagnosticSeverity,
+  Localizer,
   ScriptureDocument,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
@@ -16,6 +17,16 @@ import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
+
+const defaultLocalizer: Localizer = new Localizer();
+defaultLocalizer.addNamespace('allowedCharacters', (_language: string) => {
+  return {
+    diagnosticMessagesByCode: {
+      'disallowed-character': "The character '{{character}}' is not typically used in this language.",
+    },
+  };
+});
+await defaultLocalizer.init();
 
 // passing an empty document is fine here since we don't use getText()
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
@@ -39,6 +50,7 @@ function createExpectedDiagnostic(character: string, startOffset: number, endOff
     },
     source: 'allowed-character-set-checker',
     message: `The character '${character}' is not typically used in this language.`,
+    data: '',
   };
 }
 
@@ -47,6 +59,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
     describe('Simple cases', () => {
       const vowelCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[aeiouAEIOU]/);
       const vowelChecker = new _privateTestingClasses.AllowedCharacterIssueFinder(
+        defaultLocalizer,
         stubDiagnosticFactory,
         vowelCharacterSet,
       );
@@ -73,6 +86,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
       it('correctly handles strings with Unicode-escaped ASCII characters', () => {
         const asciiVowelCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[aeiouAEIOU]/);
         const asciiVowelChecker = new _privateTestingClasses.AllowedCharacterIssueFinder(
+          defaultLocalizer,
           stubDiagnosticFactory,
           asciiVowelCharacterSet,
         );
@@ -93,6 +107,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
           /[\u0061\u0065\u0069\u006F\u0075\u0041\u0045\u0049\u004F\u0055]/,
         );
         const unicodeVowelIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+          defaultLocalizer,
           stubDiagnosticFactory,
           unicodeVowelCharacterSet,
         );
@@ -116,6 +131,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
       it('correctly handles non-ASCII Unicode ranges in the whitelist', () => {
         const nonASCIICharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[\u2200-\u22FF]/);
         const nonASCIICharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+          defaultLocalizer,
           stubDiagnosticFactory,
           nonASCIICharacterSet,
         );
@@ -138,6 +154,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
           /[\p{General_Category=Math_Symbol}]/u,
         );
         const unicodeCategoryIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+          defaultLocalizer,
           stubDiagnosticFactory,
           unicodeCategoryCharacterSet,
         );
@@ -151,6 +168,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
       it('correctly handles Unicode scripts in the whitelist regex', () => {
         const unicodeScriptCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[\p{Script=Hebrew}]/u);
         const unicodeScriptIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+          defaultLocalizer,
           stubDiagnosticFactory,
           unicodeScriptCharacterSet,
         );
@@ -171,6 +189,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
             /[\u{1F600}-\u{1F64F}]/u,
           );
           const extendedUnicodeIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+            defaultLocalizer,
             stubDiagnosticFactory,
             extendedUnicodeCharacterSet,
           );
@@ -204,6 +223,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
             /[😀😁😂😃😴😵😶😷🙄🙅🙆🙇🙌🙍🙎🙏]/u,
           );
           const explicitExtendedUnicodeIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+            defaultLocalizer,
             stubDiagnosticFactory,
             explicitExtendedUnicodeCharacterSet,
           );
@@ -245,6 +265,7 @@ describe('AllowedCharacterIssueFinder tests', () => {
             /[\uD83D\uDE00-\uD83D\uDE4F]/u,
           );
           const surrogatePairIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+            defaultLocalizer,
             stubDiagnosticFactory,
             surrogatePairUnicodeCharacterSet,
           );
@@ -294,6 +315,7 @@ describe('AllowedCharacterChecker tests', () => {
   it("doesn't provide any DiagnosticFixes", async () => {
     const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
     const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
+      defaultLocalizer,
       stubDocumentManager,
       basicCharacterSet,
     );
@@ -302,12 +324,95 @@ describe('AllowedCharacterChecker tests', () => {
       await basicCharacterChecker.getDiagnosticFixes('Hello, _there!&%', createExpectedDiagnostic(',', 5, 6)),
     ).toEqual([]);
   });
+
+  it('initializes its own namespace in the localizer', async () => {
+    const localizer: Localizer = new Localizer();
+    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
+    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
+      localizer,
+      stubDocumentManager,
+      basicCharacterSet,
+    );
+    await basicCharacterChecker.init();
+    await localizer.init();
+
+    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([createExpectedDiagnostic('^', 5, 6)]);
+  });
+
+  it('gets its messages from the localizer', async () => {
+    const localizer: Localizer = new Localizer();
+    localizer.addNamespace('allowedCharacters', (language: string) => {
+      if (language === 'en') {
+        return {
+          diagnosticMessagesByCode: {
+            'disallowed-character': "Hey, stop using this character: '{{character}}'.",
+          },
+        };
+      } else if (language === 'es') {
+        return {
+          diagnosticMessagesByCode: {
+            'disallowed-character': "Oye, deja de usar este carácter: '{{character}}'.",
+          },
+        };
+      }
+    });
+    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
+    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
+      localizer,
+      stubDocumentManager,
+      basicCharacterSet,
+    );
+    await basicCharacterChecker.init();
+    await localizer.init();
+
+    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+      {
+        code: 'disallowed-character',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 5,
+          },
+          end: {
+            line: 0,
+            character: 6,
+          },
+        },
+        source: 'allowed-character-set-checker',
+        message: `Hey, stop using this character: '^'.`,
+        data: '',
+      },
+    ]);
+
+    await localizer.changeLanguage('es');
+    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+      {
+        code: 'disallowed-character',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 5,
+          },
+          end: {
+            line: 0,
+            character: 6,
+          },
+        },
+        source: 'allowed-character-set-checker',
+        message: `Oye, deja de usar este carácter: '^'.`,
+        data: '',
+      },
+    ]);
+  });
 });
 
 describe('integration tests', () => {
   describe('between AllowedCharacterChecker and AllowedCharacterIssueFinder', () => {
     const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
     const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
+      defaultLocalizer,
       stubDocumentManager,
       basicCharacterSet,
     );
@@ -329,7 +434,7 @@ describe('integration tests', () => {
   describe('with the standard English rule set', () => {
     const standardEnglishCharacterSet = StandardRuleSets.English;
     const standardEnglishCharacterChecker: DiagnosticProvider =
-      standardEnglishCharacterSet.createSelectedDiagnosticProviders(stubDocumentManager, [
+      standardEnglishCharacterSet.createSelectedDiagnosticProviders(defaultLocalizer, stubDocumentManager, [
         RuleType.AllowedCharacters,
       ])[0];
 
@@ -347,7 +452,7 @@ describe('integration tests', () => {
 
     it('produces Diagnostics for disallowed ASCII characters', async () => {
       expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$')).toEqual([
-        createExpectedDiagnostic('&', 0, 1),
+        createExpectedDiagnostic('&amp;', 0, 1),
         createExpectedDiagnostic('{', 1, 2),
         createExpectedDiagnostic('+', 2, 3),
         createExpectedDiagnostic('$', 3, 4),
@@ -391,6 +496,7 @@ describe('ScriptureDocument tests', () => {
       .build(),
   );
   const allowedCharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+    defaultLocalizer,
     stubDiagnosticFactory,
     standardAllowedCharacterSet,
   );
@@ -459,7 +565,7 @@ describe('ScriptureDocument tests', () => {
       createExpectedDiagnostic('$', 40, 41),
       createExpectedDiagnostic('@', 80, 81),
       createExpectedDiagnostic('|', 122, 123),
-      createExpectedDiagnostic('&', 128, 129),
+      createExpectedDiagnostic('&amp;', 128, 129),
     ]);
   });
 });
