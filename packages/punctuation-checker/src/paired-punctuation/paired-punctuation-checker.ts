@@ -1,50 +1,64 @@
-import { Diagnostic, DiagnosticFix, DiagnosticSeverity, DocumentManager, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  DiagnosticSeverity,
+  DocumentManager,
+  Localizer,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
-import { StandardFixes } from '../standard-fixes';
+import { StandardFixProvider } from '../fixes/standard-fixes';
 import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 
+const LOCALIZER_NAMESPACE = 'pairedPunctuation';
+
 const UNMATCHED_OPENING_PARENTHESIS_DIAGNOSTIC_CODE = 'unmatched-opening-parenthesis';
-const UNMATCHED_OPENING_PARENTHESIS_MESSAGE = 'Opening parenthesis with no closing parenthesis.';
-
 const UNMATCHED_CLOSING_PARENTHESIS_DIAGNOSTIC_CODE = 'unmatched-closing-parenthesis';
-const UNMATCHED_CLOSING_PARENTHESIS_MESSAGE = 'Closing parenthesis with no opening parenthesis.';
-
 const UNMATCHED_OPENING_SQUARE_BRACKET_DIAGNOSTIC_CODE = 'unmatched-opening-square-bracket';
-const UNMATCHED_OPENING_SQUARE_BRACKET_MESSAGE = 'Opening square bracket with no closing bracket.';
-
 const UNMATCHED_CLOSING_SQUARE_BRACKET_DIAGNOSTIC_CODE = 'unmatched-closing-square-bracket';
-const UNMATCHED_CLOSING_SQUARE_BRACKET_MESSAGE = 'Closing square bracket with no opening bracket.';
-
 const UNMATCHED_OPENING_CURLY_BRACKET_DIAGNOSTIC_CODE = 'unmatched-opening-curly-bracket';
-const UNMATCHED_OPENING_CURLY_BRACKET_MESSAGE = 'Opening curly bracket with no closing bracket.';
-
 const UNMATCHED_CLOSING_CURLY_BRACKET_DIAGNOSTIC_CODE = 'unmatched-closing-curly-bracket';
-const UNMATCHED_CLOSING_CURLY_BRACKET_MESSAGE = 'Closing curly bracket with no opening bracket.';
-
 const UNMATCHED_OPENING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-opening-punctuation-mark';
-const UNMATCHED_OPENING_PUNCTUATION_MARK_MESSAGE = 'Opening punctuation mark with no closing mark.';
-
 const UNMATCHED_CLOSING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-closing-punctuation-mark';
-const UNMATCHED_CLOSING_PUNCTUATION_MARK_MESSAGE = 'Closing punctuation mark with no opening mark.';
-
 const OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE = 'overlapping-punctuation-pairs';
 
 export class PairedPunctuationChecker extends AbstractChecker {
+  private readonly standardFixProvider: StandardFixProvider;
+
   constructor(
+    localizer: Localizer,
     documentManager: DocumentManager<TextDocument>,
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
   ) {
-    super('paired-punctuation-checker', documentManager);
+    super('paired-punctuation-checker', localizer, documentManager);
+    this.standardFixProvider = new StandardFixProvider(localizer);
+  }
+
+  async init(): Promise<void> {
+    await super.init();
+
+    // Ideally, we'd like to be able to inject an initialization function, so that
+    // tests can provide different messages, but due to the way variable dynamic imports
+    // work, the namespace loading function can only appear in this file at this location
+    if (!this.localizer.hasNamespace(LOCALIZER_NAMESPACE)) {
+      this.localizer.addNamespace(
+        LOCALIZER_NAMESPACE,
+        (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
+      );
+    }
+
+    this.standardFixProvider.init();
   }
 
   protected validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const quotationErrorFinder: PairedPunctuationErrorFinder = new PairedPunctuationErrorFinder(
+      this.localizer,
       this.pairedPunctuationConfig,
       diagnosticFactory,
     );
@@ -61,7 +75,7 @@ export class PairedPunctuationChecker extends AbstractChecker {
       diagnostic.code === UNMATCHED_OPENING_PUNCTUATION_MARK_DIAGNOSTIC_CODE ||
       diagnostic.code === UNMATCHED_OPENING_SQUARE_BRACKET_DIAGNOSTIC_CODE
     ) {
-      return [StandardFixes.punctuationRemovalFix(diagnostic)];
+      return [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
     }
     return [];
   }
@@ -71,6 +85,7 @@ class PairedPunctuationErrorFinder {
   private diagnosticList: DiagnosticList;
 
   constructor(
+    private readonly localizer: Localizer,
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
     private readonly diagnosticFactory: DiagnosticFactory,
   ) {
@@ -111,7 +126,7 @@ class PairedPunctuationErrorFinder {
 
   private addUnmatchedPunctuationMarkError(punctuationMark: PairedPunctuationMetadata): void {
     const code: string = this.getUnmatchedErrorCode(punctuationMark);
-    const message: string = this.getUnmatchedErrorMessage(punctuationMark);
+    const message: string = this.getUnmatchedErrorMessage(code);
 
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
@@ -147,28 +162,10 @@ class PairedPunctuationErrorFinder {
     }
   }
 
-  private getUnmatchedErrorMessage(punctuationMark: PairedPunctuationMetadata): string {
-    if (punctuationMark.direction === PairedPunctuationDirection.Opening) {
-      if (punctuationMark.text === '(') {
-        return UNMATCHED_OPENING_PARENTHESIS_MESSAGE;
-      } else if (punctuationMark.text === '[') {
-        return UNMATCHED_OPENING_SQUARE_BRACKET_MESSAGE;
-      } else if (punctuationMark.text === '{') {
-        return UNMATCHED_OPENING_CURLY_BRACKET_MESSAGE;
-      } else {
-        return UNMATCHED_OPENING_PUNCTUATION_MARK_MESSAGE;
-      }
-    } else {
-      if (punctuationMark.text === ')') {
-        return UNMATCHED_CLOSING_PARENTHESIS_MESSAGE;
-      } else if (punctuationMark.text === ']') {
-        return UNMATCHED_CLOSING_SQUARE_BRACKET_MESSAGE;
-      } else if (punctuationMark.text === '}') {
-        return UNMATCHED_CLOSING_CURLY_BRACKET_MESSAGE;
-      } else {
-        return UNMATCHED_CLOSING_PUNCTUATION_MARK_MESSAGE;
-      }
-    }
+  private getUnmatchedErrorMessage(errorCode: string): string {
+    return this.localizer.t(`diagnosticMessagesByCode.${errorCode}`, {
+      ns: LOCALIZER_NAMESPACE,
+    });
   }
 
   private addOverlappingPunctuationWarning(overlappingPairs: OverlappingPairs): void {
@@ -177,13 +174,15 @@ class PairedPunctuationErrorFinder {
   }
 
   private addFirstOverlappingPairWarning(overlappingPairs: OverlappingPairs): void {
+    const code: string = OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE;
+
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE)
+      .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(overlappingPairs.getOpeningMark().startIndex, overlappingPairs.getOpeningMark().endIndex)
       .setMessage(
-        this.createOverlappingPairMessage(overlappingPairs.getOpeningMark(), overlappingPairs.getClosingMark()),
+        this.createOverlappingPairMessage(code, overlappingPairs.getOpeningMark(), overlappingPairs.getClosingMark()),
       )
       .build();
 
@@ -191,13 +190,15 @@ class PairedPunctuationErrorFinder {
   }
 
   private addSecondOverlappingPairWarning(overlappingPairs: OverlappingPairs): void {
+    const code: string = OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE;
+
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE)
+      .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(overlappingPairs.getClosingMark().startIndex, overlappingPairs.getClosingMark().endIndex)
       .setMessage(
-        this.createOverlappingPairMessage(overlappingPairs.getClosingMark(), overlappingPairs.getOpeningMark()),
+        this.createOverlappingPairMessage(code, overlappingPairs.getClosingMark(), overlappingPairs.getOpeningMark()),
       )
       .build();
 
@@ -205,16 +206,15 @@ class PairedPunctuationErrorFinder {
   }
 
   private createOverlappingPairMessage(
+    errorCode: string,
     focusedPunctuationMark: PairedPunctuationMetadata,
     otherPunctuationMark: PairedPunctuationMetadata,
   ): string {
-    return (
-      'This pair of punctuation marks ' +
-      this.createExemplaryPunctuationPairStr(focusedPunctuationMark) +
-      ' overlaps with another pair ' +
-      this.createExemplaryPunctuationPairStr(otherPunctuationMark) +
-      '.'
-    );
+    return this.localizer.t(`diagnosticMessagesByCode.${errorCode}`, {
+      ns: LOCALIZER_NAMESPACE,
+      firstPair: this.createExemplaryPunctuationPairStr(focusedPunctuationMark),
+      secondPair: this.createExemplaryPunctuationPairStr(otherPunctuationMark),
+    });
   }
 
   private createExemplaryPunctuationPairStr(punctuationMark: PairedPunctuationMetadata): string {

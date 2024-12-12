@@ -19,6 +19,7 @@ it('correctly builds Diagnostic objects', () => {
     .setMessage(message)
     .setRange(5, 10)
     .setSeverity(DiagnosticSeverity.Warning)
+    .setData({ a: 15, b: 'test' })
     .build();
 
   expect(diagnostic.code).toEqual(code);
@@ -28,6 +29,7 @@ it('correctly builds Diagnostic objects', () => {
   expect(diagnostic.range.end.line).toEqual(0);
   expect(diagnostic.range.end.character).toEqual(10);
   expect(diagnostic.severity).toEqual(DiagnosticSeverity.Warning);
+  expect(diagnostic.data).toEqual({ a: 15, b: 'test' });
 });
 
 it('produces errors when the Diagnostic object is incompletely specified', () => {

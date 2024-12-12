@@ -1,14 +1,34 @@
-import { DiagnosticSeverity } from '@sillsdev/lynx';
+import { DiagnosticSeverity, Localizer, TextDocumentFactory } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import {
   _privateTestingClasses,
+  PairedPunctuationChecker,
   PairedPunctuationIterator,
 } from '../../src/paired-punctuation/paired-punctuation-checker';
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
 import { PairedPunctuationDirection } from '../../src/utils';
-import { StubSingleLineTextDocument } from '../test-utils';
+import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
+
+const defaultLocalizer: Localizer = new Localizer();
+defaultLocalizer.addNamespace('pairedPunctuation', (_language: string) => {
+  return {
+    diagnosticMessagesByCode: {
+      'unmatched-opening-parenthesis': 'Opening parenthesis with no closing parenthesis.',
+      'unmatched-closing-parenthesis': 'Closing parenthesis with no opening parenthesis.',
+      'unmatched-opening-square-bracket': 'Opening square bracket with no closing bracket.',
+      'unmatched-closing-square-bracket': 'Closing square bracket with no opening bracket.',
+      'unmatched-opening-curly-bracket': 'Opening curly bracket with no closing bracket.',
+      'unmatched-closing-curly-bracket': 'Closing curly bracket with no opening bracket.',
+      'unmatched-opening-punctuation-mark': 'Opening punctuation mark with no closing mark.',
+      'unmatched-closing-punctuation-mark': 'Closing punctuation mark with no opening mark.',
+      'overlapping-punctuation-pairs':
+        'This pair of punctuation marks {{firstPair}} overlaps with another pair {{secondPair}}.',
+    },
+  };
+});
+await defaultLocalizer.init();
 
 const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
   'paired-punctuation-checker',
@@ -44,6 +64,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
     .build();
 
   const pairedPunctuationErrorFinder = new _privateTestingClasses.PairedPunctuationErrorFinder(
+    defaultLocalizer,
     pairedPunctuationConfig,
     stubDiagnosticFactory,
   );
@@ -69,6 +90,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening parenthesis with no closing parenthesis.',
+        data: '',
       },
     ]);
 
@@ -88,6 +110,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening square bracket with no closing bracket.',
+        data: '',
       },
     ]);
 
@@ -107,6 +130,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening curly bracket with no closing bracket.',
+        data: '',
       },
     ]);
 
@@ -126,6 +150,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening punctuation mark with no closing mark.',
+        data: '',
       },
     ]);
 
@@ -145,6 +170,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Closing parenthesis with no opening parenthesis.',
+        data: '',
       },
     ]);
 
@@ -164,6 +190,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Closing square bracket with no opening bracket.',
+        data: '',
       },
     ]);
 
@@ -183,6 +210,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Closing curly bracket with no opening bracket.',
+        data: '',
       },
     ]);
 
@@ -202,6 +230,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Closing punctuation mark with no opening mark.',
+        data: '',
       },
     ]);
 
@@ -221,6 +250,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Closing square bracket with no opening bracket.',
+        data: '',
       },
       {
         code: 'unmatched-opening-parenthesis',
@@ -237,6 +267,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening parenthesis with no closing parenthesis.',
+        data: '',
       },
     ]);
 
@@ -258,6 +289,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'Opening curly bracket with no closing bracket.',
+        data: '',
       },
     ]);
   });
@@ -289,6 +321,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
             },
           },
           message: 'This pair of punctuation marks (\u2026) overlaps with another pair [\u2026].',
+          data: '',
         },
         {
           code: 'overlapping-punctuation-pairs',
@@ -305,6 +338,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
             },
           },
           message: 'This pair of punctuation marks [\u2026] overlaps with another pair (\u2026).',
+          data: '',
         },
       ],
     );
@@ -327,6 +361,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'This pair of punctuation marks \u201C\u2026\u201D overlaps with another pair {\u2026}.',
+        data: '',
       },
       {
         code: 'overlapping-punctuation-pairs',
@@ -343,6 +378,7 @@ describe('PairedPunctuationErrorFinder tests', () => {
           },
         },
         message: 'This pair of punctuation marks {\u2026} overlaps with another pair \u201C\u2026\u201D.',
+        data: '',
       },
     ]);
   });
@@ -857,6 +893,276 @@ describe('PairedPunctuationAnalyzer tests', () => {
           text: ')',
         },
       ),
+    ]);
+  });
+});
+
+describe('PairedPunctuationChecker tests', () => {
+  const stubDocumentManager: StubDocumentManager = new StubDocumentManager(new TextDocumentFactory());
+  const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
+    .addQuotationRule({
+      openingPunctuationMark: '\u201C',
+      closingPunctuationMark: '\u201D',
+    })
+    .addQuotationRule({
+      openingPunctuationMark: '\u2018',
+      closingPunctuationMark: '\u2019',
+    })
+    .addRule({
+      openingPunctuationMark: '(',
+      closingPunctuationMark: ')',
+    })
+    .addRule({
+      openingPunctuationMark: '[',
+      closingPunctuationMark: ']',
+    })
+    .addRule({
+      openingPunctuationMark: '{',
+      closingPunctuationMark: '}',
+    })
+    .build();
+
+  it('produces DiagnosticFixes for unmatched marks', async () => {
+    const localizer: Localizer = new Localizer();
+    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
+      localizer,
+      stubDocumentManager,
+      pairedPunctuationConfig,
+    );
+    await pairedPunctuationChecker.init();
+    await localizer.init();
+
+    expect(
+      await pairedPunctuationChecker.getDiagnosticFixes('(Hello', {
+        code: 'unmatched-opening-parenthesis',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Error,
+        range: {
+          start: {
+            line: 0,
+            character: 0,
+          },
+          end: {
+            line: 0,
+            character: 1,
+          },
+        },
+        message: 'Opening parenthesis with no closing parenthesis.',
+      }),
+    ).toEqual([
+      {
+        title: `Delete punctuation mark`,
+        isPreferred: false,
+        diagnostic: {
+          code: 'unmatched-opening-parenthesis',
+          source: 'paired-punctuation-checker',
+          severity: DiagnosticSeverity.Error,
+          range: {
+            start: {
+              line: 0,
+              character: 0,
+            },
+            end: {
+              line: 0,
+              character: 1,
+            },
+          },
+          message: 'Opening parenthesis with no closing parenthesis.',
+        },
+        edits: [
+          {
+            range: {
+              start: {
+                line: 0,
+                character: 0,
+              },
+              end: {
+                line: 0,
+                character: 1,
+              },
+            },
+            newText: '',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('does not produce DiagnosticFixes for overlapping pairs of marks', async () => {
+    const localizer: Localizer = new Localizer();
+    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
+      localizer,
+      stubDocumentManager,
+      pairedPunctuationConfig,
+    );
+    await pairedPunctuationChecker.init();
+    await localizer.init();
+
+    expect(
+      await pairedPunctuationChecker.getDiagnosticFixes('(Hello\u201C) there\u201D', {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 7,
+          },
+          end: {
+            line: 0,
+            character: 8,
+          },
+        },
+        message: 'This pair of punctuation marks (\u2026) overlaps with another pair \u201C\u2026\u201D.',
+      }),
+    ).toEqual([]);
+  });
+
+  it('initializes its own namespace in the localizer', async () => {
+    const localizer: Localizer = new Localizer();
+    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
+      localizer,
+      stubDocumentManager,
+      pairedPunctuationConfig,
+    );
+    await pairedPunctuationChecker.init();
+    await localizer.init();
+
+    expect(await pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.')).toEqual([
+      {
+        code: 'unmatched-opening-square-bracket',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Error,
+        range: {
+          start: {
+            line: 0,
+            character: 4,
+          },
+          end: {
+            line: 0,
+            character: 5,
+          },
+        },
+        message: 'Opening square bracket with no closing bracket.',
+        data: '',
+      },
+    ]);
+
+    expect(
+      await pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+    ).toEqual([
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 19,
+          },
+          end: {
+            line: 0,
+            character: 20,
+          },
+        },
+        message: 'This pair of punctuation marks {\u2026} overlaps with another pair \u2018\u2026\u2019.',
+        data: '',
+      },
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 13,
+          },
+          end: {
+            line: 0,
+            character: 14,
+          },
+        },
+        message: 'This pair of punctuation marks \u2018\u2026\u2019 overlaps with another pair {\u2026}.',
+        data: '',
+      },
+    ]);
+  });
+
+  it('gets its messages from the localizer', async () => {
+    const localizer: Localizer = new Localizer();
+    localizer.addNamespace('pairedPunctuation', (_language: string) => {
+      return {
+        diagnosticMessagesByCode: {
+          'unmatched-opening-square-bracket': "You didn't close your opening square bracket.",
+          'overlapping-punctuation-pairs': "You really shouldn't overlap {{firstPair}} with {{secondPair}}.",
+        },
+      };
+    });
+    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
+      localizer,
+      stubDocumentManager,
+      pairedPunctuationConfig,
+    );
+    await pairedPunctuationChecker.init();
+    await localizer.init();
+
+    expect(await pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.')).toEqual([
+      {
+        code: 'unmatched-opening-square-bracket',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Error,
+        range: {
+          start: {
+            line: 0,
+            character: 4,
+          },
+          end: {
+            line: 0,
+            character: 5,
+          },
+        },
+        message: "You didn't close your opening square bracket.",
+        data: '',
+      },
+    ]);
+
+    expect(
+      await pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+    ).toEqual([
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 19,
+          },
+          end: {
+            line: 0,
+            character: 20,
+          },
+        },
+        message: "You really shouldn't overlap {\u2026} with \u2018\u2026\u2019.",
+        data: '',
+      },
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 13,
+          },
+          end: {
+            line: 0,
+            character: 14,
+          },
+        },
+        message: "You really shouldn't overlap \u2018\u2026\u2019 with {\u2026}.",
+        data: '',
+      },
     ]);
   });
 });

@@ -1,22 +1,47 @@
-import { Diagnostic, DiagnosticFix, DiagnosticSeverity, DocumentManager, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  DiagnosticSeverity,
+  DocumentManager,
+  Localizer,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { AllowedCharacterSet } from './allowed-character-set';
 
+const LOCALIZER_NAMESPACE = 'allowedCharacters';
+
 export class AllowedCharacterChecker extends AbstractChecker {
   constructor(
+    localizer: Localizer,
     documentManager: DocumentManager<TextDocument>,
     private readonly allowedCharacterSet: AllowedCharacterSet,
   ) {
-    super('allowed-character-set-checker', documentManager);
+    super('allowed-character-set-checker', localizer, documentManager);
+  }
+
+  async init(): Promise<void> {
+    await super.init();
+
+    // Ideally, we'd like to be able to inject an initialization function, so that
+    // tests can provide different messages, but due to the way variable dynamic imports
+    // work, the namespace loading function can only appear in this file at this location
+    if (!this.localizer.hasNamespace(LOCALIZER_NAMESPACE)) {
+      this.localizer.addNamespace(
+        LOCALIZER_NAMESPACE,
+        (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
+      );
+    }
   }
 
   protected validateTextDocument(textDocument: TextDocument): Diagnostic[] {
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const allowedCharacterIssueFinder: AllowedCharacterIssueFinder = new AllowedCharacterIssueFinder(
+      this.localizer,
       diagnosticFactory,
       this.allowedCharacterSet,
     );
@@ -34,6 +59,7 @@ class AllowedCharacterIssueFinder {
   private static readonly DIAGNOSTIC_CODE: string = 'disallowed-character';
 
   constructor(
+    private readonly localizer: Localizer,
     private readonly diagnosticFactory: DiagnosticFactory,
     private readonly allowedCharacterSet: AllowedCharacterSet,
   ) {
@@ -60,12 +86,18 @@ class AllowedCharacterIssueFinder {
   }
 
   private addDisallowedCharacterWarning(character: string, characterStartIndex: number, characterEndIndex: number) {
+    const code: string = AllowedCharacterIssueFinder.DIAGNOSTIC_CODE;
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
-      .setCode(AllowedCharacterIssueFinder.DIAGNOSTIC_CODE)
+      .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(characterStartIndex, characterEndIndex)
-      .setMessage(`The character '${character}' is not typically used in this language.`)
+      .setMessage(
+        this.localizer.t(`diagnosticMessagesByCode.${code}`, {
+          ns: LOCALIZER_NAMESPACE,
+          character: character,
+        }),
+      )
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);

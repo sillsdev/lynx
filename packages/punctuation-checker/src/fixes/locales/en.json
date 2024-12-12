@@ -1,0 +1,4 @@
+{
+  "punctuationRemovalFix": "Delete punctuation mark",
+  "punctuationReplacementFix": "Replace this character with {{replacementCharacter}}"
+}

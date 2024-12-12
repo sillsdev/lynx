@@ -1,4 +1,4 @@
-import { DiagnosticProvider, DocumentManager, OnTypeFormattingProvider, TextDocument } from '@sillsdev/lynx';
+import { DiagnosticProvider, DocumentManager, Localizer, OnTypeFormattingProvider, TextDocument } from '@sillsdev/lynx';
 
 import { AllowedCharacterChecker } from '../allowed-character/allowed-character-checker';
 import { AllowedCharacterSet } from '../allowed-character/allowed-character-set';
@@ -21,15 +21,19 @@ export class RuleSet {
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
   ) {}
 
-  public createDiagnosticProviders(documentManager: DocumentManager<TextDocument>): DiagnosticProvider[] {
+  public createDiagnosticProviders(
+    localizer: Localizer,
+    documentManager: DocumentManager<TextDocument>,
+  ): DiagnosticProvider[] {
     return [
-      this.createAllowedCharacterChecker(documentManager),
-      this.createQuotationChecker(documentManager),
-      this.createPairedPunctuationChecker(documentManager),
+      this.createAllowedCharacterChecker(localizer, documentManager),
+      this.createQuotationChecker(localizer, documentManager),
+      this.createPairedPunctuationChecker(localizer, documentManager),
     ];
   }
 
   public createSelectedDiagnosticProviders(
+    localizer: Localizer,
     documentManager: DocumentManager<TextDocument>,
     selectedRules: RuleType[],
   ): DiagnosticProvider[] {
@@ -38,13 +42,13 @@ export class RuleSet {
     for (const rule of selectedRules) {
       switch (rule) {
         case RuleType.AllowedCharacters:
-          diagnosticProviderFactories.push(this.createAllowedCharacterChecker(documentManager));
+          diagnosticProviderFactories.push(this.createAllowedCharacterChecker(localizer, documentManager));
           break;
         case RuleType.QuotationMarkPairing:
-          diagnosticProviderFactories.push(this.createQuotationChecker(documentManager));
+          diagnosticProviderFactories.push(this.createQuotationChecker(localizer, documentManager));
           break;
         case RuleType.PairedPunctuation:
-          diagnosticProviderFactories.push(this.createPairedPunctuationChecker(documentManager));
+          diagnosticProviderFactories.push(this.createPairedPunctuationChecker(localizer, documentManager));
           break;
       }
     }
@@ -52,16 +56,25 @@ export class RuleSet {
     return diagnosticProviderFactories;
   }
 
-  private createAllowedCharacterChecker(documentManager: DocumentManager<TextDocument>): DiagnosticProvider {
-    return new AllowedCharacterChecker(documentManager, this.allowedCharacterSet);
+  private createAllowedCharacterChecker(
+    localizer: Localizer,
+    documentManager: DocumentManager<TextDocument>,
+  ): DiagnosticProvider {
+    return new AllowedCharacterChecker(localizer, documentManager, this.allowedCharacterSet);
   }
 
-  private createQuotationChecker(documentManager: DocumentManager<TextDocument>): DiagnosticProvider {
-    return new QuotationChecker(documentManager, this.quotationConfig);
+  private createQuotationChecker(
+    localizer: Localizer,
+    documentManager: DocumentManager<TextDocument>,
+  ): DiagnosticProvider {
+    return new QuotationChecker(localizer, documentManager, this.quotationConfig);
   }
 
-  private createPairedPunctuationChecker(documentManager: DocumentManager<TextDocument>): DiagnosticProvider {
-    return new PairedPunctuationChecker(documentManager, this.pairedPunctuationConfig);
+  private createPairedPunctuationChecker(
+    localizer: Localizer,
+    documentManager: DocumentManager<TextDocument>,
+  ): DiagnosticProvider {
+    return new PairedPunctuationChecker(localizer, documentManager, this.pairedPunctuationConfig);
   }
 
   public createOnTypeFormattingProviders(documentManager: DocumentManager<TextDocument>): OnTypeFormattingProvider[] {

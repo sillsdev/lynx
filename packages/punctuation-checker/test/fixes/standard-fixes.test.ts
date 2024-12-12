@@ -1,10 +1,15 @@
-import { Diagnostic, DiagnosticSeverity } from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticSeverity, Localizer } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
-import { StandardFixes } from '../src/standard-fixes';
+import { StandardFixProvider } from '../../src/fixes/standard-fixes';
 
 describe('PunctuationRemovalFix tests', () => {
-  it('targets the character specified in the Diagnostic', () => {
+  it('targets the character specified in the Diagnostic', async () => {
+    const localizer: Localizer = new Localizer();
+    const standardFixProvider: StandardFixProvider = new StandardFixProvider(localizer);
+    standardFixProvider.init();
+    await localizer.init();
+
     const diagnostic: Diagnostic = {
       code: 'incorrectly-nested-quotation-mark-level-2',
       severity: DiagnosticSeverity.Warning,
@@ -22,7 +27,7 @@ describe('PunctuationRemovalFix tests', () => {
       message: `Incorrectly nested quotation mark.`,
     };
 
-    expect(StandardFixes.punctuationRemovalFix(diagnostic)).toEqual({
+    expect(standardFixProvider.punctuationRemovalFix(diagnostic)).toEqual({
       title: `Delete punctuation mark`,
       isPreferred: false,
       diagnostic,
@@ -46,7 +51,12 @@ describe('PunctuationRemovalFix tests', () => {
 });
 
 describe('PunctuationReplacementFix tests', () => {
-  it('targets the character specified in the Diagnostic', () => {
+  it('targets the character specified in the Diagnostic', async () => {
+    const localizer: Localizer = new Localizer();
+    const standardFixProvider: StandardFixProvider = new StandardFixProvider(localizer);
+    standardFixProvider.init();
+    await localizer.init();
+
     const diagnostic: Diagnostic = {
       code: 'incorrectly-nested-quotation-mark-level-2',
       severity: DiagnosticSeverity.Warning,
@@ -64,7 +74,7 @@ describe('PunctuationReplacementFix tests', () => {
       message: `Incorrectly nested quotation mark.`,
     };
 
-    expect(StandardFixes.punctuationReplacementFix(diagnostic, '\u201F')).toEqual({
+    expect(standardFixProvider.punctuationReplacementFix(diagnostic, '\u201F')).toEqual({
       title: `Replace this character with \u201F`,
       isPreferred: true,
       diagnostic,
