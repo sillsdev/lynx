@@ -359,7 +359,7 @@ describe('Standard English rule set tests', () => {
           data: '',
         },
         {
-          code: 'incorrectly-nested-quotation-mark-level-2',
+          code: 'incorrectly-nested-quotation-mark',
           severity: DiagnosticSeverity.Warning,
           range: {
             start: {
@@ -373,10 +373,12 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
-          data: '',
+          data: {
+            depth: 2,
+          },
         },
         {
-          code: 'incorrectly-nested-quotation-mark-level-2',
+          code: 'incorrectly-nested-quotation-mark',
           severity: DiagnosticSeverity.Warning,
           range: {
             start: {
@@ -390,10 +392,12 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
-          data: '',
+          data: {
+            depth: 2,
+          },
         },
         {
-          code: 'incorrectly-nested-quotation-mark-level-2',
+          code: 'incorrectly-nested-quotation-mark',
           severity: DiagnosticSeverity.Warning,
           range: {
             start: {
@@ -407,7 +411,9 @@ describe('Standard English rule set tests', () => {
           },
           message: 'Incorrectly nested quotation mark.',
           source: 'quotation-mark-checker',
-          data: '',
+          data: {
+            depth: 2,
+          },
         },
         {
           code: 'deeply-nested-quotation-mark',
