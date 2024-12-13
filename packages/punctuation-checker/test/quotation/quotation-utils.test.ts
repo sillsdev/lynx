@@ -11,27 +11,22 @@ import { PairedPunctuationDirection, StringContextMatcher } from '../../src/util
 
 describe('QuotationIterator tests', () => {
   describe('Top-level English quotation marks', () => {
-    const quotationConfig = new QuotationConfig.Builder()
-      .setTopLevelQuotationMarks({
-        openingPunctuationMark: '\u201C',
-        closingPunctuationMark: '\u201D',
-      })
-      .build();
-
     describe('Identification of unpaired quotation marks', () => {
       it('does not identify quotes in quote-less text', () => {
-        const emptyStringIterator: QuotationIterator = new QuotationIterator(quotationConfig, '');
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const emptyStringIterator: QuotationIterator = testEnv.newQuotationIterator('');
         expect(emptyStringIterator.hasNext()).toBe(false);
 
-        const noQuotationsIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const noQuotationsIterator: QuotationIterator = testEnv.newQuotationIterator(
           'There are no quotes in this text.',
         );
         expect(noQuotationsIterator.hasNext()).toBe(false);
       });
 
       it('identifies unpaired quotation marks in otherwise empty strings', () => {
-        const openingQuotationIterator: QuotationIterator = new QuotationIterator(quotationConfig, '\u201C');
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+        const openingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C');
         expect(openingQuotationIterator.hasNext()).toBe(true);
         expect(openingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -47,7 +42,7 @@ describe('QuotationIterator tests', () => {
           openingQuotationIterator.next();
         }).toThrowError(/QuoteIterator's next\(\) function called after hasNext\(\) returned false/);
 
-        const closingQuotationIterator: QuotationIterator = new QuotationIterator(quotationConfig, '\u201D');
+        const closingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201D');
         expect(closingQuotationIterator.hasNext()).toBe(true);
         expect(closingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -62,10 +57,10 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies unpaired quotation marks in non-empty strings', () => {
-        const previousContextOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          'Extra text, \u201C',
-        );
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+        const previousContextOpeningQuotationIterator: QuotationIterator =
+          testEnv.newQuotationIterator('Extra text, \u201C');
         expect(previousContextOpeningQuotationIterator.hasNext()).toBe(true);
         expect(previousContextOpeningQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -78,8 +73,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(previousContextOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const trailingContextOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const trailingContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CWith extra text at the end',
         );
         expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(true);
@@ -94,8 +88,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const twoSidedContextOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const twoSidedContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Text at the start, \u201CWith extra text at the end',
         );
         expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(true);
@@ -110,10 +103,8 @@ describe('QuotationIterator tests', () => {
         );
         expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const previousContextClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          ' starting text\u201D',
-        );
+        const previousContextClosingQuotationIterator: QuotationIterator =
+          testEnv.newQuotationIterator(' starting text\u201D');
         expect(previousContextClosingQuotationIterator.hasNext()).toBe(true);
         expect(previousContextClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -126,10 +117,8 @@ describe('QuotationIterator tests', () => {
         );
         expect(previousContextClosingQuotationIterator.hasNext()).toBe(false);
 
-        const trailingContextClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          '\u201Dwith extra at the end.',
-        );
+        const trailingContextClosingQuotationIterator: QuotationIterator =
+          testEnv.newQuotationIterator('\u201Dwith extra at the end.');
         expect(trailingContextClosingQuotationIterator.hasNext()).toBe(true);
         expect(trailingContextClosingQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -142,8 +131,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(trailingContextClosingQuotationIterator.hasNext()).toBe(false);
 
-        const twoSidedContextClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const twoSidedContextClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Prior text \u201Dwith extra at the end.',
         );
         expect(twoSidedContextClosingQuotationIterator.hasNext()).toBe(true);
@@ -160,8 +148,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('does not depend on correct formatting of whitespace', () => {
-        const noWhitespaceOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+        const noWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Text immediately prior\u201Cwith text immediately afterward',
         );
         expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
@@ -176,8 +165,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const reversedWhitespaceOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const reversedWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'No previous space\u201C but a space afterward',
         );
         expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
@@ -192,8 +180,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const noWhitespaceClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const noWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Text immediately prior\u201Dwith text immediately afterward',
         );
         expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
@@ -208,8 +195,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(false);
 
-        const reversedWhitespaceClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const reversedWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'A previous space \u201Dbut no space afterward',
         );
         expect(reversedWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
@@ -228,7 +214,8 @@ describe('QuotationIterator tests', () => {
 
     describe('Identification of multiple quotation marks', () => {
       it('identifies a pair of quotation marks in otherwise empty strings', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(quotationConfig, '\u201C\u201D');
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u201D');
 
         expect(quotationPairIterator.hasNext()).toBe(true);
         expect(quotationPairIterator.next()).toEqual(
@@ -254,10 +241,8 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies a pair of quotation marks in non-empty strings', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          '\u201CSample text.\u201D',
-        );
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201CSample text.\u201D');
         expect(quotationPairIterator.hasNext()).toBe(true);
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -280,8 +265,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(quotationPairIterator.hasNext()).toBe(false);
 
-        const previousContextQuotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const previousContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Context on the left, \u201CSample text.\u201D',
         );
         expect(previousContextQuotationPairIterator.hasNext()).toBe(true);
@@ -306,8 +290,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(previousContextQuotationPairIterator.hasNext()).toBe(false);
 
-        const trailingContextQuotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const trailingContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CSample text.\u201D with context on the right.',
         );
         expect(trailingContextQuotationPairIterator.hasNext()).toBe(true);
@@ -332,8 +315,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(trailingContextQuotationPairIterator.hasNext()).toBe(false);
 
-        const twoSidedContextQuotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const twoSidedContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           'Context on the left, \u201CSample text.\u201D with context on the right',
         );
         expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(true);
@@ -360,8 +342,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies multiple pairs of quotation marks', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CSample text.\u201D and, \u201Cmore sample text\u201D',
         );
         expect(quotationPairIterator.hasNext()).toBe(true);
@@ -409,20 +392,10 @@ describe('QuotationIterator tests', () => {
     });
 
     describe('Identification of ambiguous quotation marks', () => {
-      const ambiguousQuotationConfig = new QuotationConfig.Builder()
-        .setTopLevelQuotationMarks({
-          openingPunctuationMark: '\u201C',
-          closingPunctuationMark: '\u201D',
-        })
-        .mapAmbiguousQuotationMark('"', '\u201C')
-        .mapAmbiguousQuotationMark('"', '\u201D')
-        .build();
-
       it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
-        const singleQuotationIterator: QuotationIterator = new QuotationIterator(
-          ambiguousQuotationConfig,
-          'Sample" text.',
-        );
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
+
+        const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('Sample" text.');
         expect(singleQuotationIterator.hasNext()).toBe(true);
         expect(singleQuotationIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -437,10 +410,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(singleQuotationIterator.hasNext()).toBe(false);
 
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          ambiguousQuotationConfig,
-          '"Sample text."',
-        );
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('"Sample text."');
         expect(quotationPairIterator.hasNext()).toBe(true);
         expect(quotationPairIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
@@ -469,8 +439,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies ambiguous quotes in text containing unambiugous quotes', () => {
-        const mixedQuotationIterator: QuotationIterator = new QuotationIterator(
-          ambiguousQuotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
+
+        const mixedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'This text \u201Ccontains "straight" and curly quotes.\u201D',
         );
         expect(mixedQuotationIterator.hasNext()).toBe(true);
@@ -523,8 +494,8 @@ describe('QuotationIterator tests', () => {
 
     describe('Identification of ill-formed quotation marks', () => {
       it('identifies quotation marks that are improperly nested', () => {
-        const improperlyNestedOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const improperlyNestedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
         );
         expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
@@ -559,8 +530,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const improperlyNestedClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const improperlyNestedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis contains an \u201D improperly nested quotation mark.\u201D',
         );
         expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
@@ -597,8 +567,8 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies unpaired quotation marks', () => {
-        const unpairedOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThe second quotation mark\u201D is \u201C never closed.',
         );
         expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
@@ -633,8 +603,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const unpairedClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'The first \u201D quotation mark \u201Cis unpaired.\u201D',
         );
         expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
@@ -673,14 +642,13 @@ describe('QuotationIterator tests', () => {
 
     describe('Adherence to the QuotationConfig', () => {
       it('does not identify single quotes', () => {
-        const singleQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u2018single quoted text\u2019',
         );
         expect(singleQuotationIterator.hasNext()).toBe(false);
 
-        const singleAndDoubleQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const singleAndDoubleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201Cdouble and \u2018single quoted text\u201D',
         );
         expect(singleAndDoubleQuotationIterator.next()).toEqual(
@@ -706,20 +674,14 @@ describe('QuotationIterator tests', () => {
       });
 
       it('does not identify straight quotes', () => {
-        const straightDoubleQuoteIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          '"straight double quotes"',
-        );
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const straightDoubleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator('"straight double quotes"');
         expect(straightDoubleQuoteIterator.hasNext()).toBe(false);
 
-        const straightSingleQuoteIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          "'straight double quotes'",
-        );
+        const straightSingleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator("'straight double quotes'");
         expect(straightSingleQuoteIterator.hasNext()).toBe(false);
 
-        const curlyAndStraightDoubleQuoteIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const curlyAndStraightDoubleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201Ccurly and straight quotes used here"',
         );
         expect(curlyAndStraightDoubleQuoteIterator.next()).toEqual(
@@ -733,8 +695,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(curlyAndStraightDoubleQuoteIterator.hasNext()).toBe(false);
 
-        const curlyDoubleAndStraightSingleQuoteIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const curlyDoubleAndStraightSingleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
           "\u201Ccurly double and 'straight' quotes used here",
         );
         expect(curlyDoubleAndStraightSingleQuoteIterator.next()).toEqual(
@@ -750,86 +711,40 @@ describe('QuotationIterator tests', () => {
       });
 
       it('does not identify alternative top-level quotes', () => {
-        const guillemetsIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+        const guillemetsIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u00ABFrench-style guillemets\u00BB',
         );
         expect(guillemetsIterator.hasNext()).toBe(false);
 
-        const germanQuotesIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          '\u201EGerman-style quotes\u201F',
-        );
+        const germanQuotesIterator: QuotationIterator = testEnv.newQuotationIterator('\u201EGerman-style quotes\u201F');
         expect(germanQuotesIterator.hasNext()).toBe(false);
       });
     });
   });
 
   describe('Multi-level English quotation marks', () => {
-    const quotationConfig: QuotationConfig = new QuotationConfig.Builder()
-      .setTopLevelQuotationMarks({
-        openingPunctuationMark: '\u201C',
-        closingPunctuationMark: '\u201D',
-      })
-      .addNestedQuotationMarks({
-        openingPunctuationMark: '\u2018',
-        closingPunctuationMark: '\u2019',
-      })
-      .addNestedQuotationMarks({
-        openingPunctuationMark: '\u201C',
-        closingPunctuationMark: '\u201D',
-      })
-      .addNestedQuotationMarks({
-        openingPunctuationMark: '\u2018',
-        closingPunctuationMark: '\u2019',
-      })
-      .mapAmbiguousQuotationMark('"', '\u201C')
-      .mapAmbiguousQuotationMark('"', '\u201D')
-      .mapAmbiguousQuotationMark("'", '\u2018')
-      .mapAmbiguousQuotationMark("'", '\u2019')
-      .ignoreMatchingQuotationMarks(
-        // possessives and contractions
-        new StringContextMatcher.Builder()
-          .setCenterContent(/^['\u2019]$/)
-          .setLeftContext(/\w$/)
-          .setRightContext(/^\w/)
-          .build(),
-      )
-      .ignoreMatchingQuotationMarks(
-        // for possessives ending in "s", e.g. "Moses'"
-        new StringContextMatcher.Builder()
-          .setCenterContent(/^['\u2019]$/)
-          .setLeftContext(/\ws$/)
-          .setRightContext(/^[ \n,.:;]/)
-          .build(),
-      )
-      .setNestingWarningDepth(QuotationDepth.fromNumber(4))
-      .build();
-
     it('skips over apostrophes', () => {
-      const basicPossessiveIterator: QuotationIterator = new QuotationIterator(quotationConfig, "Abraham's servant");
+      const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+      const basicPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("Abraham's servant");
       expect(basicPossessiveIterator.hasNext()).toBe(false);
 
-      const basicPossessiveIterator2: QuotationIterator = new QuotationIterator(
-        quotationConfig,
-        'Abraham\u2019s servant',
-      );
+      const basicPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('Abraham\u2019s servant');
       expect(basicPossessiveIterator2.hasNext()).toBe(false);
 
-      const basicContractionIterator: QuotationIterator = new QuotationIterator(quotationConfig, "they're");
+      const basicContractionIterator: QuotationIterator = testEnv.newQuotationIterator("they're");
       expect(basicContractionIterator.hasNext()).toBe(false);
 
-      const basicContractionIterator2: QuotationIterator = new QuotationIterator(quotationConfig, 'they\u2019re');
+      const basicContractionIterator2: QuotationIterator = testEnv.newQuotationIterator('they\u2019re');
       expect(basicContractionIterator2.hasNext()).toBe(false);
 
-      const sPossessiveIterator: QuotationIterator = new QuotationIterator(quotationConfig, "your sons' wives");
+      const sPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("your sons' wives");
       expect(sPossessiveIterator.hasNext()).toBe(false);
 
-      const sPossessiveIterator2: QuotationIterator = new QuotationIterator(quotationConfig, 'your sons\u2019 wives');
+      const sPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('your sons\u2019 wives');
       expect(sPossessiveIterator2.hasNext()).toBe(false);
 
-      const quotedApostropheIterator: QuotationIterator = new QuotationIterator(
-        quotationConfig,
+      const quotedApostropheIterator: QuotationIterator = testEnv.newQuotationIterator(
         '\u201CThis is one of the Hebrews\u2019 children.\u201D',
       );
       expect(quotedApostropheIterator.hasNext()).toBe(true);
@@ -857,10 +772,8 @@ describe('QuotationIterator tests', () => {
 
     describe('Identification of multiple quotation marks', () => {
       it('identifies multiple levels of quotes in otherwise empty text', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
-          '\u201C\u2018\u2019\u201D',
-        );
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u2018\u2019\u201D');
 
         expect(quotationPairIterator.hasNext()).toBe(true);
         expect(quotationPairIterator.next()).toEqual(
@@ -904,8 +817,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(quotationPairIterator.hasNext()).toBe(false);
 
-        const threeLevelQuotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201C\u2018\u201C\u201D\u2019\u201D',
         );
 
@@ -973,8 +885,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies multiple levels of quotes in non-empty text', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis text \u2018contains multiple\u2019 quote levels\u201D',
         );
 
@@ -1020,8 +933,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(quotationPairIterator.hasNext()).toBe(false);
 
-        const threeLevelQuotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis text \u2018has \u201Cthree levels\u201D of quotations\u2019\u201D',
         );
 
@@ -1091,8 +1003,9 @@ describe('QuotationIterator tests', () => {
 
     describe('Identification of ambiguous quotation marks', () => {
       it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           'This text "has \'multiple levels of "ambiguous" quotations\'"',
         );
 
@@ -1165,8 +1078,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies ambiguous quotes in text with other unambiguous quotes', () => {
-        const quotationPairIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
           'This text "has \u2018multiple levels of \u201Cambiguous" quotations\'\u201D',
         );
 
@@ -1238,8 +1152,9 @@ describe('QuotationIterator tests', () => {
 
     describe('Identification of ill-formed quotation marks', () => {
       it('identifies quotation marks that are improperly nested', () => {
-        const improperlyNestedSecondaryQuoteIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const improperlyNestedSecondaryQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
           'This contains an \u2018 improperly nested quote\u2019',
         );
         expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(true);
@@ -1264,8 +1179,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(false);
 
-        const improperlyNestedTertiaryQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const improperlyNestedTertiaryQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
         );
         expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
@@ -1302,8 +1216,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies unpaired quotation marks', () => {
-        const unpairedOpeningQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis has three \u2018unclosed \u201Cquotations',
         );
         expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
@@ -1338,8 +1253,7 @@ describe('QuotationIterator tests', () => {
         );
         expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const unpairedClosingQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           'This has\u201D three\u2019 unpaired\u201D closing quotes',
         );
         expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
@@ -1376,8 +1290,9 @@ describe('QuotationIterator tests', () => {
       });
 
       it('identifies quotation marks that are nested beyond the warning depth', () => {
-        const tooDeeplyNestedQuotationIterator: QuotationIterator = new QuotationIterator(
-          quotationConfig,
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+        const tooDeeplyNestedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
           '\u201CThis has \u2018four \u201Clevels of \u2018quotation marks\u2019\u201D\u2019\u201D',
         );
         expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
@@ -1623,18 +1538,18 @@ describe('UnresolvedQuoteMetadata tests', () => {
     });
   });
 
-  const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
-    .addDepth(QuotationDepth.fromNumber(3))
-    .addDepth(QuotationDepth.fromNumber(1))
-    .addDirection(PairedPunctuationDirection.Opening)
-    .addDirection(PairedPunctuationDirection.Closing)
-    .setStartIndex(3)
-    .setEndIndex(6)
-    .setText('"')
-    .markAsAutocorrectable()
-    .build();
-
   it('gives the correct number of options for depth and direction', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(unresolvedQuoteMetadata.numPossibleDepths()).toEqual(2);
     expect(unresolvedQuoteMetadata.numPossibleDirections()).toEqual(2);
 
@@ -1654,6 +1569,17 @@ describe('UnresolvedQuoteMetadata tests', () => {
   });
 
   it('tells whether the given depth/direction is possible', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Primary)).toBe(true);
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Secondary)).toBe(false);
     expect(unresolvedQuoteMetadata.isDepthPossible(QuotationDepth.Tertiary)).toBe(true);
@@ -1664,6 +1590,17 @@ describe('UnresolvedQuoteMetadata tests', () => {
   });
 
   it('resolves into a QuoteMetadata object with the choices specified', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), PairedPunctuationDirection.Opening)).toEqual({
       depth: QuotationDepth.Primary,
       direction: PairedPunctuationDirection.Opening,
@@ -1699,6 +1636,17 @@ describe('UnresolvedQuoteMetadata tests', () => {
   });
 
   it('selects the best depth when given a scoring function', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(unresolvedQuoteMetadata.findBestDepth((depth: QuotationDepth) => depth.asNumber())).toEqual(
       QuotationDepth.fromNumber(3),
     );
@@ -1710,6 +1658,17 @@ describe('UnresolvedQuoteMetadata tests', () => {
   });
 
   it('selects the best direction when given a scoring function', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(
       unresolvedQuoteMetadata.findBestDirection((direction: PairedPunctuationDirection) =>
         direction === PairedPunctuationDirection.Opening ? 1 : 0,
@@ -1727,6 +1686,17 @@ describe('UnresolvedQuoteMetadata tests', () => {
   });
 
   it('errors when it cannot be resolved as called', () => {
+    const unresolvedQuoteMetadata: UnresolvedQuoteMetadata = new UnresolvedQuoteMetadata.Builder()
+      .addDepth(QuotationDepth.fromNumber(3))
+      .addDepth(QuotationDepth.fromNumber(1))
+      .addDirection(PairedPunctuationDirection.Opening)
+      .addDirection(PairedPunctuationDirection.Closing)
+      .setStartIndex(3)
+      .setEndIndex(6)
+      .setText('"')
+      .markAsAutocorrectable()
+      .build();
+
     expect(() =>
       unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(2), PairedPunctuationDirection.Opening),
     ).toThrowError('Cannot resolve quote metadata with depth 2, as this depth is not possible.');
@@ -1786,3 +1756,79 @@ describe('QuotationDepth tests', () => {
     );
   });
 });
+
+class TestEnvironment {
+  private constructor(private readonly quotationConfig: QuotationConfig) {}
+
+  public newQuotationIterator(text: string): QuotationIterator {
+    return new QuotationIterator(this.quotationConfig, text);
+  }
+
+  static createWithTopLevelQuotesAndNoAmbiguity(): TestEnvironment {
+    return new TestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .build(),
+    );
+  }
+
+  static createWithTopLevelQuotes(): TestEnvironment {
+    return new TestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .mapAmbiguousQuotationMark('"', '\u201C')
+        .mapAmbiguousQuotationMark('"', '\u201D')
+        .build(),
+    );
+  }
+
+  static createWithFullEnglishQuotes(): TestEnvironment {
+    return new TestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .mapAmbiguousQuotationMark('"', '\u201C')
+        .mapAmbiguousQuotationMark('"', '\u201D')
+        .mapAmbiguousQuotationMark("'", '\u2018')
+        .mapAmbiguousQuotationMark("'", '\u2019')
+        .ignoreMatchingQuotationMarks(
+          // possessives and contractions
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\w$/)
+            .setRightContext(/^\w/)
+            .build(),
+        )
+        .ignoreMatchingQuotationMarks(
+          // for possessives ending in "s", e.g. "Moses'"
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\ws$/)
+            .setRightContext(/^[ \n,.:;]/)
+            .build(),
+        )
+        .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+        .build(),
+    );
+  }
+}
