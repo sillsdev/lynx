@@ -18,290 +18,241 @@ import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
-const defaultLocalizer: Localizer = new Localizer();
-defaultLocalizer.addNamespace('allowedCharacters', (_language: string) => {
-  return {
-    diagnosticMessagesByCode: {
-      'disallowed-character': "The character '{{character}}' is not typically used in this language.",
-    },
-  };
-});
-await defaultLocalizer.init();
-
-// passing an empty document is fine here since we don't use getText()
-const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
-  'allowed-character-set-checker',
-  new StubSingleLineTextDocument(''),
-);
-
-function createExpectedDiagnostic(character: string, startOffset: number, endOffset: number): Diagnostic {
-  return {
-    code: 'disallowed-character',
-    severity: DiagnosticSeverity.Warning,
-    range: {
-      start: {
-        line: 0,
-        character: startOffset,
-      },
-      end: {
-        line: 0,
-        character: endOffset,
-      },
-    },
-    source: 'allowed-character-set-checker',
-    message: `The character '${character}' is not typically used in this language.`,
-    data: '',
-  };
-}
-
 describe('AllowedCharacterIssueFinder tests', () => {
   describe('Diagnostics are created only for characters not on the whitelist', () => {
     describe('Simple cases', () => {
-      const vowelCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[aeiouAEIOU]/);
-      const vowelChecker = new _privateTestingClasses.AllowedCharacterIssueFinder(
-        defaultLocalizer,
-        stubDiagnosticFactory,
-        vowelCharacterSet,
-      );
-
-      it('produces no output for empty strings', () => {
-        expect(vowelChecker.produceDiagnostics('')).toEqual([]);
+      it('produces no output for empty strings', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
+        await testEnv.init();
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('')).toEqual([]);
       });
 
-      it('produces Diagnostics for disallowed ASCII characters', () => {
-        expect(vowelChecker.produceDiagnostics('g')).toEqual([createExpectedDiagnostic('g', 0, 1)]);
-        expect(vowelChecker.produceDiagnostics('bV')).toEqual([
-          createExpectedDiagnostic('b', 0, 1),
-          createExpectedDiagnostic('V', 1, 2),
+      it('produces Diagnostics for disallowed ASCII characters', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
+        await testEnv.init();
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('g')).toEqual([
+          testEnv.createExpectedDiagnostic('g', 0, 1),
         ]);
-        expect(vowelChecker.produceDiagnostics('aaauoieAEOOOUI')).toEqual([]);
-        expect(vowelChecker.produceDiagnostics('aaautoieAEOOOMUI')).toEqual([
-          createExpectedDiagnostic('t', 4, 5),
-          createExpectedDiagnostic('M', 13, 14),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('bV')).toEqual([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
+        ]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('aaauoieAEOOOUI')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('aaautoieAEOOOMUI')).toEqual([
+          testEnv.createExpectedDiagnostic('t', 4, 5),
+          testEnv.createExpectedDiagnostic('M', 13, 14),
         ]);
       });
     });
 
     describe('for basic Unicode', () => {
-      it('correctly handles strings with Unicode-escaped ASCII characters', () => {
-        const asciiVowelCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[aeiouAEIOU]/);
-        const asciiVowelChecker = new _privateTestingClasses.AllowedCharacterIssueFinder(
-          defaultLocalizer,
-          stubDiagnosticFactory,
-          asciiVowelCharacterSet,
-        );
+      it('correctly handles strings with Unicode-escaped ASCII characters', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
+        await testEnv.init();
 
         expect(
-          asciiVowelChecker.produceDiagnostics(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             '\u0061\u0061\u0061\u0075\u006F\u0069\u0065\u0041\u0045\u004F\u004F\u004F\u0055\u0049',
           ),
         ).toEqual([]);
-        expect(asciiVowelChecker.produceDiagnostics('\u0062\u0056')).toEqual([
-          createExpectedDiagnostic('b', 0, 1),
-          createExpectedDiagnostic('V', 1, 2),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u0062\u0056')).toEqual([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
         ]);
       });
 
-      it('correctly handles Unicode-escaped ASCII characters in the whitelist', () => {
-        const unicodeVowelCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-          /[\u0061\u0065\u0069\u006F\u0075\u0041\u0045\u0049\u004F\u0055]/,
+      it('correctly handles Unicode-escaped ASCII characters in the whitelist', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(
+          new CharacterRegexWhitelist(/[\u0061\u0065\u0069\u006F\u0075\u0041\u0045\u0049\u004F\u0055]/),
         );
-        const unicodeVowelIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-          defaultLocalizer,
-          stubDiagnosticFactory,
-          unicodeVowelCharacterSet,
-        );
+        await testEnv.init();
 
-        expect(unicodeVowelIssueFinder.produceDiagnostics('aaauoieAEOOOUI')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('aaauoieAEOOOUI')).toEqual([]);
         expect(
-          unicodeVowelIssueFinder.produceDiagnostics(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             '\u0061\u0061\u0061\u0075\u006F\u0069\u0065\u0041\u0045\u004F\u004F\u004F\u0055\u0049',
           ),
         ).toEqual([]);
-        expect(unicodeVowelIssueFinder.produceDiagnostics('\u0062\u0056')).toEqual([
-          createExpectedDiagnostic('b', 0, 1),
-          createExpectedDiagnostic('V', 1, 2),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u0062\u0056')).toEqual([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
         ]);
-        expect(unicodeVowelIssueFinder.produceDiagnostics('bV')).toEqual([
-          createExpectedDiagnostic('b', 0, 1),
-          createExpectedDiagnostic('V', 1, 2),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('bV')).toEqual([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
         ]);
       });
 
-      it('correctly handles non-ASCII Unicode ranges in the whitelist', () => {
-        const nonASCIICharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[\u2200-\u22FF]/);
-        const nonASCIICharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-          defaultLocalizer,
-          stubDiagnosticFactory,
-          nonASCIICharacterSet,
+      it('correctly handles non-ASCII Unicode ranges in the whitelist', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[\u2200-\u22FF]/));
+        await testEnv.init();
+
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀∂∯')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u2264\u2295\u2234\u2200\u2202\u222F')).toEqual(
+          [],
         );
 
-        expect(nonASCIICharacterIssueFinder.produceDiagnostics('≤⊕∴∀∂∯')).toEqual([]);
-        expect(nonASCIICharacterIssueFinder.produceDiagnostics('\u2264\u2295\u2234\u2200\u2202\u222F')).toEqual([]);
-
-        expect(nonASCIICharacterIssueFinder.produceDiagnostics('≤⊕∴∀A∯')).toEqual([
-          createExpectedDiagnostic('A', 4, 5),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀A∯')).toEqual([
+          testEnv.createExpectedDiagnostic('A', 4, 5),
         ]);
-        expect(nonASCIICharacterIssueFinder.produceDiagnostics('≤⊕∴∀∯⨕')).toEqual([
-          createExpectedDiagnostic('⨕', 5, 6),
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀∯⨕')).toEqual([
+          testEnv.createExpectedDiagnostic('⨕', 5, 6),
         ]);
       });
     });
 
     describe('for complex Unicode', () => {
-      it('correctly handles Unicode categories in the whitelist regex', () => {
-        const unicodeCategoryCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-          /[\p{General_Category=Math_Symbol}]/u,
+      it('correctly handles Unicode categories in the whitelist regex', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(
+          new CharacterRegexWhitelist(/[\p{General_Category=Math_Symbol}]/u),
         );
-        const unicodeCategoryIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-          defaultLocalizer,
-          stubDiagnosticFactory,
-          unicodeCategoryCharacterSet,
-        );
+        await testEnv.init();
 
-        expect(unicodeCategoryIssueFinder.produceDiagnostics('≤⊕∴∀∂∯')).toEqual([]);
-        expect(unicodeCategoryIssueFinder.produceDiagnostics('\u2264\u2295\u2234\u2200\u2202\u222F')).toEqual([]);
-        expect(unicodeCategoryIssueFinder.produceDiagnostics('≤⊕∴∀A∯')).toEqual([createExpectedDiagnostic('A', 4, 5)]);
-        expect(unicodeCategoryIssueFinder.produceDiagnostics('≤⊕∴∀∯ච')).toEqual([createExpectedDiagnostic('ච', 5, 6)]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀∂∯')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u2264\u2295\u2234\u2200\u2202\u222F')).toEqual(
+          [],
+        );
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀A∯')).toEqual([
+          testEnv.createExpectedDiagnostic('A', 4, 5),
+        ]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('≤⊕∴∀∯ච')).toEqual([
+          testEnv.createExpectedDiagnostic('ච', 5, 6),
+        ]);
       });
 
-      it('correctly handles Unicode scripts in the whitelist regex', () => {
-        const unicodeScriptCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[\p{Script=Hebrew}]/u);
-        const unicodeScriptIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-          defaultLocalizer,
-          stubDiagnosticFactory,
-          unicodeScriptCharacterSet,
+      it('correctly handles Unicode scripts in the whitelist regex', async () => {
+        const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[\p{Script=Hebrew}]/u));
+        await testEnv.init();
+
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('לִינקס')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('לִינקסקּ')).toEqual([]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u05DC\u05B4\u05D9\u05E0\u05E7\u05E1')).toEqual(
+          [],
         );
 
-        expect(unicodeScriptIssueFinder.produceDiagnostics('לִינקס')).toEqual([]);
-        expect(unicodeScriptIssueFinder.produceDiagnostics('לִינקסקּ')).toEqual([]);
-        expect(unicodeScriptIssueFinder.produceDiagnostics('\u05DC\u05B4\u05D9\u05E0\u05E7\u05E1')).toEqual([]);
-
         // Mathematical version of aleph
-        expect(unicodeScriptIssueFinder.produceDiagnostics('לִינקסℵ')).toEqual([createExpectedDiagnostic('ℵ', 6, 7)]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('לִינקסℵ')).toEqual([
+          testEnv.createExpectedDiagnostic('ℵ', 6, 7),
+        ]);
 
-        expect(unicodeScriptIssueFinder.produceDiagnostics('לִxינקס')).toEqual([createExpectedDiagnostic('x', 2, 3)]);
+        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('לִxינקס')).toEqual([
+          testEnv.createExpectedDiagnostic('x', 2, 3),
+        ]);
       });
 
       describe('correctly handles surrogate pairs and characters outside the basic multilingual plane', () => {
-        it('handles ranges of characters with U+10000 and above', () => {
-          const extendedUnicodeCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-            /[\u{1F600}-\u{1F64F}]/u,
-          );
-          const extendedUnicodeIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-            defaultLocalizer,
-            stubDiagnosticFactory,
-            extendedUnicodeCharacterSet,
-          );
+        it('handles ranges of characters with U+10000 and above', async () => {
+          const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[\u{1F600}-\u{1F64F}]/u));
+          await testEnv.init();
 
           // all three of these strings should be equivalent
-          expect(extendedUnicodeIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
-          expect(extendedUnicodeIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}')).toEqual([]);
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
           expect(
-            extendedUnicodeIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
+          ).toEqual([]);
+          expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
           ).toEqual([]);
 
-          expect(extendedUnicodeIssueFinder.produceDiagnostics('🙓😀m🚤')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('🙓😀m🚤')).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(extendedUnicodeIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}')).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(extendedUnicodeIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4'),
+          ).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
         });
 
-        it('correctly handles explicit non-BMP characters', () => {
-          const explicitExtendedUnicodeCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-            /[😀😁😂😃😴😵😶😷🙄🙅🙆🙇🙌🙍🙎🙏]/u,
+        it('correctly handles explicit non-BMP characters', async () => {
+          const testEnv: TestEnvironment = new TestEnvironment(
+            new CharacterRegexWhitelist(/[😀😁😂😃😴😵😶😷🙄🙅🙆🙇🙌🙍🙎🙏]/u),
           );
-          const explicitExtendedUnicodeIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-            defaultLocalizer,
-            stubDiagnosticFactory,
-            explicitExtendedUnicodeCharacterSet,
-          );
+          await testEnv.init();
 
-          expect(explicitExtendedUnicodeIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
-          expect(explicitExtendedUnicodeIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}')).toEqual(
-            [],
-          );
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
           expect(
-            explicitExtendedUnicodeIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
+          ).toEqual([]);
+          expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
           ).toEqual([]);
 
-          expect(explicitExtendedUnicodeIssueFinder.produceDiagnostics('🙓😀m🚤😎')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
-            createExpectedDiagnostic('😎', 7, 9),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('🙓😀m🚤😎')).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
+            testEnv.createExpectedDiagnostic('😎', 7, 9),
           ]);
           expect(
-            explicitExtendedUnicodeIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}\u{1F60E}'),
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}\u{1F60E}'),
           ).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
-            createExpectedDiagnostic('😎', 7, 9),
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
+            testEnv.createExpectedDiagnostic('😎', 7, 9),
           ]);
           expect(
-            explicitExtendedUnicodeIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4\uD83D\uDE0E'),
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4\uD83D\uDE0E'),
           ).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
-            createExpectedDiagnostic('😎', 7, 9),
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
+            testEnv.createExpectedDiagnostic('😎', 7, 9),
           ]);
         });
 
-        it('correctly handles ranges expressed with surrogate pairs', () => {
-          const surrogatePairUnicodeCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-            /[\uD83D\uDE00-\uD83D\uDE4F]/u,
+        it('correctly handles ranges expressed with surrogate pairs', async () => {
+          const testEnv: TestEnvironment = new TestEnvironment(
+            new CharacterRegexWhitelist(/[\uD83D\uDE00-\uD83D\uDE4F]/u),
           );
-          const surrogatePairIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-            defaultLocalizer,
-            stubDiagnosticFactory,
-            surrogatePairUnicodeCharacterSet,
-          );
+          await testEnv.init();
 
-          expect(surrogatePairIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
-          expect(surrogatePairIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}')).toEqual([]);
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('😀😶🙅🙏')).toEqual([]);
           expect(
-            surrogatePairIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
+          ).toEqual([]);
+          expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
           ).toEqual([]);
 
-          expect(surrogatePairIssueFinder.produceDiagnostics('🙓😀m🚤')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('🙓😀m🚤')).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(surrogatePairIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\u{1F653}\u{1F600}\u006D\u{1F6A4}')).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(surrogatePairIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4')).toEqual([
-            createExpectedDiagnostic('🙓', 0, 2),
-            createExpectedDiagnostic('m', 4, 5),
-            createExpectedDiagnostic('🚤', 5, 7),
+          expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4'),
+          ).toEqual([
+            testEnv.createExpectedDiagnostic('🙓', 0, 2),
+            testEnv.createExpectedDiagnostic('m', 4, 5),
+            testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
 
           // invalid surrogate pairs
-          expect(surrogatePairIssueFinder.produceDiagnostics('\uD83D')).toEqual([
-            createExpectedDiagnostic('\uD83D', 0, 1),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D')).toEqual([
+            testEnv.createExpectedDiagnostic('\uD83D', 0, 1),
           ]);
-          expect(surrogatePairIssueFinder.produceDiagnostics('\uD83D\u0061')).toEqual([
-            createExpectedDiagnostic('\uD83D', 0, 1),
-            createExpectedDiagnostic('a', 1, 2),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\u0061')).toEqual([
+            testEnv.createExpectedDiagnostic('\uD83D', 0, 1),
+            testEnv.createExpectedDiagnostic('a', 1, 2),
           ]);
-          expect(surrogatePairIssueFinder.produceDiagnostics('\uD83D\u{1F600}')).toEqual([
-            createExpectedDiagnostic('\uD83D', 0, 1),
+          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics('\uD83D\u{1F600}')).toEqual([
+            testEnv.createExpectedDiagnostic('\uD83D', 0, 1),
           ]);
         });
       });
@@ -313,35 +264,29 @@ const stubDocumentManager: StubDocumentManager = new StubDocumentManager(new Tex
 
 describe('AllowedCharacterChecker tests', () => {
   it("doesn't provide any DiagnosticFixes", async () => {
-    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
-    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
-      defaultLocalizer,
-      stubDocumentManager,
-      basicCharacterSet,
-    );
+    const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
+    await testEnv.init();
 
     expect(
-      await basicCharacterChecker.getDiagnosticFixes('Hello, _there!&%', createExpectedDiagnostic(',', 5, 6)),
+      await testEnv.allowedCharacterChecker.getDiagnosticFixes(
+        'Hello, _there!&%',
+        testEnv.createExpectedDiagnostic(',', 5, 6),
+      ),
     ).toEqual([]);
   });
 
   it('initializes its own namespace in the localizer', async () => {
-    const localizer: Localizer = new Localizer();
-    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
-    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
-      localizer,
-      stubDocumentManager,
-      basicCharacterSet,
-    );
-    await basicCharacterChecker.init();
-    await localizer.init();
+    const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
+    await testEnv.init();
 
-    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([createExpectedDiagnostic('^', 5, 6)]);
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+      testEnv.createExpectedDiagnostic('^', 5, 6),
+    ]);
   });
 
   it('gets its messages from the localizer', async () => {
-    const localizer: Localizer = new Localizer();
-    localizer.addNamespace('allowedCharacters', (language: string) => {
+    const customLocalizer: Localizer = new Localizer();
+    customLocalizer.addNamespace('allowedCharacters', (language: string) => {
       if (language === 'en') {
         return {
           diagnosticMessagesByCode: {
@@ -356,16 +301,11 @@ describe('AllowedCharacterChecker tests', () => {
         };
       }
     });
-    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
-    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
-      localizer,
-      stubDocumentManager,
-      basicCharacterSet,
-    );
-    await basicCharacterChecker.init();
-    await localizer.init();
 
-    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+    const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/), customLocalizer);
+    await testEnv.init();
+
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
       {
         code: 'disallowed-character',
         severity: DiagnosticSeverity.Warning,
@@ -385,8 +325,8 @@ describe('AllowedCharacterChecker tests', () => {
       },
     ]);
 
-    await localizer.changeLanguage('es');
-    expect(await basicCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+    await customLocalizer.changeLanguage('es');
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
       {
         code: 'disallowed-character',
         severity: DiagnosticSeverity.Warning,
@@ -410,39 +350,50 @@ describe('AllowedCharacterChecker tests', () => {
 
 describe('integration tests', () => {
   describe('between AllowedCharacterChecker and AllowedCharacterIssueFinder', () => {
-    const basicCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(/[a-zA-Z ]/);
-    const basicCharacterChecker: AllowedCharacterChecker = new AllowedCharacterChecker(
-      defaultLocalizer,
-      stubDocumentManager,
-      basicCharacterSet,
-    );
-
     it('correctly handles ASCII characters', async () => {
-      expect(await basicCharacterChecker.getDiagnostics('hello there')).toEqual([]);
-      expect(await basicCharacterChecker.getDiagnostics('hello there!')).toEqual([
-        createExpectedDiagnostic('!', 11, 12),
+      const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
+      await testEnv.init();
+
+      expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there')).toEqual([]);
+      expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there!')).toEqual([
+        testEnv.createExpectedDiagnostic('!', 11, 12),
       ]);
     });
     it('correctly handles Unicode characters', async () => {
-      expect(await basicCharacterChecker.getDiagnostics('h𝕖llo ther𝖊')).toEqual([
-        createExpectedDiagnostic('𝕖', 1, 3),
-        createExpectedDiagnostic('𝖊', 11, 13),
+      const testEnv: TestEnvironment = new TestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
+      await testEnv.init();
+
+      expect(await testEnv.allowedCharacterChecker.getDiagnostics('h𝕖llo ther𝖊')).toEqual([
+        testEnv.createExpectedDiagnostic('𝕖', 1, 3),
+        testEnv.createExpectedDiagnostic('𝖊', 11, 13),
       ]);
     });
   });
 
   describe('with the standard English rule set', () => {
-    const standardEnglishCharacterSet = StandardRuleSets.English;
-    const standardEnglishCharacterChecker: DiagnosticProvider =
-      standardEnglishCharacterSet.createSelectedDiagnosticProviders(defaultLocalizer, stubDocumentManager, [
-        RuleType.AllowedCharacters,
-      ])[0];
-
     it('produces no output for empty strings', async () => {
+      const localizer: Localizer = new Localizer();
+      const standardEnglishCharacterSet = StandardRuleSets.English;
+      const standardEnglishCharacterChecker: DiagnosticProvider =
+        standardEnglishCharacterSet.createSelectedDiagnosticProviders(localizer, stubDocumentManager, [
+          RuleType.AllowedCharacters,
+        ])[0];
+      await standardEnglishCharacterChecker.init();
+      await localizer.init();
+
       expect(await standardEnglishCharacterChecker.getDiagnostics('')).toEqual([]);
     });
 
     it('produces no output for standard English allowed characters', async () => {
+      const localizer: Localizer = new Localizer();
+      const standardEnglishCharacterSet = StandardRuleSets.English;
+      const standardEnglishCharacterChecker: DiagnosticProvider =
+        standardEnglishCharacterSet.createSelectedDiagnosticProviders(localizer, stubDocumentManager, [
+          RuleType.AllowedCharacters,
+        ])[0];
+      await standardEnglishCharacterChecker.init();
+      await localizer.init();
+
       expect(await standardEnglishCharacterChecker.getDiagnostics('Four score, and seven(!!!) years ago?')).toEqual([]);
       expect(await standardEnglishCharacterChecker.getDiagnostics('"4 Sc0r3;“ \tand\r’ 7 YRS ago: \n')).toEqual([]);
       expect(await standardEnglishCharacterChecker.getDiagnostics('ALL UPPERCASE TEXT')).toEqual([]);
@@ -451,61 +402,65 @@ describe('integration tests', () => {
     });
 
     it('produces Diagnostics for disallowed ASCII characters', async () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithStandardEnglishCharacters();
+
+      const localizer: Localizer = new Localizer();
+      const standardEnglishCharacterSet = StandardRuleSets.English;
+      const standardEnglishCharacterChecker: DiagnosticProvider =
+        standardEnglishCharacterSet.createSelectedDiagnosticProviders(localizer, stubDocumentManager, [
+          RuleType.AllowedCharacters,
+        ])[0];
+      await standardEnglishCharacterChecker.init();
+      await localizer.init();
+
       expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$')).toEqual([
-        createExpectedDiagnostic('&amp;', 0, 1),
-        createExpectedDiagnostic('{', 1, 2),
-        createExpectedDiagnostic('+', 2, 3),
-        createExpectedDiagnostic('$', 3, 4),
+        testEnv.createExpectedDiagnostic('&amp;', 0, 1),
+        testEnv.createExpectedDiagnostic('{', 1, 2),
+        testEnv.createExpectedDiagnostic('+', 2, 3),
+        testEnv.createExpectedDiagnostic('$', 3, 4),
       ]);
     });
 
     it('produces Diagnostics for disallowed Unicode characters', async () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithStandardEnglishCharacters();
+
+      const localizer: Localizer = new Localizer();
+      const standardEnglishCharacterSet = StandardRuleSets.English;
+      const standardEnglishCharacterChecker: DiagnosticProvider =
+        standardEnglishCharacterSet.createSelectedDiagnosticProviders(localizer, stubDocumentManager, [
+          RuleType.AllowedCharacters,
+        ])[0];
+      await standardEnglishCharacterChecker.init();
+      await localizer.init();
+
       // confusable characters
       expect(await standardEnglishCharacterChecker.getDiagnostics('аᖯ𝐜𝖽ｅ')).toEqual([
-        createExpectedDiagnostic('а', 0, 1),
-        createExpectedDiagnostic('ᖯ', 1, 2),
-        createExpectedDiagnostic('𝐜', 2, 4),
-        createExpectedDiagnostic('𝖽', 4, 6),
-        createExpectedDiagnostic('ｅ', 6, 7),
+        testEnv.createExpectedDiagnostic('а', 0, 1),
+        testEnv.createExpectedDiagnostic('ᖯ', 1, 2),
+        testEnv.createExpectedDiagnostic('𝐜', 2, 4),
+        testEnv.createExpectedDiagnostic('𝖽', 4, 6),
+        testEnv.createExpectedDiagnostic('ｅ', 6, 7),
       ]);
 
       // other seemingly plausible characters
       expect(await standardEnglishCharacterChecker.getDiagnostics('‟″á×ꭗﬁ')).toEqual([
-        createExpectedDiagnostic('‟', 0, 1),
-        createExpectedDiagnostic('″', 1, 2),
-        createExpectedDiagnostic('á', 2, 3),
-        createExpectedDiagnostic('×', 3, 4),
-        createExpectedDiagnostic('ꭗ', 4, 5),
-        createExpectedDiagnostic('ﬁ', 5, 6),
+        testEnv.createExpectedDiagnostic('‟', 0, 1),
+        testEnv.createExpectedDiagnostic('″', 1, 2),
+        testEnv.createExpectedDiagnostic('á', 2, 3),
+        testEnv.createExpectedDiagnostic('×', 3, 4),
+        testEnv.createExpectedDiagnostic('ꭗ', 4, 5),
+        testEnv.createExpectedDiagnostic('ﬁ', 5, 6),
       ]);
     });
   });
 });
 
 describe('ScriptureDocument tests', () => {
-  const stylesheet = new UsfmStylesheet('usfm.sty');
-  const documentFactory = new UsfmDocumentFactory(stylesheet);
-  const standardAllowedCharacterSet = new CharacterRegexWhitelist(
-    new CharacterClassRegexBuilder()
-      .addRange('A', 'Z')
-      .addRange('a', 'z')
-      .addRange('0', '9')
-      .addCharacters(['.', ',', '?', '/', '\\', ':', ';', '(', ')', '-', '—', '!'])
-      .addCharacters(['"', "'", '\u2018', '\u2019', '\u201C', '\u201D'])
-      .addCharacters([' ', '\r', '\n', '\t'])
-      .build(),
-  );
-  const allowedCharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
-    defaultLocalizer,
-    stubDiagnosticFactory,
-    standardAllowedCharacterSet,
-  );
+  it('produces no errors for well-formed text', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardEnglishCharacters();
+    await testEnv.init();
 
-  it('produces no errors for well-formed text', () => {
-    const scriptureDocument: ScriptureDocument = documentFactory.create(
-      'test-uri',
-      'usfm',
-      1,
+    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
       `\\id GEN
       \\toc3 Gen
       \\toc2 Genesis
@@ -518,14 +473,14 @@ describe('ScriptureDocument tests', () => {
       \\v 1 Now Abraham was old, well advanced in years. And the Lord had blessed Abraham in all things.`,
     );
 
-    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
+    expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
   });
 
-  it('identifies disallowed characters in verse text', () => {
-    const scriptureDocument: ScriptureDocument = documentFactory.create(
-      'test-uri',
-      'usfm',
-      1,
+  it('identifies disallowed characters in verse text', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardEnglishCharacters();
+    await testEnv.init();
+
+    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
       `\\id GEN
       \\toc3 Gen
       \\toc2 Genesis
@@ -538,16 +493,16 @@ describe('ScriptureDocument tests', () => {
       \\v 1 The servant% said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
     );
 
-    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
-      createExpectedDiagnostic('%', 171, 172),
+    expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      testEnv.createExpectedDiagnostic('%', 171, 172),
     ]);
   });
 
-  it('identifies disallowed characters that occur in non-verse portions', () => {
-    const scriptureDocument: ScriptureDocument = documentFactory.create(
-      'test-uri',
-      'usfm',
-      1,
+  it('identifies disallowed characters that occur in non-verse portions', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardEnglishCharacters();
+    await testEnv.init();
+
+    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
       `\\id GEN
       \\toc3 G*n
       \\toc2 Gene$is
@@ -560,12 +515,109 @@ describe('ScriptureDocument tests', () => {
       \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
     );
 
-    expect(allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
-      createExpectedDiagnostic('*', 21, 22),
-      createExpectedDiagnostic('$', 40, 41),
-      createExpectedDiagnostic('@', 80, 81),
-      createExpectedDiagnostic('|', 122, 123),
-      createExpectedDiagnostic('&amp;', 128, 129),
+    expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
+      testEnv.createExpectedDiagnostic('*', 21, 22),
+      testEnv.createExpectedDiagnostic('$', 40, 41),
+      testEnv.createExpectedDiagnostic('@', 80, 81),
+      testEnv.createExpectedDiagnostic('|', 122, 123),
+      testEnv.createExpectedDiagnostic('&amp;', 128, 129),
     ]);
   });
 });
+
+class TestEnvironment {
+  private readonly allowedCharacterIssueFinderLocalizer: Localizer;
+  private readonly allowedCharacterCheckerLocalizer: Localizer;
+
+  readonly allowedCharacterChecker: AllowedCharacterChecker;
+  readonly allowedCharacterIssueFinder;
+
+  private readonly scriptureDocumentFactory: UsfmDocumentFactory;
+
+  constructor(
+    private readonly allowedCharacterSet: AllowedCharacterSet,
+    private readonly customLocalizer?: Localizer,
+  ) {
+    this.allowedCharacterIssueFinderLocalizer = this.createDefaultLocalizer();
+
+    const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
+      'allowed-character-set-checker',
+      new StubSingleLineTextDocument(''),
+    );
+
+    this.allowedCharacterIssueFinder = new _privateTestingClasses.AllowedCharacterIssueFinder(
+      this.customLocalizer ?? this.allowedCharacterIssueFinderLocalizer,
+      stubDiagnosticFactory,
+      allowedCharacterSet,
+    );
+
+    this.allowedCharacterCheckerLocalizer = new Localizer();
+
+    this.allowedCharacterChecker = new AllowedCharacterChecker(
+      this.customLocalizer ?? this.allowedCharacterCheckerLocalizer,
+      stubDocumentManager,
+      allowedCharacterSet,
+    );
+
+    const stylesheet = new UsfmStylesheet('usfm.sty');
+    this.scriptureDocumentFactory = new UsfmDocumentFactory(stylesheet);
+  }
+
+  private createDefaultLocalizer(): Localizer {
+    const defaultLocalizer: Localizer = new Localizer();
+    defaultLocalizer.addNamespace('allowedCharacters', (_language: string) => {
+      return {
+        diagnosticMessagesByCode: {
+          'disallowed-character': "The character '{{character}}' is not typically used in this language.",
+        },
+      };
+    });
+    return defaultLocalizer;
+  }
+
+  public async init(): Promise<void> {
+    await this.allowedCharacterChecker.init();
+    await this.allowedCharacterCheckerLocalizer.init();
+    await this.allowedCharacterIssueFinderLocalizer.init();
+    await this.customLocalizer?.init();
+  }
+
+  static createWithStandardEnglishCharacters(): TestEnvironment {
+    return new TestEnvironment(
+      new CharacterRegexWhitelist(
+        new CharacterClassRegexBuilder()
+          .addRange('A', 'Z')
+          .addRange('a', 'z')
+          .addRange('0', '9')
+          .addCharacters(['.', ',', '?', '/', '\\', ':', ';', '(', ')', '-', '—', '!'])
+          .addCharacters(['"', "'", '\u2018', '\u2019', '\u201C', '\u201D'])
+          .addCharacters([' ', '\r', '\n', '\t'])
+          .build(),
+      ),
+    );
+  }
+
+  createExpectedDiagnostic(character: string, startOffset: number, endOffset: number): Diagnostic {
+    return {
+      code: 'disallowed-character',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 0,
+          character: startOffset,
+        },
+        end: {
+          line: 0,
+          character: endOffset,
+        },
+      },
+      source: 'allowed-character-set-checker',
+      message: `The character '${character}' is not typically used in this language.`,
+      data: '',
+    };
+  }
+
+  createScriptureDocument(usfm: string): ScriptureDocument {
+    return this.scriptureDocumentFactory.create('test-uri', 'usfm', 1, usfm);
+  }
+}

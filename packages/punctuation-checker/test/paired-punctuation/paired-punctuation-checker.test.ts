@@ -11,70 +11,22 @@ import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-pun
 import { PairedPunctuationDirection } from '../../src/utils';
 import { StubDocumentManager, StubSingleLineTextDocument } from '../test-utils';
 
-const defaultLocalizer: Localizer = new Localizer();
-defaultLocalizer.addNamespace('pairedPunctuation', (_language: string) => {
-  return {
-    diagnosticMessagesByCode: {
-      'unmatched-opening-parenthesis': 'Opening parenthesis with no closing parenthesis.',
-      'unmatched-closing-parenthesis': 'Closing parenthesis with no opening parenthesis.',
-      'unmatched-opening-square-bracket': 'Opening square bracket with no closing bracket.',
-      'unmatched-closing-square-bracket': 'Closing square bracket with no opening bracket.',
-      'unmatched-opening-curly-bracket': 'Opening curly bracket with no closing bracket.',
-      'unmatched-closing-curly-bracket': 'Closing curly bracket with no opening bracket.',
-      'unmatched-opening-punctuation-mark': 'Opening punctuation mark with no closing mark.',
-      'unmatched-closing-punctuation-mark': 'Closing punctuation mark with no opening mark.',
-      'overlapping-punctuation-pairs':
-        'This pair of punctuation marks {{firstPair}} overlaps with another pair {{secondPair}}.',
-    },
-  };
-});
-await defaultLocalizer.init();
-
-const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
-  'paired-punctuation-checker',
-  new StubSingleLineTextDocument(''), // passing an empty document is fine here since we don't use getText()
-);
-
 describe('PairedPunctuationErrorFinder tests', () => {
-  const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-    .addQuotationRule({
-      openingPunctuationMark: '\u201C',
-      closingPunctuationMark: '\u201D',
-    })
-    .addQuotationRule({
-      openingPunctuationMark: '\u2018',
-      closingPunctuationMark: '\u2019',
-    })
-    .addRule({
-      openingPunctuationMark: '(',
-      closingPunctuationMark: ')',
-    })
-    .addRule({
-      openingPunctuationMark: '[',
-      closingPunctuationMark: ']',
-    })
-    .addRule({
-      openingPunctuationMark: '{',
-      closingPunctuationMark: '}',
-    })
-    .addRule({
-      openingPunctuationMark: '<',
-      closingPunctuationMark: '>',
-    })
-    .build();
-
-  const pairedPunctuationErrorFinder = new _privateTestingClasses.PairedPunctuationErrorFinder(
-    defaultLocalizer,
-    pairedPunctuationConfig,
-    stubDiagnosticFactory,
-  );
-
-  it('creates no Diagnostics for error-free text', () => {
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The rain in Spain falls mainly on the plain.')).toEqual([]);
+  it('creates no Diagnostics for error-free text', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
+    await testEnv.init();
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in Spain falls mainly on the plain.'),
+    ).toEqual([]);
   });
 
-  it('creates Diagnostics for unmatched paired punctuation', () => {
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls mainly on the plain.')).toEqual([
+  it('creates Diagnostics for unmatched paired punctuation', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
+    await testEnv.init();
+
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-parenthesis',
         source: 'paired-punctuation-checker',
@@ -94,7 +46,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The [rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The [rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -114,7 +68,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The {rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The {rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-curly-bracket',
         source: 'paired-punctuation-checker',
@@ -134,7 +90,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The <rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The <rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-punctuation-mark',
         source: 'paired-punctuation-checker',
@@ -154,7 +112,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The )rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The )rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-closing-parenthesis',
         source: 'paired-punctuation-checker',
@@ -174,7 +134,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The ]rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The ]rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-closing-square-bracket',
         source: 'paired-punctuation-checker',
@@ -194,7 +156,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The }rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The }rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-closing-curly-bracket',
         source: 'paired-punctuation-checker',
@@ -214,7 +178,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The >rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The >rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-closing-punctuation-mark',
         source: 'paired-punctuation-checker',
@@ -234,7 +200,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
       },
     ]);
 
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls] mainly on the plain.')).toEqual([
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls] mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-closing-square-bracket',
         source: 'paired-punctuation-checker',
@@ -272,7 +240,9 @@ describe('PairedPunctuationErrorFinder tests', () => {
     ]);
 
     expect(
-      pairedPunctuationErrorFinder.produceDiagnostics('The \u2018rain in Spain falls mainly\u2019 on the {plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        'The \u2018rain in Spain falls mainly\u2019 on the {plain.',
+      ),
     ).toEqual([
       {
         code: 'unmatched-opening-curly-bracket',
@@ -294,57 +264,65 @@ describe('PairedPunctuationErrorFinder tests', () => {
     ]);
   });
 
-  it('does not create Diagnostics for unmatched quotes', () => {
+  it('does not create Diagnostics for unmatched quotes', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
+    await testEnv.init();
+
     expect(
-      pairedPunctuationErrorFinder.produceDiagnostics('The rain in \u201CSpain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in \u201CSpain falls mainly on the plain.'),
     ).toEqual([]);
     expect(
-      pairedPunctuationErrorFinder.produceDiagnostics('The rain in (Spain falls mainly) on the plain.\u2019'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in (Spain falls mainly) on the plain.\u2019'),
     ).toEqual([]);
   });
 
-  it('creates Diagnostics for incorrectly overlapping paired punctuation', () => {
-    expect(pairedPunctuationErrorFinder.produceDiagnostics('The (rain in [Spain) falls mainly] on the plain.')).toEqual(
-      [
-        {
-          code: 'overlapping-punctuation-pairs',
-          source: 'paired-punctuation-checker',
-          severity: DiagnosticSeverity.Warning,
-          range: {
-            start: {
-              line: 0,
-              character: 19,
-            },
-            end: {
-              line: 0,
-              character: 20,
-            },
-          },
-          message: 'This pair of punctuation marks (\u2026) overlaps with another pair [\u2026].',
-          data: '',
-        },
-        {
-          code: 'overlapping-punctuation-pairs',
-          source: 'paired-punctuation-checker',
-          severity: DiagnosticSeverity.Warning,
-          range: {
-            start: {
-              line: 0,
-              character: 13,
-            },
-            end: {
-              line: 0,
-              character: 14,
-            },
-          },
-          message: 'This pair of punctuation marks [\u2026] overlaps with another pair (\u2026).',
-          data: '',
-        },
-      ],
-    );
+  it('creates Diagnostics for incorrectly overlapping paired punctuation', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
+    await testEnv.init();
 
     expect(
-      pairedPunctuationErrorFinder.produceDiagnostics('The \u201Crain in {Spain\u201D falls mainly} on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in [Spain) falls mainly] on the plain.'),
+    ).toEqual([
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 19,
+          },
+          end: {
+            line: 0,
+            character: 20,
+          },
+        },
+        message: 'This pair of punctuation marks (\u2026) overlaps with another pair [\u2026].',
+        data: '',
+      },
+      {
+        code: 'overlapping-punctuation-pairs',
+        source: 'paired-punctuation-checker',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 13,
+          },
+          end: {
+            line: 0,
+            character: 14,
+          },
+        },
+        message: 'This pair of punctuation marks [\u2026] overlaps with another pair (\u2026).',
+        data: '',
+      },
+    ]);
+
+    expect(
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        'The \u201Crain in {Spain\u201D falls mainly} on the plain.',
+      ),
     ).toEqual([
       {
         code: 'overlapping-punctuation-pairs',
@@ -385,58 +363,33 @@ describe('PairedPunctuationErrorFinder tests', () => {
 });
 
 describe('PairedPunctuationIterator tests', () => {
-  const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-    .addQuotationRule({
-      openingPunctuationMark: '\u201C',
-      closingPunctuationMark: '\u201D',
-    })
-    .addQuotationRule({
-      openingPunctuationMark: '\u2018',
-      closingPunctuationMark: '\u2019',
-    })
-    .addRule({
-      openingPunctuationMark: '(',
-      closingPunctuationMark: ')',
-    })
-    .addRule({
-      openingPunctuationMark: '[',
-      closingPunctuationMark: ']',
-    })
-    .addRule({
-      openingPunctuationMark: '{',
-      closingPunctuationMark: '}',
-    })
-    .build();
+  it('does not identify any punctuation marks not in the PairedPunctuationConfig', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-  it('does not identify any punctuation marks not in the PairedPunctuationConfig', () => {
-    const emptyStringPairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
-      '',
-    );
+    const emptyStringPairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator('');
     expect(emptyStringPairedPunctuationIterator.hasNext()).toBe(false);
 
-    const noPunctuationPairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
+    const noPunctuationPairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
       'The rain in Spain falls mainly on the plain',
     );
     expect(noPunctuationPairedPunctuationIterator.hasNext()).toBe(false);
 
-    const noPairedPunctuationPairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
-      'The #rain, in @Spain! falls& mainly? on^ the plain*',
-    );
+    const noPairedPunctuationPairedPunctuationIterator: PairedPunctuationIterator =
+      testEnv.newPairedPunctuationIterator('The #rain, in @Spain! falls& mainly? on^ the plain*');
     expect(noPairedPunctuationPairedPunctuationIterator.hasNext()).toBe(false);
 
-    const pairedPunctuationNotInTheConfigIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
+    const pairedPunctuationNotInTheConfigIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
       '\u201EThe rain in `Spain` falls <mainly> on the plain\u201F',
     );
     expect(pairedPunctuationNotInTheConfigIterator.hasNext()).toBe(false);
   });
 
-  it('identifies properly paired punctuation in the context of a sentence', () => {
-    const pairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
+  it('identifies properly paired punctuation in the context of a sentence', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
+
+    const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
       '\u201CThe rain\u201D in [Spain {falls} mainly] (on the plain).',
     );
     expect(pairedPunctuationIterator.hasNext()).toBe(true);
@@ -497,9 +450,11 @@ describe('PairedPunctuationIterator tests', () => {
     });
   });
 
-  it('identifies malformed paired punctuation in the context of a sentence', () => {
-    const pairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      pairedPunctuationConfig,
+  it('identifies malformed paired punctuation in the context of a sentence', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
+
+    const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
       '\u201DThe rain\u201C in [Spain [falls{ mainly) (on the plain].',
     );
     expect(pairedPunctuationIterator.hasNext()).toBe(true);
@@ -560,32 +515,11 @@ describe('PairedPunctuationIterator tests', () => {
     });
   });
 
-  it('adheres to the PairedPunctuationConfig', () => {
-    const backwardsPairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-      .addQuotationRule({
-        openingPunctuationMark: '\u201D',
-        closingPunctuationMark: '\u201C',
-      })
-      .addQuotationRule({
-        openingPunctuationMark: '\u2019',
-        closingPunctuationMark: '\u2018',
-      })
-      .addRule({
-        openingPunctuationMark: ')',
-        closingPunctuationMark: '(',
-      })
-      .addRule({
-        openingPunctuationMark: ']',
-        closingPunctuationMark: '[',
-      })
-      .addRule({
-        openingPunctuationMark: '}',
-        closingPunctuationMark: '{',
-      })
-      .build();
+  it('adheres to the PairedPunctuationConfig', async () => {
+    const backwardsTestEnv: TestEnvironment = TestEnvironment.createWithBackwardsPairedPunctuation();
+    await backwardsTestEnv.init();
 
-    const pairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      backwardsPairedPunctuationConfig,
+    const pairedPunctuationIterator: PairedPunctuationIterator = backwardsTestEnv.newPairedPunctuationIterator(
       '\u201CThe rain\u201D in [Spain {falls} mainly] (on the plain).',
     );
     expect(pairedPunctuationIterator.hasNext()).toBe(true);
@@ -645,19 +579,10 @@ describe('PairedPunctuationIterator tests', () => {
       text: ')',
     });
 
-    const bizarrePairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-      .addRule({
-        openingPunctuationMark: '+',
-        closingPunctuationMark: '-',
-      })
-      .addRule({
-        openingPunctuationMark: '/',
-        closingPunctuationMark: '\\',
-      })
-      .build();
+    const bizarreTestEnv: TestEnvironment = TestEnvironment.createWithBizarrePairedPunctuation();
+    await bizarreTestEnv.init();
 
-    const bizarrePairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(
-      bizarrePairedPunctuationConfig,
+    const bizarrePairedPunctuationIterator: PairedPunctuationIterator = bizarreTestEnv.newPairedPunctuationIterator(
       'The +rain in /Spain +falls- mainly\\ on the- plain.',
     );
     expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
@@ -706,65 +631,44 @@ describe('PairedPunctuationIterator tests', () => {
 });
 
 describe('PairedPunctuationAnalyzer tests', () => {
-  const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-    .addQuotationRule({
-      openingPunctuationMark: '\u201C',
-      closingPunctuationMark: '\u201D',
-    })
-    .addQuotationRule({
-      openingPunctuationMark: '\u2018',
-      closingPunctuationMark: '\u2019',
-    })
-    .addRule({
-      openingPunctuationMark: '(',
-      closingPunctuationMark: ')',
-    })
-    .addRule({
-      openingPunctuationMark: '[',
-      closingPunctuationMark: ']',
-    })
-    .addRule({
-      openingPunctuationMark: '{',
-      closingPunctuationMark: '}',
-    })
-    .build();
+  it('identifies no issues with well-formed text', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-  it('identifies no issues with well-formed text', () => {
-    const pairedPunctuationAnalyzer = new _privateTestingClasses.PairedPunctuationAnalyzer(pairedPunctuationConfig);
-
-    const emptyAnalysis = pairedPunctuationAnalyzer.analyze('');
+    const emptyAnalysis = testEnv.pairedPunctuationAnalyzer.analyze('');
     expect(emptyAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(emptyAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const quotesAnalysis = pairedPunctuationAnalyzer.analyze(
+    const quotesAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '\u201CThe rain in \u2018Spain \u201Cfalls\u201D mainly\u2019 on the plain.\u201D',
     );
     expect(quotesAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(quotesAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const multiplePairsAnalysis = pairedPunctuationAnalyzer.analyze(
+    const multiplePairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain) in [Spain] falls {mainly} (on the plain).',
     );
     expect(multiplePairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(multiplePairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const multipleNestedPairsAnalysis = pairedPunctuationAnalyzer.analyze(
+    const multipleNestedPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in [Spain {falls} mainly] on the plain).',
     );
     expect(multipleNestedPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(multipleNestedPairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const quotesAndOtherPairsAnalysis = pairedPunctuationAnalyzer.analyze(
+    const quotesAndOtherPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '\u201CThe rain in (Spain \u2018falls [mainly]\u2019 on the plain).\u201D',
     );
     expect(quotesAndOtherPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(quotesAndOtherPairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
   });
 
-  it('identifies unmatched punctuation pairs', () => {
-    const pairedPunctuationAnalyzer = new _privateTestingClasses.PairedPunctuationAnalyzer(pairedPunctuationConfig);
+  it('identifies unmatched punctuation pairs', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-    const openingParenAnalysis = pairedPunctuationAnalyzer.analyze('(');
+    const openingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze('(');
     expect(openingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
         direction: PairedPunctuationDirection.Opening,
@@ -774,7 +678,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       },
     ]);
 
-    const closingParenAnalysis = pairedPunctuationAnalyzer.analyze(')');
+    const closingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(')');
     expect(closingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
         direction: PairedPunctuationDirection.Closing,
@@ -784,7 +688,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       },
     ]);
 
-    const unmatchedOpeningParenAnalysis = pairedPunctuationAnalyzer.analyze(
+    const unmatchedOpeningParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in [Spain falls] mainly on the plain',
     );
     expect(unmatchedOpeningParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
@@ -796,7 +700,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       },
     ]);
 
-    const unmatchedClosingParenAnalysis = pairedPunctuationAnalyzer.analyze(
+    const unmatchedClosingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       'The rain in [Spain falls] mainly on the plain)',
     );
     expect(unmatchedClosingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
@@ -808,7 +712,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       },
     ]);
 
-    const nestedUnmatchedOpeningMarkAnalysis = pairedPunctuationAnalyzer.analyze(
+    const nestedUnmatchedOpeningMarkAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in [Spain falls) mainly on the plain',
     );
     expect(nestedUnmatchedOpeningMarkAnalysis.getUnmatchedPunctuationMarks()).toEqual([
@@ -820,7 +724,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       },
     ]);
 
-    const nestedUnmatchedClosingMarkAnalysis = pairedPunctuationAnalyzer.analyze(
+    const nestedUnmatchedClosingMarkAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in ]Spain falls) mainly on the plain',
     );
     expect(nestedUnmatchedClosingMarkAnalysis.getUnmatchedPunctuationMarks()).toEqual([
@@ -833,29 +737,31 @@ describe('PairedPunctuationAnalyzer tests', () => {
     ]);
   });
 
-  it("doesn't identify unmatched Quotation mark errors", () => {
-    const pairedPunctuationAnalyzer = new _privateTestingClasses.PairedPunctuationAnalyzer(pairedPunctuationConfig);
+  it("doesn't identify unmatched Quotation mark errors", async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-    const unmatchedOpeningQuoteAnalysis = pairedPunctuationAnalyzer.analyze(
+    const unmatchedOpeningQuoteAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '\u201CThe (rain in [Spain]) falls mainly on the plain',
     );
     expect(unmatchedOpeningQuoteAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const unmatchedClosingQuoteAnalysis = pairedPunctuationAnalyzer.analyze(
+    const unmatchedClosingQuoteAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       'The (rain in [Spain\u201D]) falls mainly on the plain',
     );
     expect(unmatchedClosingQuoteAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
-    const noOtherMarksAnalysis = pairedPunctuationAnalyzer.analyze(
+    const noOtherMarksAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '\u201CThe rain in Spain\u2019 falls mainly on the plain\u2019',
     );
     expect(noOtherMarksAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
   });
 
-  it('identifies pairs of punctuation marks that incorrectly overlap', () => {
-    const pairedPunctuationAnalyzer = new _privateTestingClasses.PairedPunctuationAnalyzer(pairedPunctuationConfig);
+  it('identifies pairs of punctuation marks that incorrectly overlap', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-    const overlappingPairsAnalysis = pairedPunctuationAnalyzer.analyze(
+    const overlappingPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in [Spain) falls] mainly on the plain.',
     );
     expect(overlappingPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([
@@ -875,7 +781,7 @@ describe('PairedPunctuationAnalyzer tests', () => {
       ),
     ]);
 
-    const overlapsWithQuotesAnalysis = pairedPunctuationAnalyzer.analyze(
+    const overlapsWithQuotesAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
       '(The rain in \u201CSpain) falls\u201D mainly on the plain.',
     );
     expect(overlapsWithQuotesAnalysis.getOverlappingPunctuationMarks()).toEqual([
@@ -898,42 +804,12 @@ describe('PairedPunctuationAnalyzer tests', () => {
 });
 
 describe('PairedPunctuationChecker tests', () => {
-  const stubDocumentManager: StubDocumentManager = new StubDocumentManager(new TextDocumentFactory());
-  const pairedPunctuationConfig: PairedPunctuationConfig = new PairedPunctuationConfig.Builder()
-    .addQuotationRule({
-      openingPunctuationMark: '\u201C',
-      closingPunctuationMark: '\u201D',
-    })
-    .addQuotationRule({
-      openingPunctuationMark: '\u2018',
-      closingPunctuationMark: '\u2019',
-    })
-    .addRule({
-      openingPunctuationMark: '(',
-      closingPunctuationMark: ')',
-    })
-    .addRule({
-      openingPunctuationMark: '[',
-      closingPunctuationMark: ']',
-    })
-    .addRule({
-      openingPunctuationMark: '{',
-      closingPunctuationMark: '}',
-    })
-    .build();
-
   it('produces DiagnosticFixes for unmatched marks', async () => {
-    const localizer: Localizer = new Localizer();
-    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
-      localizer,
-      stubDocumentManager,
-      pairedPunctuationConfig,
-    );
-    await pairedPunctuationChecker.init();
-    await localizer.init();
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
     expect(
-      await pairedPunctuationChecker.getDiagnosticFixes('(Hello', {
+      await testEnv.pairedPunctuationChecker.getDiagnosticFixes('(Hello', {
         code: 'unmatched-opening-parenthesis',
         source: 'paired-punctuation-checker',
         severity: DiagnosticSeverity.Error,
@@ -989,17 +865,11 @@ describe('PairedPunctuationChecker tests', () => {
   });
 
   it('does not produce DiagnosticFixes for overlapping pairs of marks', async () => {
-    const localizer: Localizer = new Localizer();
-    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
-      localizer,
-      stubDocumentManager,
-      pairedPunctuationConfig,
-    );
-    await pairedPunctuationChecker.init();
-    await localizer.init();
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
     expect(
-      await pairedPunctuationChecker.getDiagnosticFixes('(Hello\u201C) there\u201D', {
+      await testEnv.pairedPunctuationChecker.getDiagnosticFixes('(Hello\u201C) there\u201D', {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',
         severity: DiagnosticSeverity.Warning,
@@ -1019,16 +889,12 @@ describe('PairedPunctuationChecker tests', () => {
   });
 
   it('initializes its own namespace in the localizer', async () => {
-    const localizer: Localizer = new Localizer();
-    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
-      localizer,
-      stubDocumentManager,
-      pairedPunctuationConfig,
-    );
-    await pairedPunctuationChecker.init();
-    await localizer.init();
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    await testEnv.init();
 
-    expect(await pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.')).toEqual([
+    expect(
+      await testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -1049,7 +915,9 @@ describe('PairedPunctuationChecker tests', () => {
     ]);
 
     expect(
-      await pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+      await testEnv.pairedPunctuationChecker.getDiagnostics(
+        'The {rain in \u2018Spain} falls mainly\u2019 on the plain.',
+      ),
     ).toEqual([
       {
         code: 'overlapping-punctuation-pairs',
@@ -1089,8 +957,8 @@ describe('PairedPunctuationChecker tests', () => {
   });
 
   it('gets its messages from the localizer', async () => {
-    const localizer: Localizer = new Localizer();
-    localizer.addNamespace('pairedPunctuation', (_language: string) => {
+    const customLocalizer: Localizer = new Localizer();
+    customLocalizer.addNamespace('pairedPunctuation', (_language: string) => {
       return {
         diagnosticMessagesByCode: {
           'unmatched-opening-square-bracket': "You didn't close your opening square bracket.",
@@ -1098,15 +966,14 @@ describe('PairedPunctuationChecker tests', () => {
         },
       };
     });
-    const pairedPunctuationChecker: PairedPunctuationChecker = new PairedPunctuationChecker(
-      localizer,
-      stubDocumentManager,
-      pairedPunctuationConfig,
-    );
-    await pairedPunctuationChecker.init();
-    await localizer.init();
 
-    expect(await pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.')).toEqual([
+    const testEnv: TestEnvironment =
+      TestEnvironment.createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer);
+    await testEnv.init();
+
+    expect(
+      await testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
+    ).toEqual([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -1127,7 +994,9 @@ describe('PairedPunctuationChecker tests', () => {
     ]);
 
     expect(
-      await pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+      await testEnv.pairedPunctuationChecker.getDiagnostics(
+        'The {rain in \u2018Spain} falls mainly\u2019 on the plain.',
+      ),
     ).toEqual([
       {
         code: 'overlapping-punctuation-pairs',
@@ -1166,3 +1035,200 @@ describe('PairedPunctuationChecker tests', () => {
     ]);
   });
 });
+
+class TestEnvironment {
+  readonly pairedPunctuationErrorFinder;
+  readonly pairedPunctuationAnalyzer;
+  readonly pairedPunctuationChecker: PairedPunctuationChecker;
+
+  private readonly pairedPunctuationErrorFinderLocalizer: Localizer; // we have separate localizers for the two classes
+  private readonly pairedPunctuationCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
+
+  constructor(
+    private readonly pairedPunctuationConfig: PairedPunctuationConfig,
+    private readonly customLocalizer?: Localizer,
+  ) {
+    this.pairedPunctuationErrorFinderLocalizer = this.createDefaultLocalizer();
+    this.pairedPunctuationCheckerLocalizer = new Localizer();
+
+    const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
+      'paired-punctuation-checker',
+      new StubSingleLineTextDocument(''), // passing an empty document is fine here since we don't use getText()
+    );
+    this.pairedPunctuationErrorFinder = new _privateTestingClasses.PairedPunctuationErrorFinder(
+      this.customLocalizer ?? this.pairedPunctuationErrorFinderLocalizer,
+      this.pairedPunctuationConfig,
+      stubDiagnosticFactory,
+    );
+
+    this.pairedPunctuationAnalyzer = new _privateTestingClasses.PairedPunctuationAnalyzer(this.pairedPunctuationConfig);
+
+    const stubDocumentManager: StubDocumentManager = new StubDocumentManager(new TextDocumentFactory());
+    this.pairedPunctuationChecker = new PairedPunctuationChecker(
+      this.customLocalizer ?? this.pairedPunctuationCheckerLocalizer,
+      stubDocumentManager,
+      pairedPunctuationConfig,
+    );
+  }
+
+  private createDefaultLocalizer(): Localizer {
+    const defaultLocalizer: Localizer = new Localizer();
+    defaultLocalizer.addNamespace('pairedPunctuation', (_language: string) => {
+      return {
+        diagnosticMessagesByCode: {
+          'unmatched-opening-parenthesis': 'Opening parenthesis with no closing parenthesis.',
+          'unmatched-closing-parenthesis': 'Closing parenthesis with no opening parenthesis.',
+          'unmatched-opening-square-bracket': 'Opening square bracket with no closing bracket.',
+          'unmatched-closing-square-bracket': 'Closing square bracket with no opening bracket.',
+          'unmatched-opening-curly-bracket': 'Opening curly bracket with no closing bracket.',
+          'unmatched-closing-curly-bracket': 'Closing curly bracket with no opening bracket.',
+          'unmatched-opening-punctuation-mark': 'Opening punctuation mark with no closing mark.',
+          'unmatched-closing-punctuation-mark': 'Closing punctuation mark with no opening mark.',
+          'overlapping-punctuation-pairs':
+            'This pair of punctuation marks {{firstPair}} overlaps with another pair {{secondPair}}.',
+        },
+      };
+    });
+    return defaultLocalizer;
+  }
+
+  public async init(): Promise<void> {
+    await this.pairedPunctuationChecker.init();
+    await this.pairedPunctuationErrorFinderLocalizer.init();
+    await this.pairedPunctuationCheckerLocalizer.init();
+
+    await this.customLocalizer?.init();
+  }
+
+  static createWithStandardPairedPunctuationAndAngleBrackets(): TestEnvironment {
+    return new TestEnvironment(
+      new PairedPunctuationConfig.Builder()
+        .addQuotationRule({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addQuotationRule({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addRule({
+          openingPunctuationMark: '(',
+          closingPunctuationMark: ')',
+        })
+        .addRule({
+          openingPunctuationMark: '[',
+          closingPunctuationMark: ']',
+        })
+        .addRule({
+          openingPunctuationMark: '{',
+          closingPunctuationMark: '}',
+        })
+        .addRule({
+          openingPunctuationMark: '<',
+          closingPunctuationMark: '>',
+        })
+        .build(),
+    );
+  }
+
+  static createWithStandardPairedPunctuation(): TestEnvironment {
+    return new TestEnvironment(
+      new PairedPunctuationConfig.Builder()
+        .addQuotationRule({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addQuotationRule({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addRule({
+          openingPunctuationMark: '(',
+          closingPunctuationMark: ')',
+        })
+        .addRule({
+          openingPunctuationMark: '[',
+          closingPunctuationMark: ']',
+        })
+        .addRule({
+          openingPunctuationMark: '{',
+          closingPunctuationMark: '}',
+        })
+        .build(),
+    );
+  }
+
+  static createWithBackwardsPairedPunctuation(): TestEnvironment {
+    return new TestEnvironment(
+      new PairedPunctuationConfig.Builder()
+        .addQuotationRule({
+          openingPunctuationMark: '\u201D',
+          closingPunctuationMark: '\u201C',
+        })
+        .addQuotationRule({
+          openingPunctuationMark: '\u2019',
+          closingPunctuationMark: '\u2018',
+        })
+        .addRule({
+          openingPunctuationMark: ')',
+          closingPunctuationMark: '(',
+        })
+        .addRule({
+          openingPunctuationMark: ']',
+          closingPunctuationMark: '[',
+        })
+        .addRule({
+          openingPunctuationMark: '}',
+          closingPunctuationMark: '{',
+        })
+        .build(),
+    );
+  }
+
+  static createWithBizarrePairedPunctuation(): TestEnvironment {
+    return new TestEnvironment(
+      new PairedPunctuationConfig.Builder()
+        .addRule({
+          openingPunctuationMark: '+',
+          closingPunctuationMark: '-',
+        })
+        .addRule({
+          openingPunctuationMark: '/',
+          closingPunctuationMark: '\\',
+        })
+        .build(),
+    );
+  }
+
+  static createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer: Localizer): TestEnvironment {
+    return new TestEnvironment(
+      new PairedPunctuationConfig.Builder()
+        .addQuotationRule({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addQuotationRule({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addRule({
+          openingPunctuationMark: '(',
+          closingPunctuationMark: ')',
+        })
+        .addRule({
+          openingPunctuationMark: '[',
+          closingPunctuationMark: ']',
+        })
+        .addRule({
+          openingPunctuationMark: '{',
+          closingPunctuationMark: '}',
+        })
+        .build(),
+      customLocalizer,
+    );
+  }
+
+  newPairedPunctuationIterator(text: string): PairedPunctuationIterator {
+    return new PairedPunctuationIterator(this.pairedPunctuationConfig, text);
+  }
+}
