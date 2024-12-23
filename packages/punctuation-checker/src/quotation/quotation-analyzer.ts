@@ -1,3 +1,5 @@
+import { ScriptureNode } from '@sillsdev/lynx';
+
 import { PairedPunctuationDirection } from '../utils';
 import { QuotationConfig } from './quotation-config';
 import {
@@ -15,7 +17,7 @@ export class QuotationAnalyzer {
 
   constructor(private readonly quotationConfig: QuotationConfig) {}
 
-  public analyze(text: string): QuotationAnalysis {
+  public analyze(text: string | ScriptureNode[]): QuotationAnalysis {
     this.reset();
 
     const quotationIterator: QuotationIterator = new QuotationIterator(this.quotationConfig, text);

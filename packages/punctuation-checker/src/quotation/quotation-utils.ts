@@ -1,4 +1,6 @@
-import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
+import { Range, ScriptureNode } from '@sillsdev/lynx';
+
+import { PairedPunctuationDirection, PairedPunctuationMetadata, TextSegment } from '../utils';
 import { QuotationConfig } from './quotation-config';
 
 export interface QuoteMetadata extends PairedPunctuationMetadata {
@@ -12,6 +14,7 @@ export class UnresolvedQuoteMetadata {
   private directions: Set<PairedPunctuationDirection> = new Set<PairedPunctuationDirection>();
   private startIndex = 0;
   private endIndex = 0;
+  private enclosingRange: Range | undefined = undefined;
   private text = '';
   private isAutocorrectable = false;
 
@@ -68,6 +71,7 @@ export class UnresolvedQuoteMetadata {
       direction: chosenDirection,
       startIndex: this.startIndex,
       endIndex: this.endIndex,
+      enclosingRange: this.enclosingRange,
       text: this.text,
       isAutocorrectable: this.isAutocorrectable,
     };
@@ -96,6 +100,11 @@ export class UnresolvedQuoteMetadata {
 
     public setEndIndex(endIndex: number): this {
       this.objectInstance.endIndex = endIndex;
+      return this;
+    }
+
+    public setEnclosingRange(range: Range): this {
+      this.objectInstance.enclosingRange = range;
       return this;
     }
 
@@ -237,20 +246,36 @@ export interface QuoteCorrection {
 export class QuotationIterator {
   private readonly openingOrClosingQuotePattern: RegExp = /[\u201C\u201D]/g;
   private nextQuote: UnresolvedQuoteMetadata | null = null;
+  private readonly textSegments: TextSegment[];
+  private textSegmentIndex = 0;
 
   constructor(
     private readonly quotationConfig: QuotationConfig,
-    private readonly text: string,
+    input: string | ScriptureNode[],
   ) {
     this.openingOrClosingQuotePattern = quotationConfig.createAllQuotesRegex();
+    this.textSegments = this.createTextSegments(input);
     this.findNext();
+  }
+
+  private createTextSegments(input: string | ScriptureNode[]): TextSegment[] {
+    if (typeof input === 'string') {
+      return [new TextSegment(input)];
+    }
+    return input.map((x) => new TextSegment(x.getText(), x.range));
   }
 
   private findNext(): void {
     let match: RegExpExecArray | null;
     do {
-      match = this.openingOrClosingQuotePattern.exec(this.text);
+      match = this.openingOrClosingQuotePattern.exec(this.textSegments[this.textSegmentIndex].getText());
       if (match === null) {
+        if (this.textSegmentIndex < this.textSegments.length - 1) {
+          this.textSegmentIndex++;
+          this.findNext();
+          return;
+        }
+
         this.nextQuote = null;
         return;
       }
@@ -264,6 +289,9 @@ export class QuotationIterator {
       .addDirections(this.quotationConfig.getPossibleQuoteDirections(matchingText))
       .setText(matchingText);
 
+    if (this.textSegments[this.textSegmentIndex].hasRange()) {
+      unresolvedQuoteMetadataBuilder.setEnclosingRange(this.textSegments[this.textSegmentIndex].getRange());
+    }
     if (this.quotationConfig.isQuoteAutocorrectable(matchingText)) {
       unresolvedQuoteMetadataBuilder.markAsAutocorrectable();
     }
@@ -275,11 +303,18 @@ export class QuotationIterator {
     if (!this.quotationConfig.isQuotationMarkPotentiallyIgnoreable(quoteMatch[0])) {
       return false;
     }
-    const leftContext: string = this.text.substring(Math.max(0, quoteMatch.index - 5), quoteMatch.index);
-    const rightContext: string = this.text.substring(
-      quoteMatch.index + quoteMatch[0].length,
-      Math.min(this.text.length, quoteMatch.index + quoteMatch[0].length + 5),
-    );
+    const leftContext: string = this.textSegments[this.textSegmentIndex]
+      .getText()
+      .substring(Math.max(0, quoteMatch.index - 5), quoteMatch.index);
+    const rightContext: string = this.textSegments[this.textSegmentIndex]
+      .getText()
+      .substring(
+        quoteMatch.index + quoteMatch[0].length,
+        Math.min(
+          this.textSegments[this.textSegmentIndex].getText().length,
+          quoteMatch.index + quoteMatch[0].length + 5,
+        ),
+      );
     return this.quotationConfig.shouldIgnoreQuotationMark(quoteMatch[0], leftContext, rightContext);
   }
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationCorrector } from '../../src/quotation/quotation-corrector';
-import { StubDocumentManager } from '../test-utils';
+import { StubTextDocumentManager } from '../test-utils';
 
 describe('QuotationCorrector tests', () => {
   it('produces no output for text with no unambiguous quotes', async () => {
@@ -225,7 +225,7 @@ class TestEnvironment {
   readonly quotationCorrector: QuotationCorrector;
 
   private constructor(private readonly quotationConfig: QuotationConfig) {
-    const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+    const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
     this.quotationCorrector = new QuotationCorrector(stubDocumentManager, quotationConfig);
   }
 

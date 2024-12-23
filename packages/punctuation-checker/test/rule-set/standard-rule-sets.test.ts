@@ -13,7 +13,7 @@ import { QuotationDepth } from '../../src/quotation/quotation-utils';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { PairedPunctuationDirection } from '../../src/utils';
-import { StubDocumentManager } from '../test-utils';
+import { StubTextDocumentManager } from '../test-utils';
 
 describe('Standard English rule set tests', () => {
   describe('Allowed character checking tests', () => {
@@ -201,7 +201,7 @@ describe('Standard English rule set tests', () => {
     });
 
     it('identifies no issues with well-formed English Biblical text', async () => {
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const localizer: Localizer = new Localizer();
       const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
         localizer,
@@ -254,7 +254,7 @@ describe('Standard English rule set tests', () => {
     });
 
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const localizer: Localizer = new Localizer();
       const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
         localizer,
@@ -606,7 +606,7 @@ describe('Standard English rule set tests', () => {
 
     it('identifies no issues with well-formed English Biblical text', async () => {
       const localizer: Localizer = new Localizer();
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
         localizer,
         stubDocumentManager,
@@ -638,7 +638,7 @@ describe('Standard English rule set tests', () => {
 
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
       const localizer: Localizer = new Localizer();
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
         localizer,
         stubDocumentManager,
@@ -677,7 +677,7 @@ describe('Standard English rule set tests', () => {
     const standardEnglishRuleSet = StandardRuleSets.English;
 
     it('makes no corrections for well-formed English Biblical text', async () => {
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const quoteCorrector: OnTypeFormattingProvider =
         standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
       expect(
@@ -691,7 +691,7 @@ describe('Standard English rule set tests', () => {
     });
 
     it('corrects intentionally placed ambiguities in otherwise well-formed English Biblical text', async () => {
-      const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const quoteCorrector: OnTypeFormattingProvider =
         standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
 
