@@ -33,11 +33,18 @@ class DiagnosticBuilder {
     return this;
   }
 
-  public setRange(startIndex: number, endIndex: number): this {
-    this.range = {
-      start: this.textDocument.positionAt(startIndex),
-      end: this.textDocument.positionAt(endIndex),
-    };
+  public setRange(startIndex: number, endIndex: number, enclosingRange?: Range): this {
+    if (enclosingRange === undefined) {
+      this.range = {
+        start: this.textDocument.positionAt(startIndex),
+        end: this.textDocument.positionAt(endIndex),
+      };
+    } else {
+      this.range = {
+        start: this.textDocument.positionAt(startIndex, enclosingRange),
+        end: this.textDocument.positionAt(endIndex, enclosingRange),
+      };
+    }
     return this;
   }
 

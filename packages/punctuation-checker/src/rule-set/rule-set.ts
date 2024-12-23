@@ -1,4 +1,11 @@
-import { DiagnosticProvider, DocumentManager, Localizer, OnTypeFormattingProvider, TextDocument } from '@sillsdev/lynx';
+import {
+  DiagnosticProvider,
+  DocumentManager,
+  Localizer,
+  OnTypeFormattingProvider,
+  ScriptureDocument,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AllowedCharacterChecker } from '../allowed-character/allowed-character-checker';
 import { AllowedCharacterSet } from '../allowed-character/allowed-character-set';
@@ -34,7 +41,7 @@ export class RuleSet {
 
   public createSelectedDiagnosticProviders(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentManager: DocumentManager<TextDocument | ScriptureDocument>,
     selectedRules: RuleType[],
   ): DiagnosticProvider[] {
     const diagnosticProviderFactories: DiagnosticProvider[] = [];

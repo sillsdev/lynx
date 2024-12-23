@@ -14,12 +14,12 @@ import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-pun
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { CharacterClassRegexBuilder } from '../../src/utils';
-import { StubDocumentManager } from '../test-utils';
+import { StubTextDocumentManager } from '../test-utils';
 
 const defaultLocalizer: Localizer = new Localizer();
 
 describe('DiagnosticProviderFactory tests', () => {
-  const stubDocumentManager: DocumentManager<TextDocument> = new StubDocumentManager(new TextDocumentFactory());
+  const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
 
   const allowedCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
     new CharacterClassRegexBuilder().addRange('B', 'Y').build(),

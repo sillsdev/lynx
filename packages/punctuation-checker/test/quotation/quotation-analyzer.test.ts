@@ -1227,6 +1227,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
+      enclosingRange: undefined,
       text: '\u201C',
       isAutocorrectable: false,
     };
@@ -1277,6 +1278,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
+      enclosingRange: undefined,
       text: '\u201C',
       isAutocorrectable: false,
     };
@@ -1327,6 +1329,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 3,
       endIndex: 4,
+      enclosingRange: undefined,
       text: '\u201C',
       isAutocorrectable: false,
     });
@@ -1379,6 +1382,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
+      enclosingRange: undefined,
       text: '\u201D',
       isAutocorrectable: false,
     };
@@ -1427,6 +1431,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 10,
       endIndex: 11,
+      enclosingRange: undefined,
       text: '\u2019',
       isAutocorrectable: false,
     };
@@ -1461,6 +1466,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 5,
       endIndex: 6,
+      enclosingRange: undefined,
       text: '\u2018',
       isAutocorrectable: false,
     });
@@ -1489,6 +1495,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 0,
       endIndex: 1,
+      enclosingRange: undefined,
       text: '\u201C',
       isAutocorrectable: false,
     });
@@ -1538,6 +1545,7 @@ describe('QuotationResolver tests', () => {
       direction: PairedPunctuationDirection.Opening,
       startIndex: 10,
       endIndex: 11,
+      enclosingRange: undefined,
       text: '\u201C',
       isAutocorrectable: false,
     });

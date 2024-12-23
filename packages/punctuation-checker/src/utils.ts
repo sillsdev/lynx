@@ -1,6 +1,9 @@
+import { Range } from '@sillsdev/lynx';
+
 export interface PunctuationMetadata {
   startIndex: number;
   endIndex: number;
+  enclosingRange: Range | undefined;
   text: string;
 }
 
@@ -102,4 +105,26 @@ export class StringContextMatcher {
       return this.stringContextMatcher;
     }
   };
+}
+
+export class TextSegment {
+  constructor(
+    private readonly text: string,
+    private readonly range?: Range,
+  ) {}
+
+  public getText(): string {
+    return this.text;
+  }
+
+  public hasRange(): boolean {
+    return this.range !== undefined;
+  }
+
+  public getRange(): Range {
+    if (this.range === undefined) {
+      throw new Error("Tried to get a Range from a TextSegment that doesn't have one");
+    }
+    return this.range;
+  }
 }
