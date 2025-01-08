@@ -5,6 +5,8 @@ import {
   DocumentManager,
   Localizer,
   ScriptureDocument,
+  ScriptureNode,
+  ScriptureText,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
 import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
@@ -18,7 +20,7 @@ import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
 
-describe('AllowedCharacterChecker tests', () => {
+describe('TextDocument tests', () => {
   it("doesn't provide any DiagnosticFixes", async () => {
     const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
     await testEnv.init();
@@ -104,6 +106,14 @@ describe('AllowedCharacterChecker tests', () => {
         data: '',
       },
     ]);
+  });
+
+  it('uses the AllowedCharacterSet that is passed to it', async () => {
+    const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[a-z ]/));
+    await testEnv.init();
+
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there')).toHaveLength(0);
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('heLlo ThEre')).toHaveLength(3);
   });
 });
 
@@ -279,7 +289,6 @@ describe('ScriptureDocument tests', () => {
     ]);
   });
 });
-
 class TextTestEnvironment {
   readonly allowedCharacterCheckerLocalizer: Localizer;
 
@@ -342,39 +351,27 @@ class TextTestEnvironment {
 
 class ScriptureTestEnvironment {
   readonly allowedCharacterCheckerLocalizer: Localizer;
-
-  readonly allowedCharacterChecker: AllowedCharacterChecker;
   readonly scriptureAllowedCharacterChecker: AllowedCharacterChecker;
 
   private readonly scriptureDocumentFactory: UsfmDocumentFactory;
   readonly scriptureDocumentManager: DocumentManager<ScriptureDocument>;
 
-  constructor(
-    private readonly allowedCharacterSet: AllowedCharacterSet,
-    private readonly customLocalizer?: Localizer,
-  ) {
+  constructor(private readonly allowedCharacterSet: AllowedCharacterSet) {
     this.allowedCharacterCheckerLocalizer = new Localizer();
-    const stubTextDocumentManager: StubTextDocumentManager = new StubTextDocumentManager(new TextDocumentFactory());
-    this.allowedCharacterChecker = new AllowedCharacterChecker(
-      this.customLocalizer ?? this.allowedCharacterCheckerLocalizer,
-      stubTextDocumentManager,
-      this.allowedCharacterSet,
-    );
 
     const stylesheet = new UsfmStylesheet('usfm.sty');
     this.scriptureDocumentFactory = new UsfmDocumentFactory(stylesheet);
     this.scriptureDocumentManager = new StubScriptureDocumentManager(this.scriptureDocumentFactory);
     this.scriptureAllowedCharacterChecker = new AllowedCharacterChecker(
-      this.customLocalizer ?? this.allowedCharacterCheckerLocalizer,
+      this.allowedCharacterCheckerLocalizer,
       this.scriptureDocumentManager,
       this.allowedCharacterSet,
     );
   }
 
   public async init(): Promise<void> {
-    await this.allowedCharacterChecker.init();
+    await this.scriptureAllowedCharacterChecker.init();
     await this.allowedCharacterCheckerLocalizer.init();
-    await this.customLocalizer?.init();
   }
 
   static createWithStandardEnglishCharacters(): ScriptureTestEnvironment {
@@ -420,5 +417,24 @@ class ScriptureTestEnvironment {
 
   createScriptureDocument(id: string, usfm: string): ScriptureDocument {
     return this.scriptureDocumentFactory.create(id, 'usfm', 1, usfm);
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }

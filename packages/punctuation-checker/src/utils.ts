@@ -1,4 +1,4 @@
-import { Range } from '@sillsdev/lynx';
+import { Range, ScriptureNode, ScriptureNodeType } from '@sillsdev/lynx';
 
 export interface PunctuationMetadata {
   startIndex: number;
@@ -126,5 +126,37 @@ export class TextSegment {
       throw new Error("Tried to get a Range from a TextSegment that doesn't have one");
     }
     return this.range;
+  }
+}
+
+export class ScriptureNodeGrouper {
+  private readonly nonVerseNodes: ScriptureNode[] = [];
+  private readonly verseNodes: ScriptureNode[] = [];
+
+  constructor(allNodes: IterableIterator<ScriptureNode>) {
+    for (const node of allNodes) {
+      if (this.isVerseNode(node)) {
+        this.verseNodes.push(node);
+      } else {
+        this.nonVerseNodes.push(node);
+      }
+    }
+  }
+
+  private isVerseNode(node: ScriptureNode): boolean {
+    for (const sibling of node.parent?.children ?? []) {
+      if (sibling.type === ScriptureNodeType.Verse) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public getVerseNodes(): ScriptureNode[] {
+    return this.verseNodes;
+  }
+
+  public getNonVerseNodes(): ScriptureNode[] {
+    return this.nonVerseNodes;
   }
 }

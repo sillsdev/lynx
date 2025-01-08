@@ -5,7 +5,6 @@ import {
   DiagnosticsChanged,
   DocumentManager,
   ScriptureDocument,
-  ScriptureNode,
   ScriptureNodeType,
   TextDocument,
 } from '@sillsdev/lynx';
@@ -13,6 +12,7 @@ import { map, merge, Observable, switchMap } from 'rxjs';
 
 import { DiagnosticFactory } from './diagnostic-factory';
 import { IssueFinder, IssueFinderFactory } from './issue-finder';
+import { ScriptureNodeGrouper } from './utils';
 
 export abstract class AbstractChecker implements DiagnosticProvider {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
@@ -97,36 +97,4 @@ export abstract class AbstractChecker implements DiagnosticProvider {
   }
 
   protected abstract getFixes(document: TextDocument | ScriptureDocument, diagnostic: Diagnostic): DiagnosticFix[];
-}
-
-class ScriptureNodeGrouper {
-  private readonly nonVerseNodes: ScriptureNode[] = [];
-  private readonly verseNodes: ScriptureNode[] = [];
-
-  constructor(allNodes: IterableIterator<ScriptureNode>) {
-    for (const node of allNodes) {
-      if (this.isVerseNode(node)) {
-        this.verseNodes.push(node);
-      } else {
-        this.nonVerseNodes.push(node);
-      }
-    }
-  }
-
-  private isVerseNode(node: ScriptureNode): boolean {
-    for (const sibling of node.parent?.children ?? []) {
-      if (sibling.type === ScriptureNodeType.Verse) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public getVerseNodes(): ScriptureNode[] {
-    return this.verseNodes;
-  }
-
-  public getNonVerseNodes(): ScriptureNode[] {
-    return this.nonVerseNodes;
-  }
 }

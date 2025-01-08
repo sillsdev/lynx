@@ -17,10 +17,10 @@ export class QuotationAnalyzer {
 
   constructor(private readonly quotationConfig: QuotationConfig) {}
 
-  public analyze(text: string | ScriptureNode[]): QuotationAnalysis {
+  public analyze(input: string | ScriptureNode[]): QuotationAnalysis {
     this.reset();
 
-    const quotationIterator: QuotationIterator = new QuotationIterator(this.quotationConfig, text);
+    const quotationIterator: QuotationIterator = new QuotationIterator(this.quotationConfig, input);
     while (quotationIterator.hasNext()) {
       this.processQuotationMark(quotationIterator.next());
     }

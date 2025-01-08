@@ -236,6 +236,25 @@ describe('PairedPunctuationChecker tests', () => {
       },
     ]);
   });
+
+  it('uses the PairedPunctuationConfig that is passed to it', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithCustomPairedPunctuation(
+      new PairedPunctuationConfig.Builder()
+        .addRule({
+          openingPunctuationMark: '/',
+          closingPunctuationMark: '\\',
+        })
+        .build(),
+    );
+    await testEnv.init();
+
+    expect(
+      await testEnv.pairedPunctuationChecker.getDiagnostics('The /rain in Spain\\ falls mainly on the plain.'),
+    ).toHaveLength(0);
+    expect(
+      await testEnv.pairedPunctuationChecker.getDiagnostics('The \\rain in Spain/ falls mainly on the plain.'),
+    ).toHaveLength(2);
+  });
 });
 
 class TestEnvironment {
@@ -289,6 +308,10 @@ class TestEnvironment {
         })
         .build(),
     );
+  }
+
+  static createWithCustomPairedPunctuation(pairedPunctuationConfig: PairedPunctuationConfig): TestEnvironment {
+    return new TestEnvironment(pairedPunctuationConfig);
   }
 
   static createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer: Localizer): TestEnvironment {

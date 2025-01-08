@@ -1,3 +1,4 @@
+import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { _privateTestingClasses, QuotationAnalysis, QuotationAnalyzer } from '../../src/quotation/quotation-analyzer';
@@ -34,7 +35,7 @@ describe('QuotationAnalyzer tests', () => {
     });
   });
 
-  describe('Issue identification tests', () => {
+  describe('Issue identification tests for text', () => {
     describe('Top-level English quotation marks', () => {
       describe('No issues for well-formed text', () => {
         it('produces no issues for quote-less text', () => {
@@ -1092,6 +1093,34 @@ describe('QuotationAnalyzer tests', () => {
     });
   });
 
+  describe('Issue identification tests for ScriptureNodes', () => {
+    it('identifies no issues in well-formed quotations spanning across ScriptureNodes', () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+      const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some \u201Ctest text', 5, 15, 5, 30);
+      const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some\u201D other text', 5, 45, 5, 55);
+
+      expect(testEnv.quotationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedQuotes()).toEqual([]);
+    });
+
+    it('identifies issues in quotations spanning across ScriptureNodes', () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+      const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some \u201Ctest \u2018text', 5, 15, 5, 30);
+      const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some\u201D other text', 5, 45, 5, 55);
+
+      expect(testEnv.quotationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedQuotes()).toEqual([
+        {
+          depth: QuotationDepth.Secondary,
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 11,
+          endIndex: 12,
+          text: '\u2018',
+          enclosingRange: scriptureNode1.range,
+          isAutocorrectable: false,
+        },
+      ]);
+    });
+  });
+
   describe('Ambiguous quote correction tests', () => {
     it('produces no output for unambiguous quotation marks', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
@@ -1658,5 +1687,24 @@ class TestEnvironment {
         .setNestingWarningDepth(warningDepth)
         .build(),
     );
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }

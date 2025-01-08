@@ -1,3 +1,4 @@
+import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { OverlappingPairs, PairedPunctuationAnalyzer } from '../../src/paired-punctuation/paired-punctuation-analyzer';
@@ -6,7 +7,7 @@ import { PairedPunctuationIterator } from '../../src/paired-punctuation/paired-p
 import { _privateTestingClasses } from '../../src/quotation/quotation-analyzer';
 import { PairedPunctuationDirection } from '../../src/utils';
 
-describe('PairedPunctuationAnalyzer tests', () => {
+describe('Text tests', () => {
   it('identifies no issues with well-formed text', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
@@ -179,6 +180,60 @@ describe('PairedPunctuationAnalyzer tests', () => {
   });
 });
 
+describe('ScriptureNode tests', () => {
+  it('identifies no issues in well-formed paired punctuation spanning across ScriptureNodes', () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some (test text', 5, 15, 5, 30);
+    const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some) other text', 5, 45, 5, 55);
+
+    expect(
+      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedPunctuationMarks(),
+    ).toEqual([]);
+    expect(
+      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getOverlappingPunctuationMarks(),
+    ).toEqual([]);
+  });
+
+  it('identifies issues in quotations spanning across ScriptureNodes', () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
+    const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some (test [text', 5, 15, 5, 30);
+    const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some) other text', 5, 45, 5, 55);
+
+    expect(
+      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedPunctuationMarks(),
+    ).toEqual([
+      {
+        direction: PairedPunctuationDirection.Opening,
+        startIndex: 11,
+        endIndex: 12,
+        text: '[',
+        enclosingRange: scriptureNode1.range,
+      },
+    ]);
+
+    expect(
+      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getOverlappingPunctuationMarks(),
+    ).toEqual([
+      new OverlappingPairs(
+        {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 11,
+          endIndex: 12,
+          text: '[',
+          enclosingRange: scriptureNode1.range,
+        },
+        {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 8,
+          endIndex: 9,
+          text: ')',
+          enclosingRange: scriptureNode2.range,
+        },
+      ),
+    ]);
+  });
+});
+
 class TestEnvironment {
   readonly pairedPunctuationAnalyzer;
 
@@ -215,5 +270,24 @@ class TestEnvironment {
 
   newPairedPunctuationIterator(text: string): PairedPunctuationIterator {
     return new PairedPunctuationIterator(this.pairedPunctuationConfig, text);
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }

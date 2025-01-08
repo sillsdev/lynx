@@ -43,3 +43,26 @@ export class StubSingleLineTextDocument extends TextDocument {
     return position.character;
   }
 }
+
+export class StubFixedLineWidthTextDocument extends TextDocument {
+  private lineWidth = 1000;
+  public constructor(private readonly text: string) {
+    super('test', 1, text);
+  }
+
+  public getText(_range: Range): string {
+    return this.text;
+  }
+
+  public positionAt(offset: number, enclosingRange?: Range): Position {
+    const newOffset = offset + (enclosingRange === undefined ? 0 : this.offsetAt(enclosingRange.start));
+    return {
+      line: Math.floor(newOffset / this.lineWidth),
+      character: newOffset % this.lineWidth,
+    };
+  }
+
+  public offsetAt(position: Position): number {
+    return position.line * this.lineWidth + position.character;
+  }
+}
