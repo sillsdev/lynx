@@ -6,6 +6,8 @@ import {
   TextDocument,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
 import { RuleSet } from '../../src';
@@ -15,8 +17,6 @@ import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
-import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
-import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 
 const defaultLocalizer: Localizer = new Localizer();
 
