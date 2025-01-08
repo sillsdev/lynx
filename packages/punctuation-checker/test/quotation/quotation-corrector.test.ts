@@ -1,11 +1,11 @@
 import { DocumentManager, Position, ScriptureDocument, TextDocument, TextDocumentFactory } from '@sillsdev/lynx';
-import { describe, expect, it } from 'vitest';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
+import { describe, expect, it } from 'vitest';
 
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationCorrector } from '../../src/quotation/quotation-corrector';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
-import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 
 describe('Text quote correction tests', () => {
   it('produces no output for text with no unambiguous quotes', async () => {
