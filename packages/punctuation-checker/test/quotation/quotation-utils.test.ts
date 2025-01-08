@@ -1,3 +1,4 @@
+import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { QuotationConfig } from '../../src/quotation/quotation-config';
@@ -10,1373 +11,1464 @@ import {
 import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationIterator tests', () => {
-  describe('Top-level English quotation marks', () => {
-    describe('Identification of unpaired quotation marks', () => {
-      it('does not identify quotes in quote-less text', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const emptyStringIterator: QuotationIterator = testEnv.newQuotationIterator('');
-        expect(emptyStringIterator.hasNext()).toBe(false);
+  describe('Plain text quotation mark identification', () => {
+    describe('Top-level English quotation marks', () => {
+      describe('Identification of unpaired quotation marks', () => {
+        it('does not identify quotes in quote-less text', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const emptyStringIterator: QuotationIterator = testEnv.newQuotationIterator('');
+          expect(emptyStringIterator.hasNext()).toBe(false);
 
-        const noQuotationsIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'There are no quotes in this text.',
-        );
-        expect(noQuotationsIterator.hasNext()).toBe(false);
+          const noQuotationsIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'There are no quotes in this text.',
+          );
+          expect(noQuotationsIterator.hasNext()).toBe(false);
+        });
+
+        it('identifies unpaired quotation marks in otherwise empty strings', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+          const openingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C');
+          expect(openingQuotationIterator.hasNext()).toBe(true);
+          expect(openingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(openingQuotationIterator.hasNext()).toBe(false);
+          expect(() => {
+            openingQuotationIterator.next();
+          }).toThrowError(/QuoteIterator's next\(\) function called after hasNext\(\) returned false/);
+
+          const closingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201D');
+          expect(closingQuotationIterator.hasNext()).toBe(true);
+          expect(closingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(closingQuotationIterator.hasNext()).toBe(false);
+        });
+
+        it('identifies unpaired quotation marks in non-empty strings', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+          const previousContextOpeningQuotationIterator: QuotationIterator =
+            testEnv.newQuotationIterator('Extra text, \u201C');
+          expect(previousContextOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(previousContextOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(12)
+              .setEndIndex(13)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(previousContextOpeningQuotationIterator.hasNext()).toBe(false);
+
+          const trailingContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CWith extra text at the end',
+          );
+          expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(trailingContextOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(false);
+
+          const twoSidedContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Text at the start, \u201CWith extra text at the end',
+          );
+          expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(twoSidedContextOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(19)
+              .setEndIndex(20)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(false);
+
+          const previousContextClosingQuotationIterator: QuotationIterator =
+            testEnv.newQuotationIterator(' starting text\u201D');
+          expect(previousContextClosingQuotationIterator.hasNext()).toBe(true);
+          expect(previousContextClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(14)
+              .setEndIndex(15)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(previousContextClosingQuotationIterator.hasNext()).toBe(false);
+
+          const trailingContextClosingQuotationIterator: QuotationIterator =
+            testEnv.newQuotationIterator('\u201Dwith extra at the end.');
+          expect(trailingContextClosingQuotationIterator.hasNext()).toBe(true);
+          expect(trailingContextClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(trailingContextClosingQuotationIterator.hasNext()).toBe(false);
+
+          const twoSidedContextClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Prior text \u201Dwith extra at the end.',
+          );
+          expect(twoSidedContextClosingQuotationIterator.hasNext()).toBe(true);
+          expect(twoSidedContextClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(11)
+              .setEndIndex(12)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(twoSidedContextClosingQuotationIterator.hasNext()).toBe(false);
+        });
+
+        it('does not depend on correct formatting of whitespace', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+          const noWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Text immediately prior\u201Cwith text immediately afterward',
+          );
+          expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(noWhitespaceOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(22)
+              .setEndIndex(23)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
+
+          const reversedWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'No previous space\u201C but a space afterward',
+          );
+          expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(reversedWhitespaceOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(17)
+              .setEndIndex(18)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
+
+          const noWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Text immediately prior\u201Dwith text immediately afterward',
+          );
+          expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
+          expect(noWhitespaceClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(22)
+              .setEndIndex(23)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(false);
+
+          const reversedWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'A previous space \u201Dbut no space afterward',
+          );
+          expect(reversedWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
+          expect(reversedWhitespaceClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(17)
+              .setEndIndex(18)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(reversedWhitespaceClosingQuotationIterator.hasNext()).toBe(false);
+        });
       });
 
-      it('identifies unpaired quotation marks in otherwise empty strings', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+      describe('Identification of multiple quotation marks', () => {
+        it('identifies a pair of quotation marks in otherwise empty strings', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u201D');
 
-        const openingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C');
-        expect(openingQuotationIterator.hasNext()).toBe(true);
-        expect(openingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(openingQuotationIterator.hasNext()).toBe(false);
-        expect(() => {
-          openingQuotationIterator.next();
-        }).toThrowError(/QuoteIterator's next\(\) function called after hasNext\(\) returned false/);
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(1)
+              .setEndIndex(2)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
+        });
 
-        const closingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('\u201D');
-        expect(closingQuotationIterator.hasNext()).toBe(true);
-        expect(closingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(closingQuotationIterator.hasNext()).toBe(false);
+        it('identifies a pair of quotation marks in non-empty strings', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201CSample text.\u201D');
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(13)
+              .setEndIndex(14)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
+
+          const previousContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Context on the left, \u201CSample text.\u201D',
+          );
+          expect(previousContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(previousContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(21)
+              .setEndIndex(22)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(previousContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(previousContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(34)
+              .setEndIndex(35)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(previousContextQuotationPairIterator.hasNext()).toBe(false);
+
+          const trailingContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CSample text.\u201D with context on the right.',
+          );
+          expect(trailingContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(trailingContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(trailingContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(trailingContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(13)
+              .setEndIndex(14)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(trailingContextQuotationPairIterator.hasNext()).toBe(false);
+
+          const twoSidedContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'Context on the left, \u201CSample text.\u201D with context on the right',
+          );
+          expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(twoSidedContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(21)
+              .setEndIndex(22)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(true);
+          expect(twoSidedContextQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(34)
+              .setEndIndex(35)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(false);
+        });
+
+        it('identifies multiple pairs of quotation marks', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CSample text.\u201D and, \u201Cmore sample text\u201D',
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(13)
+              .setEndIndex(14)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(20)
+              .setEndIndex(21)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(37)
+              .setEndIndex(38)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
+        });
       });
 
-      it('identifies unpaired quotation marks in non-empty strings', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+      describe('Identification of ambiguous quotation marks', () => {
+        it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
 
-        const previousContextOpeningQuotationIterator: QuotationIterator =
-          testEnv.newQuotationIterator('Extra text, \u201C');
-        expect(previousContextOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(previousContextOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(12)
-            .setEndIndex(13)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(previousContextOpeningQuotationIterator.hasNext()).toBe(false);
+          const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('Sample" text.');
+          expect(singleQuotationIterator.hasNext()).toBe(true);
+          expect(singleQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(6)
+              .setEndIndex(7)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(singleQuotationIterator.hasNext()).toBe(false);
 
-        const trailingContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CWith extra text at the end',
-        );
-        expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(trailingContextOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(trailingContextOpeningQuotationIterator.hasNext()).toBe(false);
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('"Sample text."');
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(13)
+              .setEndIndex(14)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
+        });
 
-        const twoSidedContextOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Text at the start, \u201CWith extra text at the end',
-        );
-        expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(twoSidedContextOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(19)
-            .setEndIndex(20)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(twoSidedContextOpeningQuotationIterator.hasNext()).toBe(false);
+        it('identifies ambiguous quotes in text containing unambiugous quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
 
-        const previousContextClosingQuotationIterator: QuotationIterator =
-          testEnv.newQuotationIterator(' starting text\u201D');
-        expect(previousContextClosingQuotationIterator.hasNext()).toBe(true);
-        expect(previousContextClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(14)
-            .setEndIndex(15)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(previousContextClosingQuotationIterator.hasNext()).toBe(false);
-
-        const trailingContextClosingQuotationIterator: QuotationIterator =
-          testEnv.newQuotationIterator('\u201Dwith extra at the end.');
-        expect(trailingContextClosingQuotationIterator.hasNext()).toBe(true);
-        expect(trailingContextClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(trailingContextClosingQuotationIterator.hasNext()).toBe(false);
-
-        const twoSidedContextClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Prior text \u201Dwith extra at the end.',
-        );
-        expect(twoSidedContextClosingQuotationIterator.hasNext()).toBe(true);
-        expect(twoSidedContextClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(11)
-            .setEndIndex(12)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(twoSidedContextClosingQuotationIterator.hasNext()).toBe(false);
+          const mixedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'This text \u201Ccontains "straight" and curly quotes.\u201D',
+          );
+          expect(mixedQuotationIterator.hasNext()).toBe(true);
+          expect(mixedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(10)
+              .setEndIndex(11)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(mixedQuotationIterator.hasNext()).toBe(true);
+          expect(mixedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(20)
+              .setEndIndex(21)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(mixedQuotationIterator.hasNext()).toBe(true);
+          expect(mixedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(mixedQuotationIterator.hasNext()).toBe(true);
+          expect(mixedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(48)
+              .setEndIndex(49)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(mixedQuotationIterator.hasNext()).toBe(false);
+        });
       });
 
-      it('does not depend on correct formatting of whitespace', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+      describe('Identification of ill-formed quotation marks', () => {
+        it('identifies quotation marks that are improperly nested', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const improperlyNestedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
+          );
+          expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(18)
+              .setEndIndex(19)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(53)
+              .setEndIndex(54)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const noWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Text immediately prior\u201Cwith text immediately afterward',
-        );
-        expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(noWhitespaceOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(22)
-            .setEndIndex(23)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(noWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
+          const improperlyNestedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis contains an \u201D improperly nested quotation mark.\u201D',
+          );
+          expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(18)
+              .setEndIndex(19)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(53)
+              .setEndIndex(54)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(false);
+        });
 
-        const reversedWhitespaceOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'No previous space\u201C but a space afterward',
-        );
-        expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(reversedWhitespaceOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(17)
-            .setEndIndex(18)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(reversedWhitespaceOpeningQuotationIterator.hasNext()).toBe(false);
+        it('identifies unpaired quotation marks', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThe second quotation mark\u201D is \u201C never closed.',
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(26)
+              .setEndIndex(27)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(31)
+              .setEndIndex(32)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const noWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Text immediately prior\u201Dwith text immediately afterward',
-        );
-        expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
-        expect(noWhitespaceClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(22)
-            .setEndIndex(23)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(noWhitespaceClosingQuotationIterator.hasNext()).toBe(false);
+          const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'The first \u201D quotation mark \u201Cis unpaired.\u201D',
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(10)
+              .setEndIndex(11)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(27)
+              .setEndIndex(28)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(40)
+              .setEndIndex(41)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(false);
+        });
+      });
 
-        const reversedWhitespaceClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'A previous space \u201Dbut no space afterward',
-        );
-        expect(reversedWhitespaceClosingQuotationIterator.hasNext()).toBe(true);
-        expect(reversedWhitespaceClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(17)
-            .setEndIndex(18)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(reversedWhitespaceClosingQuotationIterator.hasNext()).toBe(false);
+      describe('Adherence to the QuotationConfig', () => {
+        it('does not identify single quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u2018single quoted text\u2019',
+          );
+          expect(singleQuotationIterator.hasNext()).toBe(false);
+
+          const singleAndDoubleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201Cdouble and \u2018single quoted text\u201D',
+          );
+          expect(singleAndDoubleQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(singleAndDoubleQuotationIterator.hasNext()).toBe(true);
+          expect(singleAndDoubleQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(31)
+              .setEndIndex(32)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(singleAndDoubleQuotationIterator.hasNext()).toBe(false);
+        });
+
+        it('does not identify straight quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const straightDoubleQuoteIterator: QuotationIterator =
+            testEnv.newQuotationIterator('"straight double quotes"');
+          expect(straightDoubleQuoteIterator.hasNext()).toBe(false);
+
+          const straightSingleQuoteIterator: QuotationIterator =
+            testEnv.newQuotationIterator("'straight double quotes'");
+          expect(straightSingleQuoteIterator.hasNext()).toBe(false);
+
+          const curlyAndStraightDoubleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201Ccurly and straight quotes used here"',
+          );
+          expect(curlyAndStraightDoubleQuoteIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(curlyAndStraightDoubleQuoteIterator.hasNext()).toBe(false);
+
+          const curlyDoubleAndStraightSingleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
+            "\u201Ccurly double and 'straight' quotes used here",
+          );
+          expect(curlyDoubleAndStraightSingleQuoteIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(curlyDoubleAndStraightSingleQuoteIterator.hasNext()).toBe(false);
+        });
+
+        it('does not identify alternative top-level quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+          const guillemetsIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u00ABFrench-style guillemets\u00BB',
+          );
+          expect(guillemetsIterator.hasNext()).toBe(false);
+
+          const germanQuotesIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201EGerman-style quotes\u201F',
+          );
+          expect(germanQuotesIterator.hasNext()).toBe(false);
+        });
       });
     });
 
-    describe('Identification of multiple quotation marks', () => {
-      it('identifies a pair of quotation marks in otherwise empty strings', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u201D');
+    describe('Multi-level English quotation marks', () => {
+      it('skips over apostrophes', () => {
+        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+        const basicPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("Abraham's servant");
+        expect(basicPossessiveIterator.hasNext()).toBe(false);
 
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
+        const basicPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('Abraham\u2019s servant');
+        expect(basicPossessiveIterator2.hasNext()).toBe(false);
+
+        const basicContractionIterator: QuotationIterator = testEnv.newQuotationIterator("they're");
+        expect(basicContractionIterator.hasNext()).toBe(false);
+
+        const basicContractionIterator2: QuotationIterator = testEnv.newQuotationIterator('they\u2019re');
+        expect(basicContractionIterator2.hasNext()).toBe(false);
+
+        const sPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("your sons' wives");
+        expect(sPossessiveIterator.hasNext()).toBe(false);
+
+        const sPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('your sons\u2019 wives');
+        expect(sPossessiveIterator2.hasNext()).toBe(false);
+
+        const quotedApostropheIterator: QuotationIterator = testEnv.newQuotationIterator(
+          '\u201CThis is one of the Hebrews\u2019 children.\u201D',
+        );
+        expect(quotedApostropheIterator.hasNext()).toBe(true);
+        expect(quotedApostropheIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
+            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
             .addDirection(PairedPunctuationDirection.Opening)
             .setStartIndex(0)
             .setEndIndex(1)
             .setText('\u201C')
             .build(),
         );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
+        expect(quotedApostropheIterator.hasNext()).toBe(true);
+        expect(quotedApostropheIterator.next()).toEqual(
           new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
+            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
             .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(1)
-            .setEndIndex(2)
+            .setStartIndex(38)
+            .setEndIndex(39)
             .setText('\u201D')
             .build(),
         );
-        expect(quotationPairIterator.hasNext()).toBe(false);
+        expect(quotedApostropheIterator.hasNext()).toBe(false);
       });
 
-      it('identifies a pair of quotation marks in non-empty strings', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201CSample text.\u201D');
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(13)
-            .setEndIndex(14)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(false);
+      describe('Identification of multiple quotation marks', () => {
+        it('identifies multiple levels of quotes in otherwise empty text', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u2018\u2019\u201D');
 
-        const previousContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Context on the left, \u201CSample text.\u201D',
-        );
-        expect(previousContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(previousContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(21)
-            .setEndIndex(22)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(previousContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(previousContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(34)
-            .setEndIndex(35)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(previousContextQuotationPairIterator.hasNext()).toBe(false);
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(1)
+              .setEndIndex(2)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(2)
+              .setEndIndex(3)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(3)
+              .setEndIndex(4)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
 
-        const trailingContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CSample text.\u201D with context on the right.',
-        );
-        expect(trailingContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(trailingContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(trailingContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(trailingContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(13)
-            .setEndIndex(14)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(trailingContextQuotationPairIterator.hasNext()).toBe(false);
+          const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201C\u2018\u201C\u201D\u2019\u201D',
+          );
 
-        const twoSidedContextQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'Context on the left, \u201CSample text.\u201D with context on the right',
-        );
-        expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(twoSidedContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(21)
-            .setEndIndex(22)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(true);
-        expect(twoSidedContextQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(34)
-            .setEndIndex(35)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(twoSidedContextQuotationPairIterator.hasNext()).toBe(false);
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(1)
+              .setEndIndex(2)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(2)
+              .setEndIndex(3)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(3)
+              .setEndIndex(4)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(4)
+              .setEndIndex(5)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(5)
+              .setEndIndex(6)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(false);
+        });
+
+        it('identifies multiple levels of quotes in non-empty text', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis text \u2018contains multiple\u2019 quote levels\u201D',
+          );
+
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(11)
+              .setEndIndex(12)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(43)
+              .setEndIndex(44)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(false);
+
+          const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis text \u2018has \u201Cthree levels\u201D of quotations\u2019\u201D',
+          );
+
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(11)
+              .setEndIndex(12)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(16)
+              .setEndIndex(17)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(44)
+              .setEndIndex(45)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
+          expect(threeLevelQuotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(45)
+              .setEndIndex(46)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(threeLevelQuotationPairIterator.hasNext()).toBe(false);
+        });
       });
 
-      it('identifies multiple pairs of quotation marks', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
+      describe('Identification of ambiguous quotation marks', () => {
+        it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CSample text.\u201D and, \u201Cmore sample text\u201D',
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(13)
-            .setEndIndex(14)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(20)
-            .setEndIndex(21)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(37)
-            .setEndIndex(38)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(false);
-      });
-    });
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'This text "has \'multiple levels of "ambiguous" quotations\'"',
+          );
 
-    describe('Identification of ambiguous quotation marks', () => {
-      it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(10)
+              .setEndIndex(11)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText("'")
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(35)
+              .setEndIndex(36)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(45)
+              .setEndIndex(46)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(57)
+              .setEndIndex(58)
+              .setText("'")
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(58)
+              .setEndIndex(59)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+        });
 
-        const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator('Sample" text.');
-        expect(singleQuotationIterator.hasNext()).toBe(true);
-        expect(singleQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(6)
-            .setEndIndex(7)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(singleQuotationIterator.hasNext()).toBe(false);
+        it('identifies ambiguous quotes in text with other unambiguous quotes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('"Sample text."');
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(13)
-            .setEndIndex(14)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(false);
-      });
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'This text "has \u2018multiple levels of \u201Cambiguous" quotations\'\u201D',
+          );
 
-      it('identifies ambiguous quotes in text containing unambiugous quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
-
-        const mixedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'This text \u201Ccontains "straight" and curly quotes.\u201D',
-        );
-        expect(mixedQuotationIterator.hasNext()).toBe(true);
-        expect(mixedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(10)
-            .setEndIndex(11)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(mixedQuotationIterator.hasNext()).toBe(true);
-        expect(mixedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(20)
-            .setEndIndex(21)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(mixedQuotationIterator.hasNext()).toBe(true);
-        expect(mixedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(29)
-            .setEndIndex(30)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(mixedQuotationIterator.hasNext()).toBe(true);
-        expect(mixedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(48)
-            .setEndIndex(49)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(mixedQuotationIterator.hasNext()).toBe(false);
-      });
-    });
-
-    describe('Identification of ill-formed quotation marks', () => {
-      it('identifies quotation marks that are improperly nested', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const improperlyNestedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
-        );
-        expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(18)
-            .setEndIndex(19)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(53)
-            .setEndIndex(54)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(improperlyNestedOpeningQuotationIterator.hasNext()).toBe(false);
-
-        const improperlyNestedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis contains an \u201D improperly nested quotation mark.\u201D',
-        );
-        expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(18)
-            .setEndIndex(19)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(53)
-            .setEndIndex(54)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(improperlyNestedClosingQuotationIterator.hasNext()).toBe(false);
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(10)
+              .setEndIndex(11)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(35)
+              .setEndIndex(36)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(45)
+              .setEndIndex(46)
+              .setText('"')
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(57)
+              .setEndIndex(58)
+              .setText("'")
+              .markAsAutocorrectable()
+              .build(),
+          );
+          expect(quotationPairIterator.hasNext()).toBe(true);
+          expect(quotationPairIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(58)
+              .setEndIndex(59)
+              .setText('\u201D')
+              .build(),
+          );
+        });
       });
 
-      it('identifies unpaired quotation marks', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThe second quotation mark\u201D is \u201C never closed.',
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(26)
-            .setEndIndex(27)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(31)
-            .setEndIndex(32)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
+      describe('Identification of ill-formed quotation marks', () => {
+        it('identifies quotation marks that are improperly nested', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-        const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'The first \u201D quotation mark \u201Cis unpaired.\u201D',
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(10)
-            .setEndIndex(11)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(27)
-            .setEndIndex(28)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(40)
-            .setEndIndex(41)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(false);
-      });
-    });
+          const improperlyNestedSecondaryQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'This contains an \u2018 improperly nested quote\u2019',
+          );
+          expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(true);
+          expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(17)
+              .setEndIndex(18)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(true);
+          expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(42)
+              .setEndIndex(43)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(false);
 
-    describe('Adherence to the QuotationConfig', () => {
-      it('does not identify single quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const singleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u2018single quoted text\u2019',
-        );
-        expect(singleQuotationIterator.hasNext()).toBe(false);
+          const improperlyNestedTertiaryQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
+          );
+          expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(18)
+              .setEndIndex(19)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
+          expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(53)
+              .setEndIndex(54)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(false);
+        });
 
-        const singleAndDoubleQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201Cdouble and \u2018single quoted text\u201D',
-        );
-        expect(singleAndDoubleQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(singleAndDoubleQuotationIterator.hasNext()).toBe(true);
-        expect(singleAndDoubleQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(31)
-            .setEndIndex(32)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(singleAndDoubleQuotationIterator.hasNext()).toBe(false);
-      });
+        it('identifies unpaired quotation marks', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-      it('does not identify straight quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const straightDoubleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator('"straight double quotes"');
-        expect(straightDoubleQuoteIterator.hasNext()).toBe(false);
+          const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis has three \u2018unclosed \u201Cquotations',
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(16)
+              .setEndIndex(17)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedOpeningQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(26)
+              .setEndIndex(27)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
 
-        const straightSingleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator("'straight double quotes'");
-        expect(straightSingleQuoteIterator.hasNext()).toBe(false);
+          const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            'This has\u201D three\u2019 unpaired\u201D closing quotes',
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(8)
+              .setEndIndex(9)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
+          expect(unpairedClosingQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(25)
+              .setEndIndex(26)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(unpairedClosingQuotationIterator.hasNext()).toBe(false);
+        });
 
-        const curlyAndStraightDoubleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201Ccurly and straight quotes used here"',
-        );
-        expect(curlyAndStraightDoubleQuoteIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(curlyAndStraightDoubleQuoteIterator.hasNext()).toBe(false);
+        it('identifies quotation marks that are nested beyond the warning depth', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-        const curlyDoubleAndStraightSingleQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
-          "\u201Ccurly double and 'straight' quotes used here",
-        );
-        expect(curlyDoubleAndStraightSingleQuoteIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepth(QuotationDepth.Primary)
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(curlyDoubleAndStraightSingleQuoteIterator.hasNext()).toBe(false);
-      });
-
-      it('does not identify alternative top-level quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
-        const guillemetsIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u00ABFrench-style guillemets\u00BB',
-        );
-        expect(guillemetsIterator.hasNext()).toBe(false);
-
-        const germanQuotesIterator: QuotationIterator = testEnv.newQuotationIterator('\u201EGerman-style quotes\u201F');
-        expect(germanQuotesIterator.hasNext()).toBe(false);
+          const tooDeeplyNestedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            '\u201CThis has \u2018four \u201Clevels of \u2018quotation marks\u2019\u201D\u2019\u201D',
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(10)
+              .setEndIndex(11)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(16)
+              .setEndIndex(17)
+              .setText('\u201C')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(27)
+              .setEndIndex(28)
+              .setText('\u2018')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(43)
+              .setEndIndex(44)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(44)
+              .setEndIndex(45)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(45)
+              .setEndIndex(46)
+              .setText('\u2019')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
+          expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
+            new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(46)
+              .setEndIndex(47)
+              .setText('\u201D')
+              .build(),
+          );
+          expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(false);
+        });
       });
     });
   });
 
-  describe('Multi-level English quotation marks', () => {
-    it('skips over apostrophes', () => {
+  describe('ScriptureNode quotation mark identification', () => {
+    it('identifies quotation marks in a single ScriptureNode', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-      const basicPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("Abraham's servant");
-      expect(basicPossessiveIterator.hasNext()).toBe(false);
+      const scriptureNode: ScriptureNode = testEnv.createScriptureNode('text \u201Cwith\u201D quotes', 1, 5, 1, 23);
 
-      const basicPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('Abraham\u2019s servant');
-      expect(basicPossessiveIterator2.hasNext()).toBe(false);
-
-      const basicContractionIterator: QuotationIterator = testEnv.newQuotationIterator("they're");
-      expect(basicContractionIterator.hasNext()).toBe(false);
-
-      const basicContractionIterator2: QuotationIterator = testEnv.newQuotationIterator('they\u2019re');
-      expect(basicContractionIterator2.hasNext()).toBe(false);
-
-      const sPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator("your sons' wives");
-      expect(sPossessiveIterator.hasNext()).toBe(false);
-
-      const sPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator('your sons\u2019 wives');
-      expect(sPossessiveIterator2.hasNext()).toBe(false);
-
-      const quotedApostropheIterator: QuotationIterator = testEnv.newQuotationIterator(
-        '\u201CThis is one of the Hebrews\u2019 children.\u201D',
-      );
-      expect(quotedApostropheIterator.hasNext()).toBe(true);
-      expect(quotedApostropheIterator.next()).toEqual(
+      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator([scriptureNode]);
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toEqual(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
           .addDirection(PairedPunctuationDirection.Opening)
-          .setStartIndex(0)
-          .setEndIndex(1)
+          .setStartIndex(5)
+          .setEndIndex(6)
+          .setEnclosingRange(scriptureNode.range)
           .setText('\u201C')
           .build(),
       );
-      expect(quotedApostropheIterator.hasNext()).toBe(true);
-      expect(quotedApostropheIterator.next()).toEqual(
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toStrictEqual(
         new UnresolvedQuoteMetadata.Builder()
           .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
           .addDirection(PairedPunctuationDirection.Closing)
-          .setStartIndex(38)
-          .setEndIndex(39)
+          .setStartIndex(10)
+          .setEndIndex(11)
+          .setEnclosingRange(scriptureNode.range)
           .setText('\u201D')
           .build(),
       );
-      expect(quotedApostropheIterator.hasNext()).toBe(false);
+      expect(quotationIterator.hasNext()).toBe(false);
     });
 
-    describe('Identification of multiple quotation marks', () => {
-      it('identifies multiple levels of quotes in otherwise empty text', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator('\u201C\u2018\u2019\u201D');
+    it('identifies quotation marks in multiple ScriptureNodes', () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+      const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('text \u201Cwith \u2018quotes', 1, 5, 1, 23);
+      const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('different\u2019 text\u201D', 2, 3, 2, 19);
 
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(1)
-            .setEndIndex(2)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(2)
-            .setEndIndex(3)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(3)
-            .setEndIndex(4)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(false);
-
-        const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201C\u2018\u201C\u201D\u2019\u201D',
-        );
-
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(1)
-            .setEndIndex(2)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(2)
-            .setEndIndex(3)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(3)
-            .setEndIndex(4)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(4)
-            .setEndIndex(5)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(5)
-            .setEndIndex(6)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(false);
-      });
-
-      it('identifies multiple levels of quotes in non-empty text', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis text \u2018contains multiple\u2019 quote levels\u201D',
-        );
-
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(11)
-            .setEndIndex(12)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(29)
-            .setEndIndex(30)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(43)
-            .setEndIndex(44)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(false);
-
-        const threeLevelQuotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis text \u2018has \u201Cthree levels\u201D of quotations\u2019\u201D',
-        );
-
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(11)
-            .setEndIndex(12)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(16)
-            .setEndIndex(17)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(29)
-            .setEndIndex(30)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(44)
-            .setEndIndex(45)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(true);
-        expect(threeLevelQuotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(45)
-            .setEndIndex(46)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(threeLevelQuotationPairIterator.hasNext()).toBe(false);
-      });
-    });
-
-    describe('Identification of ambiguous quotation marks', () => {
-      it('identifies ambiguous quotes in text with no unambiguous quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'This text "has \'multiple levels of "ambiguous" quotations\'"',
-        );
-
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(10)
-            .setEndIndex(11)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(15)
-            .setEndIndex(16)
-            .setText("'")
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(35)
-            .setEndIndex(36)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(45)
-            .setEndIndex(46)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(57)
-            .setEndIndex(58)
-            .setText("'")
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(58)
-            .setEndIndex(59)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-      });
-
-      it('identifies ambiguous quotes in text with other unambiguous quotes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'This text "has \u2018multiple levels of \u201Cambiguous" quotations\'\u201D',
-        );
-
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(10)
-            .setEndIndex(11)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(15)
-            .setEndIndex(16)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(35)
-            .setEndIndex(36)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(45)
-            .setEndIndex(46)
-            .setText('"')
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
-            .setStartIndex(57)
-            .setEndIndex(58)
-            .setText("'")
-            .markAsAutocorrectable()
-            .build(),
-        );
-        expect(quotationPairIterator.hasNext()).toBe(true);
-        expect(quotationPairIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(58)
-            .setEndIndex(59)
-            .setText('\u201D')
-            .build(),
-        );
-      });
-    });
-
-    describe('Identification of ill-formed quotation marks', () => {
-      it('identifies quotation marks that are improperly nested', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const improperlyNestedSecondaryQuoteIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'This contains an \u2018 improperly nested quote\u2019',
-        );
-        expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(true);
-        expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(17)
-            .setEndIndex(18)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(true);
-        expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(42)
-            .setEndIndex(43)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(improperlyNestedSecondaryQuoteIterator.hasNext()).toBe(false);
-
-        const improperlyNestedTertiaryQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis contains an \u201C improperly nested quotation mark.\u201D',
-        );
-        expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(18)
-            .setEndIndex(19)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(true);
-        expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(53)
-            .setEndIndex(54)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(improperlyNestedTertiaryQuotationIterator.hasNext()).toBe(false);
-      });
-
-      it('identifies unpaired quotation marks', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const unpairedOpeningQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis has three \u2018unclosed \u201Cquotations',
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(16)
-            .setEndIndex(17)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedOpeningQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(26)
-            .setEndIndex(27)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(unpairedOpeningQuotationIterator.hasNext()).toBe(false);
-
-        const unpairedClosingQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          'This has\u201D three\u2019 unpaired\u201D closing quotes',
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(8)
-            .setEndIndex(9)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(15)
-            .setEndIndex(16)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(true);
-        expect(unpairedClosingQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(25)
-            .setEndIndex(26)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(unpairedClosingQuotationIterator.hasNext()).toBe(false);
-      });
-
-      it('identifies quotation marks that are nested beyond the warning depth', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-
-        const tooDeeplyNestedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-          '\u201CThis has \u2018four \u201Clevels of \u2018quotation marks\u2019\u201D\u2019\u201D',
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(10)
-            .setEndIndex(11)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(16)
-            .setEndIndex(17)
-            .setText('\u201C')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(27)
-            .setEndIndex(28)
-            .setText('\u2018')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(43)
-            .setEndIndex(44)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(44)
-            .setEndIndex(45)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(45)
-            .setEndIndex(46)
-            .setText('\u2019')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(true);
-        expect(tooDeeplyNestedQuotationIterator.next()).toEqual(
-          new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(46)
-            .setEndIndex(47)
-            .setText('\u201D')
-            .build(),
-        );
-        expect(tooDeeplyNestedQuotationIterator.hasNext()).toBe(false);
-      });
+      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator([scriptureNode1, scriptureNode2]);
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toEqual(
+        new UnresolvedQuoteMetadata.Builder()
+          .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+          .addDirection(PairedPunctuationDirection.Opening)
+          .setStartIndex(5)
+          .setEndIndex(6)
+          .setEnclosingRange(scriptureNode1.range)
+          .setText('\u201C')
+          .build(),
+      );
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toStrictEqual(
+        new UnresolvedQuoteMetadata.Builder()
+          .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+          .addDirection(PairedPunctuationDirection.Opening)
+          .setStartIndex(11)
+          .setEndIndex(12)
+          .setEnclosingRange(scriptureNode1.range)
+          .setText('\u2018')
+          .build(),
+      );
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toStrictEqual(
+        new UnresolvedQuoteMetadata.Builder()
+          .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+          .addDirection(PairedPunctuationDirection.Closing)
+          .setStartIndex(9)
+          .setEndIndex(10)
+          .setEnclosingRange(scriptureNode2.range)
+          .setText('\u2019')
+          .build(),
+      );
+      expect(quotationIterator.hasNext()).toBe(true);
+      expect(quotationIterator.next()).toStrictEqual(
+        new UnresolvedQuoteMetadata.Builder()
+          .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+          .addDirection(PairedPunctuationDirection.Closing)
+          .setStartIndex(15)
+          .setEndIndex(16)
+          .setEnclosingRange(scriptureNode2.range)
+          .setText('\u201D')
+          .build(),
+      );
+      expect(quotationIterator.hasNext()).toBe(false);
     });
   });
 });
@@ -1760,7 +1852,7 @@ describe('QuotationDepth tests', () => {
 class TestEnvironment {
   private constructor(private readonly quotationConfig: QuotationConfig) {}
 
-  public newQuotationIterator(text: string): QuotationIterator {
+  public newQuotationIterator(text: string | ScriptureNode[]): QuotationIterator {
     return new QuotationIterator(this.quotationConfig, text);
   }
 
@@ -1830,5 +1922,24 @@ class TestEnvironment {
         .setNestingWarningDepth(QuotationDepth.fromNumber(4))
         .build(),
     );
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }

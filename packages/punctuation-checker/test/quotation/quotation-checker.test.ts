@@ -3,24 +3,20 @@ import {
   DiagnosticSeverity,
   DocumentManager,
   Localizer,
-  ScriptureDocument,
   TextDocument,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
-import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
-import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
-import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { QuotationChecker } from '../../src/quotation/quotation-checker';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationDepth } from '../../src/quotation/quotation-utils';
 import { StringContextMatcher } from '../../src/utils';
-import { StubSingleLineTextDocument, StubTextDocumentManager } from '../test-utils';
+import { StubTextDocumentManager } from '../test-utils';
 
 describe('QuotationChecker tests', () => {
   it('provides DiagnosticFixes to remove the character for mismatched quotes', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
     const unmatchedOpeningQuoteDiagnostic: Diagnostic = {
@@ -87,7 +83,7 @@ describe('QuotationChecker tests', () => {
   });
 
   it('provides DiagnosticFixes to remove or replace the character for incorrectly nested quotes', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
     const incorrectlyNestedDiagnostic: Diagnostic = {
@@ -137,7 +133,7 @@ describe('QuotationChecker tests', () => {
   });
 
   it('provides DiagnosticFixes to replace the character for ambiguous quotes', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
     const ambiguousDiagnostic: Diagnostic = {
@@ -177,7 +173,7 @@ describe('QuotationChecker tests', () => {
   });
 
   it('provides no DiagnosticFixes for too deeply nested quotes', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
     const tooDeeplyNestedDiagnostic: Diagnostic = {
@@ -199,9 +195,36 @@ describe('QuotationChecker tests', () => {
 
     expect(await testEnv.quotationChecker.getDiagnosticFixes('', tooDeeplyNestedDiagnostic)).toEqual([]);
   });
+
+  it('uses the QuotationConfig that is passed to it', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithCustomQuotes(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '/',
+          closingPunctuationMark: '\\',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '+',
+          closingPunctuationMark: '-',
+        })
+        .build(),
+    );
+    await testEnv.init();
+
+    expect(
+      await testEnv.quotationChecker.getDiagnostics(
+        '/It was the best of times, +it was the worst of times-, it was...\\',
+      ),
+    ).toHaveLength(0);
+    expect(
+      await testEnv.quotationChecker.getDiagnostics(
+        '/It was the best of times, +it was the worst of times, it was...\\',
+      ),
+    ).toHaveLength(1);
+  });
 });
 
-class TextTestEnvironment {
+class TestEnvironment {
   readonly quotationChecker: QuotationChecker;
 
   private readonly quotationCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
@@ -222,8 +245,12 @@ class TextTestEnvironment {
     await this.quotationCheckerLocalizer.init();
   }
 
+  static createWithCustomQuotes(customQuotationConfig: QuotationConfig) {
+    return new TestEnvironment(customQuotationConfig);
+  }
+
   static createWithFullEnglishQuotes() {
-    return new TextTestEnvironment(
+    return new TestEnvironment(
       new QuotationConfig.Builder()
         .setTopLevelQuotationMarks({
           openingPunctuationMark: '\u201C',
@@ -264,242 +291,5 @@ class TextTestEnvironment {
         .setNestingWarningDepth(QuotationDepth.fromNumber(4))
         .build(),
     );
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-class ScriptureTestEnvironment {
-  readonly quotationChecker: QuotationChecker;
-
-  private readonly quotationCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
-
-  private readonly scriptureDocumentFactory: UsfmDocumentFactory;
-
-  constructor(private readonly quotationConfig: QuotationConfig) {
-    this.quotationCheckerLocalizer = new Localizer();
-
-    const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
-    this.quotationChecker = new QuotationChecker(this.quotationCheckerLocalizer, stubDocumentManager, quotationConfig);
-
-    const stylesheet = new UsfmStylesheet('usfm.sty');
-    this.scriptureDocumentFactory = new UsfmDocumentFactory(stylesheet);
-  }
-
-  public async init(): Promise<void> {
-    await this.quotationChecker.init();
-    await this.quotationCheckerLocalizer.init();
-  }
-
-  private createDefaultLocalizer(): Localizer {
-    const defaultLocalizer: Localizer = new Localizer();
-    defaultLocalizer.addNamespace('quotation', (_language: string) => {
-      return {
-        diagnosticMessagesByCode: {
-          'unmatched-opening-quotation-mark': 'Opening quotation mark with no closing mark.',
-          'unmatched-closing-quotation-mark': 'Closing quotation mark with no opening mark.',
-          'incorrectly-nested-quotation-mark': 'Incorrectly nested quotation mark.',
-          'ambiguous-quotation-mark': 'This quotation mark is ambiguous.',
-          'deeply-nested-quotation-mark': 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
-        },
-      };
-    });
-    return defaultLocalizer;
-  }
-
-  private createStubDiagnosticFactory(): DiagnosticFactory {
-    return new DiagnosticFactory(
-      'quotation-mark-checker',
-      new StubSingleLineTextDocument(''), // passing an empty document is fine here since we don't use getText()
-    );
-  }
-
-  static createWithTopLevelQuotes() {
-    return new TextTestEnvironment(
-      new QuotationConfig.Builder()
-        .setTopLevelQuotationMarks({
-          openingPunctuationMark: '\u201C',
-          closingPunctuationMark: '\u201D',
-        })
-        .mapAmbiguousQuotationMark('"', '\u201C')
-        .mapAmbiguousQuotationMark('"', '\u201D')
-        .build(),
-    );
-  }
-
-  static createWithFullEnglishQuotes() {
-    return new TextTestEnvironment(
-      new QuotationConfig.Builder()
-        .setTopLevelQuotationMarks({
-          openingPunctuationMark: '\u201C',
-          closingPunctuationMark: '\u201D',
-        })
-        .addNestedQuotationMarks({
-          openingPunctuationMark: '\u2018',
-          closingPunctuationMark: '\u2019',
-        })
-        .addNestedQuotationMarks({
-          openingPunctuationMark: '\u201C',
-          closingPunctuationMark: '\u201D',
-        })
-        .addNestedQuotationMarks({
-          openingPunctuationMark: '\u2018',
-          closingPunctuationMark: '\u2019',
-        })
-        .mapAmbiguousQuotationMark('"', '\u201C')
-        .mapAmbiguousQuotationMark('"', '\u201D')
-        .mapAmbiguousQuotationMark("'", '\u2018')
-        .mapAmbiguousQuotationMark("'", '\u2019')
-        .ignoreMatchingQuotationMarks(
-          // possessives and contractions
-          new StringContextMatcher.Builder()
-            .setCenterContent(/^['\u2019]$/)
-            .setLeftContext(/\w$/)
-            .setRightContext(/^\w/)
-            .build(),
-        )
-        .ignoreMatchingQuotationMarks(
-          // for possessives ending in "s", e.g. "Moses'"
-          new StringContextMatcher.Builder()
-            .setCenterContent(/^['\u2019]$/)
-            .setLeftContext(/\ws$/)
-            .setRightContext(/^[ \n,.:;]/)
-            .build(),
-        )
-        .setNestingWarningDepth(QuotationDepth.fromNumber(4))
-        .build(),
-    );
-  }
-
-  static createWithDifferentThirdLevelQuotes() {
-    return new TextTestEnvironment(
-      new QuotationConfig.Builder()
-        .setTopLevelQuotationMarks({
-          openingPunctuationMark: '\u201C',
-          closingPunctuationMark: '\u201D',
-        })
-        .addNestedQuotationMarks({
-          openingPunctuationMark: '\u2018',
-          closingPunctuationMark: '\u2019',
-        })
-        .addNestedQuotationMarks({
-          openingPunctuationMark: '\u201E',
-          closingPunctuationMark: '\u201F',
-        })
-        .build(),
-    );
-  }
-
-  createUnmatchedOpeningQuoteDiagnostic(startOffset: number, endOffset: number): Diagnostic {
-    return {
-      code: 'unmatched-opening-quotation-mark',
-      severity: DiagnosticSeverity.Error,
-      range: {
-        start: {
-          line: 0,
-          character: startOffset,
-        },
-        end: {
-          line: 0,
-          character: endOffset,
-        },
-      },
-      source: 'quotation-mark-checker',
-      message: `Opening quotation mark with no closing mark.`,
-      data: '',
-    };
-  }
-
-  createUnmatchedClosingQuoteDiagnostic(startOffset: number, endOffset: number): Diagnostic {
-    return {
-      code: 'unmatched-closing-quotation-mark',
-      severity: DiagnosticSeverity.Error,
-      range: {
-        start: {
-          line: 0,
-          character: startOffset,
-        },
-        end: {
-          line: 0,
-          character: endOffset,
-        },
-      },
-      source: 'quotation-mark-checker',
-      message: `Closing quotation mark with no opening mark.`,
-      data: '',
-    };
-  }
-
-  createIncorrectlyNestedDiagnostic(startOffset: number, endOffset: number, parentDepth: QuotationDepth): Diagnostic {
-    return {
-      code: 'incorrectly-nested-quotation-mark',
-      severity: DiagnosticSeverity.Warning,
-      range: {
-        start: {
-          line: 0,
-          character: startOffset,
-        },
-        end: {
-          line: 0,
-          character: endOffset,
-        },
-      },
-      source: 'quotation-mark-checker',
-      message: `Incorrectly nested quotation mark.`,
-      data: {
-        depth: parentDepth.asNumber(),
-      },
-    };
-  }
-
-  createAmbiguousDiagnostic(
-    startOffset: number,
-    endOffset: number,
-    ambiguousMark: string,
-    unambiguousMark: string,
-  ): Diagnostic {
-    return {
-      code: 'ambiguous-quotation-mark',
-      severity: DiagnosticSeverity.Warning,
-      range: {
-        start: {
-          line: 0,
-          character: startOffset,
-        },
-        end: {
-          line: 0,
-          character: endOffset,
-        },
-      },
-      source: 'quotation-mark-checker',
-      message: `This quotation mark is ambiguous.`,
-      data: {
-        existingQuotationMark: ambiguousMark,
-        correctedQuotationMark: unambiguousMark,
-      },
-    };
-  }
-
-  createTooDeeplyNestedDiagnostic(startOffset: number, endOffset: number): Diagnostic {
-    return {
-      code: 'deeply-nested-quotation-mark',
-      severity: DiagnosticSeverity.Warning,
-      range: {
-        start: {
-          line: 0,
-          character: startOffset,
-        },
-        end: {
-          line: 0,
-          character: endOffset,
-        },
-      },
-      source: 'quotation-mark-checker',
-      message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
-      data: '',
-    };
-  }
-
-  createScriptureDocument(usfm: string): ScriptureDocument {
-    return this.scriptureDocumentFactory.create('test-uri', 'usfm', 1, usfm);
   }
 }

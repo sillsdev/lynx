@@ -14,7 +14,9 @@ import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-pun
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { CharacterClassRegexBuilder } from '../../src/utils';
-import { StubTextDocumentManager } from '../test-utils';
+import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 
 const defaultLocalizer: Localizer = new Localizer();
 
@@ -137,5 +139,25 @@ describe('DiagnosticProviderFactory tests', () => {
     expect(await onTypeFormatters[0].getOnTypeEdits('A', { line: 0, character: 0 }, '')).toBe(undefined);
     expect(await onTypeFormatters[0].getOnTypeEdits('+A', { line: 0, character: 0 }, '')).toHaveLength(1);
     expect(await onTypeFormatters[0].getOnTypeEdits('+A+', { line: 0, character: 0 }, '')).toHaveLength(2);
+  });
+
+  it('also accepts a ScriptureDocument factory', async () => {
+    const stylesheet = new UsfmStylesheet('usfm.sty');
+    const stubScriptureDocumentManager: DocumentManager<TextDocument> = new StubScriptureDocumentManager(
+      new UsfmDocumentFactory(stylesheet),
+    );
+
+    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const diagnosticProviders: DiagnosticProvider[] = ruleSet.createDiagnosticProviders(
+      defaultLocalizer,
+      stubScriptureDocumentManager,
+    );
+    for (const diagnosticProvider of diagnosticProviders) {
+      await diagnosticProvider.init();
+    }
+    await defaultLocalizer.init();
+
+    expect(await diagnosticProviders[0].getDiagnostics('\\c 1 \\v 1 BADTEXT')).toHaveLength(1);
+    expect(await diagnosticProviders[0].getDiagnostics('\\c 1 \\v 1 BDTEXT')).toHaveLength(0);
   });
 });

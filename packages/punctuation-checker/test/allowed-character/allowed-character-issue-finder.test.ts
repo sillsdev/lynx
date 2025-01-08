@@ -1,4 +1,12 @@
-import { Diagnostic, DiagnosticSeverity, DocumentManager, Localizer, ScriptureDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  DocumentManager,
+  Localizer,
+  ScriptureDocument,
+  ScriptureNode,
+  ScriptureText,
+} from '@sillsdev/lynx';
 import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
@@ -7,9 +15,13 @@ import { AllowedCharacterIssueFinder } from '../../src/allowed-character/allowed
 import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-character/allowed-character-set';
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { CharacterClassRegexBuilder } from '../../src/utils';
-import { StubScriptureDocumentManager, StubSingleLineTextDocument } from '../test-utils';
+import {
+  StubFixedLineWidthTextDocument,
+  StubScriptureDocumentManager,
+  StubSingleLineTextDocument,
+} from '../test-utils';
 
-describe('Tests with TextDocuments', () => {
+describe('Tests with plain-text strings', () => {
   describe('Diagnostics are created only for characters not on the whitelist', () => {
     describe('Simple cases', () => {
       it('produces no output for empty strings', async () => {
@@ -255,6 +267,35 @@ describe('Tests with TextDocuments', () => {
   });
 });
 
+describe('Tests with ScriptureNodes', () => {
+  it('identifies issues in a single ScriptureNode', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardEnglishCharacters();
+    await testEnv.init();
+
+    expect(
+      testEnv.allowedCharacterIssueFinder.produceDiagnosticsForScripture(
+        testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20),
+      ),
+    ).toEqual([testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11)]);
+  });
+
+  it('identifies issues in multiple ScriptureNodes', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardEnglishCharacters();
+    await testEnv.init();
+
+    expect(
+      testEnv.allowedCharacterIssueFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20),
+        testEnv.createScriptureNode('$ome other *verse text', 6, 8, 6, 30),
+      ]),
+    ).toEqual([
+      testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11),
+      testEnv.createExpectedScriptureDiagnostic('$', 6, 8, 6, 9),
+      testEnv.createExpectedScriptureDiagnostic('*', 6, 19, 6, 20),
+    ]);
+  });
+});
+
 class TextTestEnvironment {
   readonly allowedCharacterIssueFinderLocalizer: Localizer;
   readonly allowedCharacterIssueFinder;
@@ -326,7 +367,6 @@ class TextTestEnvironment {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class ScriptureTestEnvironment {
   readonly allowedCharacterIssueFinderLocalizer: Localizer;
   readonly allowedCharacterIssueFinder;
@@ -342,7 +382,7 @@ class ScriptureTestEnvironment {
 
     const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
       'allowed-character-set-checker',
-      new StubSingleLineTextDocument(''),
+      new StubFixedLineWidthTextDocument(''),
     );
 
     this.allowedCharacterIssueFinder = new AllowedCharacterIssueFinder(
@@ -416,5 +456,24 @@ class ScriptureTestEnvironment {
 
   createScriptureDocument(id: string, usfm: string): ScriptureDocument {
     return this.scriptureDocumentFactory.create(id, 'usfm', 1, usfm);
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }

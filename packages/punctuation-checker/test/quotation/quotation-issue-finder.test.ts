@@ -1,4 +1,11 @@
-import { Diagnostic, DiagnosticSeverity, Localizer, ScriptureDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  Localizer,
+  ScriptureDocument,
+  ScriptureNode,
+  ScriptureText,
+} from '@sillsdev/lynx';
 import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +15,7 @@ import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationIssueFinder } from '../../src/quotation/quotation-issue-finder';
 import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotation-utils';
 import { StringContextMatcher } from '../../src/utils';
-import { StubSingleLineTextDocument } from '../test-utils';
+import { StubFixedLineWidthTextDocument, StubSingleLineTextDocument } from '../test-utils';
 
 describe('QuotationErrorFinder tests', () => {
   it('keeps no internal state', async () => {
@@ -359,87 +366,109 @@ describe('ScriptureDocument tests', () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
-      `\\id GEN
-      \\toc3 Gen
-      \\toc2 Genesis
-      \\toc1 Genesis
-      \\mt2 Book of
-      \\mt1 Genesis
-      \\c 1
-      \\s Isaac and Rebekah
-      \\p
-      \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
-    );
-
-    expect(testEnv.quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode('Genesis', 3, 13, 3, 20),
+      ]),
+    ).toEqual([]);
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27),
+      ]),
+    ).toEqual([]);
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode(
+          'The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”',
+          10,
+          13,
+          10,
+          167,
+        ),
+      ]),
+    ).toEqual([]);
   });
 
-  it('identifies quotation errors in a single verse', async () => {
+  it('identifies quotation errors in a single text node', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
-      `\\id GEN
-      \\toc3 Gen
-      \\toc2 Genesis
-      \\toc1 Genesis
-      \\mt2 Book of
-      \\mt1 Genesis
-      \\c 1
-      \\s Isaac and Rebekah
-      \\p
-      \\v 1 The servant said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
-    );
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode(
+          'The servant said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”',
+          10,
+          13,
+          10,
+          168,
+        ),
+      ]),
+    ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(10, 68, 10, 69)]);
+  });
 
-    expect(testEnv.quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
-      testEnv.createUnmatchedOpeningQuoteDiagnostic(215, 216),
+  it('produces no issues for well-formed quotes that span across ScriptureNodes', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
+    await testEnv.init();
+
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode(
+          'Abraham said to him, “See to it that you do not take my son back there. ',
+          10,
+          13,
+          10,
+          83,
+        ),
+        testEnv.createScriptureNode(
+          "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land’, he will send his angel before you, and you shall take a wife for my son from there.",
+          11,
+          13,
+          11,
+          272,
+        ),
+        testEnv.createScriptureNode(
+          'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
+          12,
+          13,
+          12,
+          147,
+        ),
+      ]),
+    ).toEqual([]);
+  });
+
+  it('correctly identifies issues that occur in groups of multiple ScriptureNodes', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
+    await testEnv.init();
+
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+        testEnv.createScriptureNode(
+          'Abraham said to him, “See to it that you do not take my son back there. ',
+          10,
+          13,
+          10,
+          83,
+        ),
+        testEnv.createScriptureNode(
+          "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land”, he will send his angel before you, and you shall take a wife for my son from there.",
+          11,
+          13,
+          11,
+          272,
+        ),
+        testEnv.createScriptureNode(
+          'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
+          12,
+          13,
+          12,
+          147,
+        ),
+      ]),
+    ).toEqual([
+      testEnv.createUnmatchedOpeningQuoteDiagnostic(11, 147, 11, 148),
+      testEnv.createUnmatchedClosingQuoteDiagnostic(12, 147, 12, 148),
     ]);
-  });
-
-  it('identifies quotation errors that occur in non-verse portions', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
-    await testEnv.init();
-
-    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
-      `\\id GEN
-      \\toc3 “Gen
-      \\toc2 Genesis”
-      \\toc1 “Genesis
-      \\mt2 Book of”
-      \\mt1 “Genesis”
-      \\c 1
-      \\s “Isaac and Rebekah
-      \\p
-      \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`,
-    );
-
-    expect(testEnv.quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([
-      testEnv.createUnmatchedOpeningQuoteDiagnostic(128, 129),
-      testEnv.createIncorrectlyNestedDiagnostic(192, 193, QuotationDepth.Primary),
-    ]);
-  });
-
-  it('produces no issues for well-formed quotes that span across verses', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
-    await testEnv.init();
-
-    const scriptureDocument: ScriptureDocument = testEnv.createScriptureDocument(
-      `\\id GEN
-      \\toc3 Gen
-      \\toc2 Genesis
-      \\toc1 Genesis
-      \\mt2 Book of
-      \\mt1 Genesis
-      \\c 1
-      \\s Isaac and Rebekah
-      \\p
-      \v 1 Abraham said to him, “See to it that you do not take my son back there. 
-      \v 2 The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land’, he will send his angel before you, and you shall take a wife for my son from there. 
-      \v 3 But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”`,
-    );
-
-    expect(testEnv.quotationErrorFinder.produceDiagnostics(scriptureDocument.getText())).toEqual([]);
   });
 });
 
@@ -716,7 +745,7 @@ class ScriptureTestEnvironment {
   private createStubDiagnosticFactory(): DiagnosticFactory {
     return new DiagnosticFactory(
       'quotation-mark-checker',
-      new StubSingleLineTextDocument(''), // passing an empty document is fine here since we don't use getText()
+      new StubFixedLineWidthTextDocument(''), // passing an empty document is fine here since we don't use getText()
     );
   }
 
@@ -796,18 +825,23 @@ class ScriptureTestEnvironment {
     );
   }
 
-  createUnmatchedOpeningQuoteDiagnostic(startOffset: number, endOffset: number): Diagnostic {
+  createUnmatchedOpeningQuoteDiagnostic(
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number,
+  ): Diagnostic {
     return {
       code: 'unmatched-opening-quotation-mark',
       severity: DiagnosticSeverity.Error,
       range: {
         start: {
-          line: 0,
-          character: startOffset,
+          line: startLine,
+          character: startCharacter,
         },
         end: {
-          line: 0,
-          character: endOffset,
+          line: endLine,
+          character: endCharacter,
         },
       },
       source: 'quotation-mark-checker',
@@ -816,18 +850,23 @@ class ScriptureTestEnvironment {
     };
   }
 
-  createUnmatchedClosingQuoteDiagnostic(startOffset: number, endOffset: number): Diagnostic {
+  createUnmatchedClosingQuoteDiagnostic(
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number,
+  ): Diagnostic {
     return {
       code: 'unmatched-closing-quotation-mark',
       severity: DiagnosticSeverity.Error,
       range: {
         start: {
-          line: 0,
-          character: startOffset,
+          line: startLine,
+          character: startCharacter,
         },
         end: {
-          line: 0,
-          character: endOffset,
+          line: endLine,
+          character: endCharacter,
         },
       },
       source: 'quotation-mark-checker',
@@ -836,18 +875,24 @@ class ScriptureTestEnvironment {
     };
   }
 
-  createIncorrectlyNestedDiagnostic(startOffset: number, endOffset: number, parentDepth: QuotationDepth): Diagnostic {
+  createIncorrectlyNestedDiagnostic(
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number,
+    parentDepth: QuotationDepth,
+  ): Diagnostic {
     return {
       code: 'incorrectly-nested-quotation-mark',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
-          line: 0,
-          character: startOffset,
+          line: startLine,
+          character: startCharacter,
         },
         end: {
-          line: 0,
-          character: endOffset,
+          line: endLine,
+          character: endCharacter,
         },
       },
       source: 'quotation-mark-checker',
@@ -859,8 +904,10 @@ class ScriptureTestEnvironment {
   }
 
   createAmbiguousDiagnostic(
-    startOffset: number,
-    endOffset: number,
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number,
     ambiguousMark: string,
     unambiguousMark: string,
   ): Diagnostic {
@@ -869,12 +916,12 @@ class ScriptureTestEnvironment {
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
-          line: 0,
-          character: startOffset,
+          line: startLine,
+          character: startCharacter,
         },
         end: {
-          line: 0,
-          character: endOffset,
+          line: endLine,
+          character: endCharacter,
         },
       },
       source: 'quotation-mark-checker',
@@ -886,18 +933,23 @@ class ScriptureTestEnvironment {
     };
   }
 
-  createTooDeeplyNestedDiagnostic(startOffset: number, endOffset: number): Diagnostic {
+  createTooDeeplyNestedDiagnostic(
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number,
+  ): Diagnostic {
     return {
       code: 'deeply-nested-quotation-mark',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
-          line: 0,
-          character: startOffset,
+          line: startLine,
+          character: startCharacter,
         },
         end: {
-          line: 0,
-          character: endOffset,
+          line: endLine,
+          character: endCharacter,
         },
       },
       source: 'quotation-mark-checker',
@@ -908,5 +960,24 @@ class ScriptureTestEnvironment {
 
   createScriptureDocument(usfm: string): ScriptureDocument {
     return this.scriptureDocumentFactory.create('test-uri', 'usfm', 1, usfm);
+  }
+
+  createScriptureNode(
+    text: string,
+    lineStart: number,
+    characterStart: number,
+    lineEnd: number,
+    characterEnd: number,
+  ): ScriptureNode {
+    return new ScriptureText(text, {
+      start: {
+        line: lineStart,
+        character: characterStart,
+      },
+      end: {
+        line: lineEnd,
+        character: characterEnd,
+      },
+    });
   }
 }
