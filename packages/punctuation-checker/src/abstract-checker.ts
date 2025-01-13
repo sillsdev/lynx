@@ -3,7 +3,7 @@ import {
   DiagnosticFix,
   DiagnosticProvider,
   DiagnosticsChanged,
-  DocumentManager,
+  DocumentAccessor,
   ScriptureDocument,
   ScriptureNodeType,
   TextDocument,
@@ -12,34 +12,34 @@ import { map, merge, Observable, switchMap } from 'rxjs';
 
 import { DiagnosticFactory } from './diagnostic-factory';
 import { IssueFinder, IssueFinderFactory } from './issue-finder';
-import { ScriptureNodeGrouper } from './utils';
+import { isScriptureDocument, ScriptureNodeGrouper } from './utils';
 
-export abstract class AbstractChecker implements DiagnosticProvider {
+export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument> implements DiagnosticProvider {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(
     public readonly id: string,
-    private readonly documentManager: DocumentManager<TextDocument | ScriptureDocument>,
+    private readonly documentAccessor: DocumentAccessor<T>,
     private readonly issueFinderFactory: IssueFinderFactory,
   ) {
     this.diagnosticsChanged$ = merge(
-      documentManager.opened$.pipe(
+      documentAccessor.opened$.pipe(
         map((e) => ({
           uri: e.document.uri,
           version: e.document.version,
           diagnostics: this.validateDocument(e.document),
         })),
       ),
-      documentManager.changed$.pipe(
+      documentAccessor.changed$.pipe(
         map((e) => ({
           uri: e.document.uri,
           version: e.document.version,
           diagnostics: this.validateDocument(e.document),
         })),
       ),
-      documentManager.closed$.pipe(
+      documentAccessor.closed$.pipe(
         switchMap(async (e) => {
-          const doc = await this.documentManager.get(e.uri);
+          const doc = await this.documentAccessor.get(e.uri);
           return { uri: e.uri, version: doc?.version, diagnostics: [] };
         }),
       ),
@@ -51,7 +51,7 @@ export abstract class AbstractChecker implements DiagnosticProvider {
   }
 
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {
-    const doc = await this.documentManager.get(uri);
+    const doc = await this.documentAccessor.get(uri);
     if (doc == null) {
       return [];
     }
@@ -59,15 +59,15 @@ export abstract class AbstractChecker implements DiagnosticProvider {
   }
 
   async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
-    const doc = await this.documentManager.get(uri);
+    const doc = await this.documentAccessor.get(uri);
     if (doc == null) {
       return [];
     }
     return this.getFixes(doc, diagnostic);
   }
 
-  private validateDocument(document: TextDocument | ScriptureDocument): Diagnostic[] {
-    if (document instanceof ScriptureDocument) {
+  private validateDocument(document: T): Diagnostic[] {
+    if (isScriptureDocument(document)) {
       return this.validateScriptureDocument(document);
     }
     return this.validateTextDocument(document);
@@ -96,5 +96,5 @@ export abstract class AbstractChecker implements DiagnosticProvider {
     return diagnostics;
   }
 
-  protected abstract getFixes(document: TextDocument | ScriptureDocument, diagnostic: Diagnostic): DiagnosticFix[];
+  protected abstract getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[];
 }

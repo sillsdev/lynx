@@ -1,13 +1,13 @@
-import { Diagnostic, DiagnosticSeverity, Range, TextDocument } from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticSeverity, Range, ScriptureDocument, TextDocument } from '@sillsdev/lynx';
 
 export class DiagnosticFactory {
   constructor(
     private readonly sourceId: string,
-    private readonly textDocument: TextDocument,
+    private readonly document: TextDocument | ScriptureDocument,
   ) {}
 
   public newBuilder(): DiagnosticBuilder {
-    return new DiagnosticBuilder(this.sourceId, this.textDocument);
+    return new DiagnosticBuilder(this.sourceId, this.document);
   }
 }
 
@@ -20,7 +20,7 @@ class DiagnosticBuilder {
 
   constructor(
     private readonly sourceId: string,
-    private readonly textDocument: TextDocument,
+    private readonly document: TextDocument | ScriptureDocument,
   ) {}
 
   public setCode(code: string | number): this {
@@ -36,13 +36,13 @@ class DiagnosticBuilder {
   public setRange(startIndex: number, endIndex: number, enclosingRange?: Range): this {
     if (enclosingRange === undefined) {
       this.range = {
-        start: this.textDocument.positionAt(startIndex),
-        end: this.textDocument.positionAt(endIndex),
+        start: this.document.positionAt(startIndex),
+        end: this.document.positionAt(endIndex),
       };
     } else {
       this.range = {
-        start: this.textDocument.positionAt(startIndex, enclosingRange),
-        end: this.textDocument.positionAt(endIndex, enclosingRange),
+        start: this.document.positionAt(startIndex, enclosingRange),
+        end: this.document.positionAt(endIndex, enclosingRange),
       };
     }
     return this;

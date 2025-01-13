@@ -1,7 +1,16 @@
-import { Diagnostic, DiagnosticFix, DocumentManager, Localizer, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  DocumentAccessor,
+  EditFactory,
+  Localizer,
+  ScriptureDocument,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
-import { StandardFixProvider } from '../fixes/standard-fixes';
+import type { StandardFixProvider } from '../fixes/standard-fixes';
+import { StandardFixProviderFactory } from '../fixes/standard-fixes';
 import { PairedPunctuationDirection } from '../utils';
 import { QuotationConfig } from './quotation-config';
 import { QuotationIssueFinderFactory } from './quotation-issue-finder';
@@ -15,16 +24,17 @@ export const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'incorrectly-nested-quot
 export const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE = 'ambiguous-quotation-mark';
 export const TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'deeply-nested-quotation-mark';
 
-export class QuotationChecker extends AbstractChecker {
-  private readonly standardFixProvider: StandardFixProvider;
+export class QuotationChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
 
   constructor(
     private readonly localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
     private readonly quotationConfig: QuotationConfig,
   ) {
-    super('quotation-mark-checker', documentManager, new QuotationIssueFinderFactory(localizer, quotationConfig));
-    this.standardFixProvider = new StandardFixProvider(localizer);
+    super('quotation-mark-checker', documentAccessor, new QuotationIssueFinderFactory(localizer, quotationConfig));
+    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -40,19 +50,22 @@ export class QuotationChecker extends AbstractChecker {
       );
     }
 
-    this.standardFixProvider.init();
+    await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(_textDocument: TextDocument, diagnostic: Diagnostic): DiagnosticFix[] {
+  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
+    const standardFixProvider: StandardFixProvider<T> =
+      this.standardFixProviderFactory.createStandardFixProvider(document);
+
     if (diagnostic.code === UNMATCHED_OPENING_QUOTE_DIAGNOSTIC_CODE) {
-      return [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
+      return [standardFixProvider.punctuationRemovalFix(diagnostic)];
     }
     if (diagnostic.code === UNMATCHED_CLOSING_QUOTE_DIAGNOSTIC_CODE) {
-      return [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
+      return [standardFixProvider.punctuationRemovalFix(diagnostic)];
     }
 
     if (diagnostic.code === INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE) {
-      const fixes: DiagnosticFix[] = [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
+      const fixes: DiagnosticFix[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
       interface QuoteParentDepth {
         depth: number;
       }
@@ -60,7 +73,7 @@ export class QuotationChecker extends AbstractChecker {
         (diagnostic.data as QuoteParentDepth).depth,
       );
       if (expectedQuotationMark !== undefined) {
-        fixes.push(this.standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark));
+        fixes.push(standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark));
       }
 
       return fixes;
@@ -72,7 +85,7 @@ export class QuotationChecker extends AbstractChecker {
         correctedQuotationMark: string;
       }
       const expectedQuotationMark: string = (diagnostic.data as QuotationMarkCorrection).correctedQuotationMark;
-      return [this.standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
+      return [standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
     }
     return [];
   }

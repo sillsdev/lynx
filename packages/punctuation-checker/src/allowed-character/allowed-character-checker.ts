@@ -1,4 +1,11 @@
-import { Diagnostic, DiagnosticFix, DocumentManager, Localizer, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  DocumentAccessor,
+  Localizer,
+  ScriptureDocument,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
 import { AllowedCharacterIssueFinderFactory } from './allowed-character-issue-finder';
@@ -6,15 +13,15 @@ import { AllowedCharacterSet } from './allowed-character-set';
 
 export const ALLOWED_CHARACTER_CHECKER_LOCALIZER_NAMESPACE = 'allowedCharacters';
 
-export class AllowedCharacterChecker extends AbstractChecker {
+export class AllowedCharacterChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
   constructor(
     private readonly localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
     allowedCharacterSet: AllowedCharacterSet,
   ) {
     super(
       'allowed-character-set-checker',
-      documentManager,
+      documentAccessor,
       new AllowedCharacterIssueFinderFactory(localizer, allowedCharacterSet),
     );
   }
@@ -33,7 +40,7 @@ export class AllowedCharacterChecker extends AbstractChecker {
     }
   }
 
-  protected getFixes(_textDocument: TextDocument, _diagnostic: Diagnostic): DiagnosticFix[] {
+  protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticFix[] {
     // no fixes available for disallowed characters
     return [];
   }

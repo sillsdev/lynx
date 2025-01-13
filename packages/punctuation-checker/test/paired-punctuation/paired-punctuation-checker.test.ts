@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, Localizer, TextDocumentFactory } from '@sillsdev/lynx';
+import { DiagnosticSeverity, Localizer, TextDocument, TextDocumentFactory, TextEditFactory } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
 import { PairedPunctuationChecker } from '../../src/paired-punctuation/paired-punctuation-checker';
@@ -258,7 +258,7 @@ describe('PairedPunctuationChecker tests', () => {
 });
 
 class TestEnvironment {
-  readonly pairedPunctuationChecker: PairedPunctuationChecker;
+  readonly pairedPunctuationChecker: PairedPunctuationChecker<TextDocument>;
 
   private readonly pairedPunctuationCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
 
@@ -269,9 +269,10 @@ class TestEnvironment {
     this.pairedPunctuationCheckerLocalizer = new Localizer();
 
     const stubDocumentManager: StubTextDocumentManager = new StubTextDocumentManager(new TextDocumentFactory());
-    this.pairedPunctuationChecker = new PairedPunctuationChecker(
+    this.pairedPunctuationChecker = new PairedPunctuationChecker<TextDocument>(
       this.customLocalizer ?? this.pairedPunctuationCheckerLocalizer,
       stubDocumentManager,
+      new TextEditFactory(),
       this.pairedPunctuationConfig,
     );
   }

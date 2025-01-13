@@ -1,5 +1,6 @@
 import {
-  DocumentManager,
+  DocumentAccessor,
+  EditFactory,
   OnTypeFormattingProvider,
   Position,
   ScriptureDocument,
@@ -9,16 +10,17 @@ import {
   TextEdit,
 } from '@sillsdev/lynx';
 
-import { ScriptureNodeGrouper } from '../utils';
+import { isScriptureDocument, ScriptureNodeGrouper } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
 
-export class QuotationCorrector implements OnTypeFormattingProvider {
+export class QuotationCorrector<T extends TextDocument | ScriptureDocument> implements OnTypeFormattingProvider {
   readonly id = 'quote-corrector';
   readonly onTypeTriggerCharacters: ReadonlySet<string>;
 
   constructor(
-    private readonly documentManager: DocumentManager<TextDocument | ScriptureDocument>,
+    private readonly documentManager: DocumentAccessor<T>,
+    private readonly editFactory: EditFactory<T>,
     private readonly quotationConfig: QuotationConfig,
   ) {
     this.onTypeTriggerCharacters = this.quotationConfig.createAmbiguousQuotationMarkSet();
@@ -40,7 +42,7 @@ export class QuotationCorrector implements OnTypeFormattingProvider {
   private correctDocument(
     doc: TextDocument | ScriptureDocument,
   ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
-    if (doc instanceof ScriptureDocument) {
+    if (isScriptureDocument(doc)) {
       return this.correctScriptureDocument(doc);
     }
     return this.correctTextDocument(doc);
@@ -74,19 +76,22 @@ export class QuotationCorrector implements OnTypeFormattingProvider {
     const edits: TextEdit[] = [];
 
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
-      edits.push({
-        range: {
-          start: scriptureDocument.positionAt(
-            quoteCorrection.existingQuotationMark.startIndex,
-            quoteCorrection.existingQuotationMark.enclosingRange,
-          ),
-          end: scriptureDocument.positionAt(
-            quoteCorrection.existingQuotationMark.endIndex,
-            quoteCorrection.existingQuotationMark.enclosingRange,
-          ),
-        },
-        newText: quoteCorrection.correctedQuotationMark.text,
-      });
+      edits.push(
+        ...this.editFactory.createTextEdit(
+          scriptureDocument as T,
+          {
+            start: scriptureDocument.positionAt(
+              quoteCorrection.existingQuotationMark.startIndex,
+              quoteCorrection.existingQuotationMark.enclosingRange,
+            ),
+            end: scriptureDocument.positionAt(
+              quoteCorrection.existingQuotationMark.endIndex,
+              quoteCorrection.existingQuotationMark.enclosingRange,
+            ),
+          },
+          quoteCorrection.correctedQuotationMark.text,
+        ),
+      );
     }
 
     return edits;
@@ -100,13 +105,16 @@ export class QuotationCorrector implements OnTypeFormattingProvider {
 
     const edits: TextEdit[] = [];
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
-      edits.push({
-        range: {
-          start: textDocument.positionAt(quoteCorrection.existingQuotationMark.startIndex),
-          end: textDocument.positionAt(quoteCorrection.existingQuotationMark.endIndex),
-        },
-        newText: quoteCorrection.correctedQuotationMark.text,
-      });
+      edits.push(
+        ...this.editFactory.createTextEdit(
+          textDocument as T,
+          {
+            start: textDocument.positionAt(quoteCorrection.existingQuotationMark.startIndex),
+            end: textDocument.positionAt(quoteCorrection.existingQuotationMark.endIndex),
+          },
+          quoteCorrection.correctedQuotationMark.text,
+        ),
+      );
     }
 
     if (edits.length === 0) {

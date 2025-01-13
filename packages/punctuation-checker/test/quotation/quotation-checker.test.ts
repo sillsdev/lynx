@@ -5,6 +5,7 @@ import {
   Localizer,
   TextDocument,
   TextDocumentFactory,
+  TextEditFactory,
 } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
@@ -225,7 +226,7 @@ describe('QuotationChecker tests', () => {
 });
 
 class TestEnvironment {
-  readonly quotationChecker: QuotationChecker;
+  readonly quotationChecker: QuotationChecker<TextDocument>;
 
   private readonly quotationCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
 
@@ -236,6 +237,7 @@ class TestEnvironment {
     this.quotationChecker = new QuotationChecker(
       this.quotationCheckerLocalizer,
       stubDocumentManager,
+      new TextEditFactory(),
       this.quotationConfig,
     );
   }

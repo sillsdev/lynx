@@ -4,7 +4,10 @@ import { expect, it } from 'vitest';
 import { DiagnosticFactory } from '../src/diagnostic-factory';
 import { DiagnosticList } from '../src/diagnostic-list';
 
-const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory('test-source', new TextDocument('test', 1, ''));
+const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
+  'test-source',
+  new TextDocument('test', 'no-format', 1, ''),
+);
 const sampleDiagnostic1 = diagnosticFactory
   .newBuilder()
   .setCode(1234)

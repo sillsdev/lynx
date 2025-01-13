@@ -25,7 +25,7 @@ export class StubScriptureDocumentManager extends DocumentManager<ScriptureDocum
 
 export class StubSingleLineTextDocument extends TextDocument {
   public constructor(private readonly text: string) {
-    super('test', 1, text);
+    super('test', 'no-format', 1, text);
   }
 
   public getText(_range?: Range): string {
@@ -47,7 +47,7 @@ export class StubSingleLineTextDocument extends TextDocument {
 export class StubFixedLineWidthTextDocument extends TextDocument {
   private lineWidth = 1000;
   public constructor(private readonly text: string) {
-    super('test', 1, text);
+    super('test', 'no-format', 1, text);
   }
 
   public getText(_range: Range): string {

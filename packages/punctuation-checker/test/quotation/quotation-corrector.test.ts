@@ -1,5 +1,12 @@
-import { DocumentManager, Position, ScriptureDocument, TextDocument, TextDocumentFactory } from '@sillsdev/lynx';
-import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import {
+  DocumentManager,
+  Position,
+  ScriptureDocument,
+  TextDocument,
+  TextDocumentFactory,
+  TextEditFactory,
+} from '@sillsdev/lynx';
+import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
@@ -300,11 +307,15 @@ describe('Scripture quote correction tests', () => {
 });
 
 class TextTestEnvironment {
-  readonly quotationCorrector: QuotationCorrector;
+  readonly quotationCorrector: QuotationCorrector<TextDocument>;
 
   private constructor(private readonly quotationConfig: QuotationConfig) {
     const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
-    this.quotationCorrector = new QuotationCorrector(stubDocumentManager, quotationConfig);
+    this.quotationCorrector = new QuotationCorrector<TextDocument>(
+      stubDocumentManager,
+      new TextEditFactory(),
+      quotationConfig,
+    );
   }
 
   static createWithFullEnglishQuotes(): TextTestEnvironment {
@@ -365,14 +376,18 @@ class TextTestEnvironment {
 }
 
 class ScriptureTestEnvironment {
-  readonly quotationCorrector: QuotationCorrector;
+  readonly quotationCorrector: QuotationCorrector<ScriptureDocument>;
 
   private constructor(private readonly quotationConfig: QuotationConfig) {
     const stylesheet = new UsfmStylesheet('usfm.sty');
     const stubDocumentManager: DocumentManager<ScriptureDocument> = new StubScriptureDocumentManager(
       new UsfmDocumentFactory(stylesheet),
     );
-    this.quotationCorrector = new QuotationCorrector(stubDocumentManager, quotationConfig);
+    this.quotationCorrector = new QuotationCorrector<ScriptureDocument>(
+      stubDocumentManager,
+      new UsfmEditFactory(stylesheet),
+      quotationConfig,
+    );
   }
 
   static createWithFullEnglishQuotes(): ScriptureTestEnvironment {

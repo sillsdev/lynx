@@ -2,6 +2,7 @@ import {
   Diagnostic,
   DiagnosticFix,
   DiagnosticSeverity,
+  DocumentAccessor,
   DocumentManager,
   ScriptureDocument,
   ScriptureNode,
@@ -155,8 +156,8 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
 });
 
 class TestEnvironment {
-  private readonly textDocumentChecker: AbstractChecker;
-  private readonly scriptureDocumentChecker: AbstractChecker;
+  private readonly textDocumentChecker: AbstractChecker<TextDocument>;
+  private readonly scriptureDocumentChecker: AbstractChecker<ScriptureDocument>;
 
   constructor() {
     const createTextDiagnostic = (text: string) => {
@@ -222,8 +223,8 @@ class TestEnvironment {
       },
     });
 
-    class StubChecker extends AbstractChecker {
-      constructor(documentManager: DocumentManager<TextDocument>) {
+    class StubChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
+      constructor(documentManager: DocumentAccessor<T>) {
         super('stub-checker', documentManager, {
           createIssueFinder(_diagnosticFactory: DiagnosticFactory) {
             return mockIssueFinder;
@@ -231,7 +232,7 @@ class TestEnvironment {
         });
       }
 
-      protected getFixes(_document: TextDocument | ScriptureDocument, _diagnostic: Diagnostic): DiagnosticFix[] {
+      protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticFix[] {
         return [];
       }
     }
@@ -246,11 +247,11 @@ class TestEnvironment {
     this.scriptureDocumentChecker = new StubChecker(scriptureDocumentManager);
   }
 
-  public getTextDocumentChecker(): AbstractChecker {
+  public getTextDocumentChecker(): AbstractChecker<TextDocument> {
     return this.textDocumentChecker;
   }
 
-  public getScriptureDocumentChecker(): AbstractChecker {
+  public getScriptureDocumentChecker(): AbstractChecker<ScriptureDocument> {
     return this.scriptureDocumentChecker;
   }
 }

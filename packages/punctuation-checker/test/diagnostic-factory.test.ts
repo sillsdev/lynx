@@ -70,7 +70,10 @@ it('adjusts the position of the error when an enclosing range is provided', () =
 });
 
 it('produces errors when the Diagnostic object is incompletely specified', () => {
-  const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory('test-source-id', new TextDocument('test', 1, ''));
+  const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
+    'test-source-id',
+    new TextDocument('test', 'no-format', 1, ''),
+  );
 
   const code = 'testing-code';
   const message = 'testing-message';

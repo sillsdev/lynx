@@ -1,7 +1,16 @@
-import { Diagnostic, DiagnosticFix, DocumentManager, Localizer, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  DocumentAccessor,
+  EditFactory,
+  Localizer,
+  ScriptureDocument,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
-import { StandardFixProvider } from '../fixes/standard-fixes';
+import type { StandardFixProvider } from '../fixes/standard-fixes';
+import { StandardFixProviderFactory } from '../fixes/standard-fixes';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 import { PairedPunctuationIssueFinderFactory } from './paired-punctuation-issue-finder';
 
@@ -17,20 +26,21 @@ export const UNMATCHED_OPENING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-ope
 export const UNMATCHED_CLOSING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-closing-punctuation-mark';
 export const OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE = 'overlapping-punctuation-pairs';
 
-export class PairedPunctuationChecker extends AbstractChecker {
-  private readonly standardFixProvider: StandardFixProvider;
+export class PairedPunctuationChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
 
   constructor(
     private readonly localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
   ) {
     super(
       'paired-punctuation-checker',
-      documentManager,
+      documentAccessor,
       new PairedPunctuationIssueFinderFactory(localizer, pairedPunctuationConfig),
     );
-    this.standardFixProvider = new StandardFixProvider(localizer);
+    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -46,10 +56,12 @@ export class PairedPunctuationChecker extends AbstractChecker {
       );
     }
 
-    this.standardFixProvider.init();
+    await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(_textDocument: TextDocument, diagnostic: Diagnostic): DiagnosticFix[] {
+  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
+    const standardFixProvider: StandardFixProvider<T> =
+      this.standardFixProviderFactory.createStandardFixProvider(document);
     if (
       diagnostic.code === UNMATCHED_CLOSING_CURLY_BRACKET_DIAGNOSTIC_CODE ||
       diagnostic.code === UNMATCHED_CLOSING_PARENTHESIS_DIAGNOSTIC_CODE ||
@@ -60,7 +72,7 @@ export class PairedPunctuationChecker extends AbstractChecker {
       diagnostic.code === UNMATCHED_OPENING_PUNCTUATION_MARK_DIAGNOSTIC_CODE ||
       diagnostic.code === UNMATCHED_OPENING_SQUARE_BRACKET_DIAGNOSTIC_CODE
     ) {
-      return [this.standardFixProvider.punctuationRemovalFix(diagnostic)];
+      return [standardFixProvider.punctuationRemovalFix(diagnostic)];
     }
     return [];
   }

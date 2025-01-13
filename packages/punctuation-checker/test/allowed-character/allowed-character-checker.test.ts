@@ -7,7 +7,9 @@ import {
   ScriptureDocument,
   ScriptureNode,
   ScriptureText,
+  TextDocument,
   TextDocumentFactory,
+  TextEditFactory,
 } from '@sillsdev/lynx';
 import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
@@ -147,6 +149,7 @@ describe('integration tests', () => {
         standardEnglishCharacterSet.createSelectedDiagnosticProviders(
           testEnv.allowedCharacterCheckerLocalizer,
           new StubTextDocumentManager(new TextDocumentFactory()),
+          new TextEditFactory(),
           [RuleType.AllowedCharacters],
         )[0];
       await standardEnglishCharacterChecker.init();
@@ -162,6 +165,7 @@ describe('integration tests', () => {
         standardEnglishCharacterSet.createSelectedDiagnosticProviders(
           testEnv.allowedCharacterCheckerLocalizer,
           new StubTextDocumentManager(new TextDocumentFactory()),
+          new TextEditFactory(),
           [RuleType.AllowedCharacters],
         )[0];
       await standardEnglishCharacterChecker.init();
@@ -181,6 +185,7 @@ describe('integration tests', () => {
         standardEnglishCharacterSet.createSelectedDiagnosticProviders(
           testEnv.allowedCharacterCheckerLocalizer,
           new StubTextDocumentManager(new TextDocumentFactory()),
+          new TextEditFactory(),
           [RuleType.AllowedCharacters],
         )[0];
       await standardEnglishCharacterChecker.init();
@@ -201,6 +206,7 @@ describe('integration tests', () => {
         standardEnglishCharacterSet.createSelectedDiagnosticProviders(
           testEnv.allowedCharacterCheckerLocalizer,
           new StubTextDocumentManager(new TextDocumentFactory()),
+          new TextEditFactory(),
           [RuleType.AllowedCharacters],
         )[0];
       await standardEnglishCharacterChecker.init();
@@ -292,7 +298,7 @@ describe('ScriptureDocument tests', () => {
 class TextTestEnvironment {
   readonly allowedCharacterCheckerLocalizer: Localizer;
 
-  readonly allowedCharacterChecker: AllowedCharacterChecker;
+  readonly allowedCharacterChecker: AllowedCharacterChecker<TextDocument>;
 
   constructor(
     private readonly allowedCharacterSet: AllowedCharacterSet,
@@ -351,7 +357,7 @@ class TextTestEnvironment {
 
 class ScriptureTestEnvironment {
   readonly allowedCharacterCheckerLocalizer: Localizer;
-  readonly scriptureAllowedCharacterChecker: AllowedCharacterChecker;
+  readonly scriptureAllowedCharacterChecker: AllowedCharacterChecker<ScriptureDocument>;
 
   private readonly scriptureDocumentFactory: UsfmDocumentFactory;
   readonly scriptureDocumentManager: DocumentManager<ScriptureDocument>;

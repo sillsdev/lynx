@@ -6,6 +6,7 @@ import {
   OnTypeFormattingProvider,
   TextDocument,
   TextDocumentFactory,
+  TextEditFactory,
 } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
@@ -203,11 +204,13 @@ describe('Standard English rule set tests', () => {
     it('identifies no issues with well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const localizer: Localizer = new Localizer();
-      const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
-        localizer,
-        stubDocumentManager,
-        [RuleType.QuotationMarkPairing],
-      )[0];
+      const quotationChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.QuotationMarkPairing],
+        )[0];
       await quotationChecker.init();
       await localizer.init();
 
@@ -256,11 +259,13 @@ describe('Standard English rule set tests', () => {
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const localizer: Localizer = new Localizer();
-      const quotationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
-        localizer,
-        stubDocumentManager,
-        [RuleType.QuotationMarkPairing],
-      )[0];
+      const quotationChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.QuotationMarkPairing],
+        )[0];
       await quotationChecker.init();
       await localizer.init();
 
@@ -607,11 +612,13 @@ describe('Standard English rule set tests', () => {
     it('identifies no issues with well-formed English Biblical text', async () => {
       const localizer: Localizer = new Localizer();
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
-      const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
-        localizer,
-        stubDocumentManager,
-        [RuleType.PairedPunctuation],
-      )[0];
+      const pairedPunctuationChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.PairedPunctuation],
+        )[0];
       await pairedPunctuationChecker.init();
       await localizer.init();
 
@@ -639,11 +646,13 @@ describe('Standard English rule set tests', () => {
     it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
       const localizer: Localizer = new Localizer();
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
-      const pairedPunctuationChecker: DiagnosticProvider = standardEnglishRuleSet.createSelectedDiagnosticProviders(
-        localizer,
-        stubDocumentManager,
-        [RuleType.PairedPunctuation],
-      )[0];
+      const pairedPunctuationChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.PairedPunctuation],
+        )[0];
       await pairedPunctuationChecker.init();
       await localizer.init();
 
@@ -679,7 +688,10 @@ describe('Standard English rule set tests', () => {
     it('makes no corrections for well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const quoteCorrector: OnTypeFormattingProvider =
-        standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
+        standardEnglishRuleSet.createOnTypeFormattingProviders<TextDocument>(
+          stubDocumentManager,
+          new TextEditFactory(),
+        )[0];
       expect(
         await quoteCorrector.getOnTypeEdits(
           `So Pharaoh summoned Abram and said, “What is this you have done to me? Why didn't you tell me that she was your wife?
@@ -693,7 +705,10 @@ describe('Standard English rule set tests', () => {
     it('corrects intentionally placed ambiguities in otherwise well-formed English Biblical text', async () => {
       const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
       const quoteCorrector: OnTypeFormattingProvider =
-        standardEnglishRuleSet.createOnTypeFormattingProviders(stubDocumentManager)[0];
+        standardEnglishRuleSet.createOnTypeFormattingProviders<TextDocument>(
+          stubDocumentManager,
+          new TextEditFactory(),
+        )[0];
 
       expect(
         await quoteCorrector.getOnTypeEdits(

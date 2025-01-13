@@ -1,6 +1,7 @@
 import {
   DiagnosticProvider,
-  DocumentManager,
+  DocumentAccessor,
+  EditFactory,
   Localizer,
   OnTypeFormattingProvider,
   ScriptureDocument,
@@ -28,20 +29,22 @@ export class RuleSet {
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
   ) {}
 
-  public createDiagnosticProviders(
+  public createDiagnosticProviders<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentManager: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
   ): DiagnosticProvider[] {
     return [
       this.createAllowedCharacterChecker(localizer, documentManager),
-      this.createQuotationChecker(localizer, documentManager),
-      this.createPairedPunctuationChecker(localizer, documentManager),
+      this.createQuotationChecker(localizer, documentManager, editFactory),
+      this.createPairedPunctuationChecker(localizer, documentManager, editFactory),
     ];
   }
 
-  public createSelectedDiagnosticProviders(
+  public createSelectedDiagnosticProviders<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument | ScriptureDocument>,
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
     selectedRules: RuleType[],
   ): DiagnosticProvider[] {
     const diagnosticProviderFactories: DiagnosticProvider[] = [];
@@ -49,13 +52,15 @@ export class RuleSet {
     for (const rule of selectedRules) {
       switch (rule) {
         case RuleType.AllowedCharacters:
-          diagnosticProviderFactories.push(this.createAllowedCharacterChecker(localizer, documentManager));
+          diagnosticProviderFactories.push(this.createAllowedCharacterChecker(localizer, documentAccessor));
           break;
         case RuleType.QuotationMarkPairing:
-          diagnosticProviderFactories.push(this.createQuotationChecker(localizer, documentManager));
+          diagnosticProviderFactories.push(this.createQuotationChecker(localizer, documentAccessor, editFactory));
           break;
         case RuleType.PairedPunctuation:
-          diagnosticProviderFactories.push(this.createPairedPunctuationChecker(localizer, documentManager));
+          diagnosticProviderFactories.push(
+            this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory),
+          );
           break;
       }
     }
@@ -63,33 +68,41 @@ export class RuleSet {
     return diagnosticProviderFactories;
   }
 
-  private createAllowedCharacterChecker(
+  private createAllowedCharacterChecker<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
   ): DiagnosticProvider {
-    return new AllowedCharacterChecker(localizer, documentManager, this.allowedCharacterSet);
+    return new AllowedCharacterChecker(localizer, documentAccessor, this.allowedCharacterSet);
   }
 
-  private createQuotationChecker(
+  private createQuotationChecker<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
   ): DiagnosticProvider {
-    return new QuotationChecker(localizer, documentManager, this.quotationConfig);
+    return new QuotationChecker(localizer, documentAccessor, editFactory, this.quotationConfig);
   }
 
-  private createPairedPunctuationChecker(
+  private createPairedPunctuationChecker<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
-    documentManager: DocumentManager<TextDocument>,
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
   ): DiagnosticProvider {
-    return new PairedPunctuationChecker(localizer, documentManager, this.pairedPunctuationConfig);
+    return new PairedPunctuationChecker<T>(localizer, documentAccessor, editFactory, this.pairedPunctuationConfig);
   }
 
-  public createOnTypeFormattingProviders(documentManager: DocumentManager<TextDocument>): OnTypeFormattingProvider[] {
-    return [this.createQuoteCorrector(documentManager)];
+  public createOnTypeFormattingProviders<T extends TextDocument | ScriptureDocument>(
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
+  ): OnTypeFormattingProvider[] {
+    return [this.createQuoteCorrector(documentAccessor, editFactory)];
   }
 
-  private createQuoteCorrector(documentManager: DocumentManager<TextDocument>): OnTypeFormattingProvider {
-    return new QuotationCorrector(documentManager, this.quotationConfig);
+  private createQuoteCorrector<T extends TextDocument | ScriptureDocument>(
+    documentAccessor: DocumentAccessor<T>,
+    editFactory: EditFactory<T>,
+  ): OnTypeFormattingProvider {
+    return new QuotationCorrector(documentAccessor, editFactory, this.quotationConfig);
   }
 
   _getAllowedCharacterSet(): AllowedCharacterSet {

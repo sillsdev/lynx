@@ -1,4 +1,4 @@
-import { Range, ScriptureNode, ScriptureNodeType } from '@sillsdev/lynx';
+import { Range, ScriptureDocument, ScriptureNode, ScriptureNodeType, TextDocument } from '@sillsdev/lynx';
 
 export interface PunctuationMetadata {
   startIndex: number;
@@ -159,4 +159,8 @@ export class ScriptureNodeGrouper {
   public getNonVerseNodes(): ScriptureNode[] {
     return this.nonVerseNodes;
   }
+}
+
+export function isScriptureDocument(document: TextDocument | ScriptureDocument): document is ScriptureDocument {
+  return 'findNodes' in document;
 }
