@@ -1,11 +1,12 @@
 import { Position } from '../common/position';
 import { Range } from '../common/range';
-import { ScriptureDocument } from './scripture-document';
-import { findScriptureNodes, ScriptureNode, ScriptureNodeType } from './scripture-document';
+import { ScriptureChildren, ScriptureDocument, ScriptureNode, ScriptureNodeType } from './scripture-document';
 
 export abstract class ScriptureContainer implements ScriptureNode {
-  private _parent?: ScriptureNode;
-  private readonly _children: ScriptureNode[] = [];
+  parent?: ScriptureNode;
+  next?: ScriptureNode;
+  previous?: ScriptureNode;
+  private readonly _children = new ScriptureChildren(this);
   readonly isLeaf = false;
 
   constructor(
@@ -22,26 +23,18 @@ export abstract class ScriptureContainer implements ScriptureNode {
   abstract readonly type: ScriptureNodeType;
 
   get document(): ScriptureDocument | undefined {
-    return this._parent?.document;
-  }
-
-  get parent(): ScriptureNode | undefined {
-    return this._parent;
+    return this.parent?.document;
   }
 
   get children(): readonly ScriptureNode[] {
-    return this._children;
-  }
-
-  updateParent(parent: ScriptureNode | undefined): void {
-    this._parent = parent;
+    return this._children.nodes;
   }
 
   remove(): void {
-    if (this._parent == null) {
+    if (this.parent == null) {
       throw new Error('The node does not have a parent.');
     }
-    this._parent.removeChild(this);
+    this.parent.removeChild(this);
   }
 
   getText(): string {
@@ -54,7 +47,7 @@ export abstract class ScriptureContainer implements ScriptureNode {
   findNodes(
     filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean) | ScriptureNodeType[],
   ): IterableIterator<ScriptureNode> {
-    return findScriptureNodes(this, filter);
+    return this._children.find(filter);
   }
 
   positionAt(offset: number): Position {
@@ -65,38 +58,22 @@ export abstract class ScriptureContainer implements ScriptureNode {
   }
 
   appendChild(child: ScriptureNode): void {
-    this._children.push(child);
-    child.updateParent(this);
+    this._children.append(child);
   }
 
   insertChild(index: number, child: ScriptureNode): void {
-    this._children.splice(index, 0, child);
-    child.updateParent(this);
+    this._children.insert(index, child);
   }
 
   removeChild(child: ScriptureNode): void {
-    if (child.parent !== this) {
-      throw new Error('This node does not contain the specified child.');
-    }
-    const index = this._children.indexOf(child);
-    if (index === -1) {
-      throw new Error('This node does not contain the specified child.');
-    }
-    this._children.splice(index, 1);
-    child.updateParent(undefined);
+    this._children.remove(child);
   }
 
   spliceChildren(start: number, deleteCount: number, ...items: ScriptureNode[]): void {
-    const removed = this._children.splice(start, deleteCount, ...items);
-    for (const child of removed) {
-      child.updateParent(undefined);
-    }
-    for (const child of items) {
-      child.updateParent(this);
-    }
+    this._children.splice(start, deleteCount, ...items);
   }
 
   clearChildren(): void {
-    this._children.length = 0;
+    this._children.clear();
   }
 }
