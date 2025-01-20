@@ -17,7 +17,7 @@ export { ScriptureChapter } from './scripture-chapter';
 export { ScriptureCharacterStyle } from './scripture-character-style';
 export { ScriptureContainer } from './scripture-container';
 export type { ScriptureDocument, ScriptureNode } from './scripture-document';
-export { findScriptureNodes, ScriptureNodeType } from './scripture-document';
+export { ScriptureChildren, ScriptureDocumentMixin, ScriptureNodeType } from './scripture-document';
 export type { ScriptureEditFactory } from './scripture-edit-factory';
 export { ScriptureLeaf } from './scripture-leaf';
 export { ScriptureMilestone } from './scripture-milestone';

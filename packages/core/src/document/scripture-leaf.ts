@@ -4,8 +4,10 @@ import { ScriptureDocument } from './scripture-document';
 import { ScriptureNode, ScriptureNodeType } from './scripture-document';
 
 export abstract class ScriptureLeaf implements ScriptureNode {
-  private _parent?: ScriptureNode;
-  readonly children: readonly ScriptureNode[] = [];
+  parent?: ScriptureNode;
+  next?: ScriptureNode;
+  previous?: ScriptureNode;
+  readonly children: ScriptureNode[] = [];
   readonly isLeaf = true;
 
   constructor(public range: Range = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }) {}
@@ -13,22 +15,14 @@ export abstract class ScriptureLeaf implements ScriptureNode {
   abstract readonly type: ScriptureNodeType;
 
   get document(): ScriptureDocument | undefined {
-    return this._parent?.document;
-  }
-
-  get parent(): ScriptureNode | undefined {
-    return this._parent;
-  }
-
-  updateParent(parent: ScriptureNode | undefined): void {
-    this._parent = parent;
+    return this.parent?.document;
   }
 
   remove(): void {
-    if (this._parent == null) {
+    if (this.parent == null) {
       throw new Error('The node does not have a parent.');
     }
-    this._parent.removeChild(this);
+    this.parent.removeChild(this);
   }
 
   getText(): string {
