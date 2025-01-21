@@ -1,6 +1,6 @@
-import { Range, ScriptureNode } from '@sillsdev/lynx';
+import { Range } from '@sillsdev/lynx';
 
-import { PairedPunctuationDirection, PairedPunctuationMetadata, TextSegment } from '../utils';
+import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup, TextSegment } from '../utils';
 import { QuotationConfig } from './quotation-config';
 
 export interface QuoteMetadata extends PairedPunctuationMetadata {
@@ -85,7 +85,7 @@ export class UnresolvedQuoteMetadata {
     }
     if (!this.isDirectionPossible(chosenDirection)) {
       throw new Error(
-        `Cannot resolve quote metadata with direction ${chosenDirection.toFixed()} as this direction is not possible`,
+        `Cannot resolve quote metadata with direction \u201C${chosenDirection}\u201D as this direction is not possible`,
       );
     }
   }
@@ -251,18 +251,18 @@ export class QuotationIterator {
 
   constructor(
     private readonly quotationConfig: QuotationConfig,
-    input: string | ScriptureNode[],
+    input: string | ScriptureNodeGroup,
   ) {
     this.openingOrClosingQuotePattern = quotationConfig.createAllQuotesRegex();
     this.textSegments = this.createTextSegments(input);
     this.findNext();
   }
 
-  private createTextSegments(input: string | ScriptureNode[]): TextSegment[] {
+  private createTextSegments(input: string | ScriptureNodeGroup): TextSegment[] {
     if (typeof input === 'string') {
       return [new TextSegment(input)];
     }
-    return input.map((x) => new TextSegment(x.getText(), x.range));
+    return input.toTextSegmentArray();
   }
 
   private findNext(): void {

@@ -3,6 +3,7 @@ import { Diagnostic, DiagnosticSeverity, Localizer, Range, ScriptureNode } from 
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
+import { ScriptureNodeGroup } from '../utils';
 import { ALLOWED_CHARACTER_CHECKER_LOCALIZER_NAMESPACE } from './allowed-character-checker';
 import { AllowedCharacterSet } from './allowed-character-set';
 
@@ -43,11 +44,11 @@ export class AllowedCharacterIssueFinder implements IssueFinder {
     return this.diagnosticList.toArray();
   }
 
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNode[]): Diagnostic[] {
+  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
     this.diagnosticList = new DiagnosticList();
 
-    if (!Array.isArray(nodes)) {
-      nodes = [nodes];
+    if (!(nodes instanceof ScriptureNodeGroup)) {
+      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
     }
 
     for (const node of nodes) {

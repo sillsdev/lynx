@@ -5,14 +5,13 @@ import {
   DiagnosticsChanged,
   DocumentAccessor,
   ScriptureDocument,
-  ScriptureNodeType,
   TextDocument,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
 
 import { DiagnosticFactory } from './diagnostic-factory';
 import { IssueFinder, IssueFinderFactory } from './issue-finder';
-import { isScriptureDocument, ScriptureNodeGrouper } from './utils';
+import { isScriptureDocument, ScriptureTextNodeGrouper } from './utils';
 
 export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument> implements DiagnosticProvider {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
@@ -86,13 +85,16 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
 
     const issueFinder: IssueFinder = this.issueFinderFactory.createIssueFinder(diagnosticFactory);
 
-    const scriptureNodeGrouper: ScriptureNodeGrouper = new ScriptureNodeGrouper(
-      scriptureDocument.findNodes([ScriptureNodeType.Text]),
-    );
-    for (const nonVerseNode of scriptureNodeGrouper.getNonVerseNodes()) {
+    const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
+    for (const nonVerseNode of scriptureNodeGrouper.getStandAloneNodes()) {
       diagnostics = diagnostics.concat(issueFinder.produceDiagnosticsForScripture(nonVerseNode));
     }
-    diagnostics = diagnostics.concat(issueFinder.produceDiagnosticsForScripture(scriptureNodeGrouper.getVerseNodes()));
+    for (const nonVerseNodeGroup of scriptureNodeGrouper.getNonVerseNodeGroups()) {
+      diagnostics = diagnostics.concat(issueFinder.produceDiagnosticsForScripture(nonVerseNodeGroup));
+    }
+    diagnostics = diagnostics.concat(
+      issueFinder.produceDiagnosticsForScripture(scriptureNodeGrouper.getVerseNodeGroup()),
+    );
     return diagnostics;
   }
 

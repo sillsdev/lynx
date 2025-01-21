@@ -17,6 +17,7 @@ import { mock } from 'vitest-mock-extended';
 import { AbstractChecker } from '../src/abstract-checker';
 import { DiagnosticFactory } from '../src/diagnostic-factory';
 import { IssueFinder } from '../src/issue-finder';
+import { ScriptureNodeGroup } from '../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from './test-utils';
 
 it('calls produceDiagnostics once when given a TextDocument', async () => {
@@ -48,7 +49,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with a
   expect(await testEnv.getScriptureDocumentChecker().getDiagnostics('\\c 1 \\v 1 this is test scripture text')).toEqual(
     [
       {
-        code: 'scripture-node-array-passed',
+        code: 'scripture-node-group-passed',
         source: 'mock-issue-finder',
         range: {
           start: {
@@ -76,7 +77,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with m
       .getDiagnostics('\\c 1 \\v 1 this is test scripture text \\v 2 some more text \\v 3 and the end'),
   ).toEqual([
     {
-      code: 'scripture-node-array-passed',
+      code: 'scripture-node-group-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -121,7 +122,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
       message: 'book name',
     },
     {
-      code: 'single-scripture-node-passed',
+      code: 'scripture-node-group-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -137,7 +138,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
       message: 'with a footnote ',
     },
     {
-      code: 'scripture-node-array-passed',
+      code: 'scripture-node-group-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -178,8 +179,8 @@ class TestEnvironment {
         message: text,
       };
     };
-    const createScriptureDiagnostic = (nodes: ScriptureNode | ScriptureNode[]) => {
-      if (!Array.isArray(nodes)) {
+    const createScriptureDiagnostic = (nodes: ScriptureNode | ScriptureNodeGroup) => {
+      if (!(nodes instanceof ScriptureNodeGroup)) {
         return {
           code: 'single-scripture-node-passed',
           source: 'mock-issue-finder',
@@ -198,7 +199,7 @@ class TestEnvironment {
         };
       }
       return {
-        code: 'scripture-node-array-passed',
+        code: 'scripture-node-group-passed',
         source: 'mock-issue-finder',
         range: {
           start: {
@@ -211,14 +212,17 @@ class TestEnvironment {
           },
         },
         severity: DiagnosticSeverity.Error,
-        message: nodes.map((x) => x.getText()).join('***'),
+        message: nodes
+          .toTextSegmentArray()
+          .map((x) => x.getText())
+          .join('***'),
       };
     };
     const mockIssueFinder = mock<IssueFinder>({
       produceDiagnostics(text: string): Diagnostic[] {
         return [createTextDiagnostic(text)];
       },
-      produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNode[]): Diagnostic[] {
+      produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
         return [createScriptureDiagnostic(nodes)];
       },
     });

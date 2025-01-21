@@ -8,7 +8,7 @@ import {
   QuotationRootLevel,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
-import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
+import { PairedPunctuationDirection, ScriptureNodeGroup, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationIterator tests', () => {
   describe('Plain text quotation mark identification', () => {
@@ -1392,7 +1392,9 @@ describe('QuotationIterator tests', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
       const scriptureNode: ScriptureNode = testEnv.createScriptureNode('text \u201Cwith\u201D quotes', 1, 5, 1, 23);
 
-      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator([scriptureNode]);
+      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+        ScriptureNodeGroup.createFromNodes([scriptureNode]),
+      );
       expect(quotationIterator.hasNext()).toBe(true);
       expect(quotationIterator.next()).toEqual(
         new UnresolvedQuoteMetadata.Builder()
@@ -1423,7 +1425,9 @@ describe('QuotationIterator tests', () => {
       const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('text \u201Cwith \u2018quotes', 1, 5, 1, 23);
       const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('different\u2019 text\u201D', 2, 3, 2, 19);
 
-      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator([scriptureNode1, scriptureNode2]);
+      const quotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+        ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]),
+      );
       expect(quotationIterator.hasNext()).toBe(true);
       expect(quotationIterator.next()).toEqual(
         new UnresolvedQuoteMetadata.Builder()
@@ -1794,7 +1798,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
     ).toThrowError('Cannot resolve quote metadata with depth 2, as this depth is not possible.');
     expect(() =>
       unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Ambiguous),
-    ).toThrow('Cannot resolve quote metadata with direction 3 as this direction is not possible');
+    ).toThrow('Cannot resolve quote metadata with direction \u201CAmbiguous\u201D as this direction is not possible');
   });
 });
 
@@ -1852,7 +1856,7 @@ describe('QuotationDepth tests', () => {
 class TestEnvironment {
   private constructor(private readonly quotationConfig: QuotationConfig) {}
 
-  public newQuotationIterator(text: string | ScriptureNode[]): QuotationIterator {
+  public newQuotationIterator(text: string | ScriptureNodeGroup): QuotationIterator {
     return new QuotationIterator(this.quotationConfig, text);
   }
 

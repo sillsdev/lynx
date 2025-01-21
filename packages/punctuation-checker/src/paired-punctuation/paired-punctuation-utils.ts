@@ -1,6 +1,4 @@
-import { ScriptureNode } from '@sillsdev/lynx';
-
-import { PairedPunctuationDirection, PairedPunctuationMetadata, TextSegment } from '../utils';
+import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup, TextSegment } from '../utils';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 
 export class PairedPunctuationIterator {
@@ -11,18 +9,18 @@ export class PairedPunctuationIterator {
 
   constructor(
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
-    input: string | ScriptureNode[],
+    input: string | ScriptureNodeGroup,
   ) {
     this.openingOrClosingMarkPattern = pairedPunctuationConfig.createAllPairedMarksRegex();
     this.textSegments = this.createTextSegments(input);
     this.findNext();
   }
 
-  private createTextSegments(input: string | ScriptureNode[]): TextSegment[] {
+  private createTextSegments(input: string | ScriptureNodeGroup): TextSegment[] {
     if (typeof input === 'string') {
       return [new TextSegment(input)];
     }
-    return input.map((x) => new TextSegment(x.getText(), x.range));
+    return input.toTextSegmentArray();
   }
 
   private findNext(): void {

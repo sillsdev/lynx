@@ -12,9 +12,14 @@ export interface PairedPunctuationMetadata extends PunctuationMetadata {
 }
 
 export enum PairedPunctuationDirection {
-  Opening = 1,
-  Closing = 2,
-  Ambiguous = 3,
+  Opening = 'Opening',
+  Closing = 'Closing',
+  Ambiguous = 'Ambiguous',
+}
+
+export enum ContextDirection {
+  Left,
+  Right,
 }
 
 export class CharacterClassRegexBuilder {
@@ -129,35 +134,125 @@ export class TextSegment {
   }
 }
 
-export class ScriptureNodeGrouper {
-  private readonly nonVerseNodes: ScriptureNode[] = [];
-  private readonly verseNodes: ScriptureNode[] = [];
+export class ScriptureNodeGroup implements Iterable<ScriptureNode> {
+  private constructor(private readonly nodes: ScriptureNode[]) {}
 
-  constructor(allNodes: IterableIterator<ScriptureNode>) {
-    for (const node of allNodes) {
-      if (this.isVerseNode(node)) {
-        this.verseNodes.push(node);
+  public static createEmptyGroup(): ScriptureNodeGroup {
+    return new ScriptureNodeGroup([]);
+  }
+
+  public static createFromNodes(nodes: ScriptureNode[]): ScriptureNodeGroup {
+    return new ScriptureNodeGroup(nodes);
+  }
+
+  public add(scriptureNode: ScriptureNode): void {
+    this.nodes.push(scriptureNode);
+  }
+
+  public size(): number {
+    return this.nodes.length;
+  }
+
+  public nodeAtIndex(index: number): ScriptureNode {
+    if (index < 0 && index >= this.size()) {
+      throw new Error(`Index ${index.toString()} is out of bounds when calling ScriptureNodeGroup.get(index)`);
+    }
+    return this.nodes[index];
+  }
+
+  [Symbol.iterator]() {
+    return new ScriptureNodeIterator(this.nodes);
+  }
+
+  public toTextSegmentArray(): TextSegment[] {
+    return this.nodes.map((x) => new TextSegment(x.getText(), x.range));
+  }
+}
+
+class ScriptureNodeIterator implements Iterator<ScriptureNode> {
+  private currentIndex = 0;
+
+  constructor(private readonly nodeArray: ScriptureNode[]) {}
+
+  next(): IteratorResult<ScriptureNode> {
+    if (this.currentIndex < this.nodeArray.length) {
+      return {
+        done: false,
+        value: this.nodeArray[this.currentIndex++],
+      };
+    }
+    return {
+      done: true,
+      value: undefined,
+    };
+  }
+}
+
+export class ScriptureTextNodeGrouper {
+  private standaloneNodes: ScriptureNode[] = [];
+  private nonVerseNodeGroups: ScriptureNodeGroup[] = [];
+  private verseNodes: ScriptureNodeGroup = ScriptureNodeGroup.createEmptyGroup();
+  private firstVerseNode: ScriptureNode | undefined = undefined;
+
+  private static prohibitedVerseAncestorTypes: Set<ScriptureNodeType> = new Set<ScriptureNodeType>([
+    ScriptureNodeType.Note,
+    ScriptureNodeType.Cell,
+    ScriptureNodeType.Row,
+    ScriptureNodeType.Table,
+    ScriptureNodeType.Sidebar,
+    ScriptureNodeType.Ref,
+  ]);
+
+  constructor(scriptureDocument: ScriptureDocument) {
+    this.groupNodes(scriptureDocument);
+  }
+
+  private groupNodes(scriptureDocument: ScriptureDocument): void {
+    const topLevelTextNodes: ScriptureNode[] = [];
+    this.processNode(scriptureDocument, topLevelTextNodes);
+
+    this.verseNodes = ScriptureNodeGroup.createFromNodes(topLevelTextNodes);
+  }
+
+  private processNode(node: ScriptureNode, currentGroup: ScriptureNode[]): void {
+    if (node.type === ScriptureNodeType.Text) {
+      if (this.firstVerseNode === undefined) {
+        this.standaloneNodes.push(node);
       } else {
-        this.nonVerseNodes.push(node);
+        currentGroup.push(node);
+      }
+    }
+
+    if (node.type === ScriptureNodeType.Verse && this.firstVerseNode === undefined) {
+      this.firstVerseNode = node;
+    }
+
+    if (ScriptureTextNodeGrouper.prohibitedVerseAncestorTypes.has(node.type)) {
+      // create a new group of nodes
+      const newNodeGroup: ScriptureNode[] = [];
+      for (const child of node.children) {
+        this.processNode(child, newNodeGroup);
+      }
+      if (newNodeGroup.length > 0) {
+        this.nonVerseNodeGroups.push(ScriptureNodeGroup.createFromNodes(newNodeGroup));
+      }
+    } else {
+      for (const child of node.children) {
+        this.processNode(child, currentGroup);
       }
     }
   }
 
-  private isVerseNode(node: ScriptureNode): boolean {
-    for (const sibling of node.parent?.children ?? []) {
-      if (sibling.type === ScriptureNodeType.Verse) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public getVerseNodes(): ScriptureNode[] {
+  public getVerseNodeGroup(): ScriptureNodeGroup {
     return this.verseNodes;
   }
 
-  public getNonVerseNodes(): ScriptureNode[] {
-    return this.nonVerseNodes;
+  public getNonVerseNodeGroups(): ScriptureNodeGroup[] {
+    return this.nonVerseNodeGroups;
+  }
+
+  public getStandAloneNodes(): ScriptureNode[] {
+    return this.standaloneNodes;
   }
 }
 

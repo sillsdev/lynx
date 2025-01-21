@@ -14,7 +14,7 @@ import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationIssueFinder } from '../../src/quotation/quotation-issue-finder';
 import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotation-utils';
-import { StringContextMatcher } from '../../src/utils';
+import { ScriptureNodeGroup, StringContextMatcher } from '../../src/utils';
 import { StubFixedLineWidthTextDocument, StubSingleLineTextDocument } from '../test-utils';
 
 describe('QuotationErrorFinder tests', () => {
@@ -367,17 +367,15 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
-        testEnv.createScriptureNode('Genesis', 3, 13, 3, 20),
-      ]),
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(testEnv.createScriptureNode('Genesis', 3, 13, 3, 20)),
     ).toEqual([]);
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(
         testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27),
-      ]),
+      ),
     ).toEqual([]);
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(
         testEnv.createScriptureNode(
           'The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”',
           10,
@@ -385,7 +383,7 @@ describe('ScriptureDocument tests', () => {
           10,
           167,
         ),
-      ]),
+      ),
     ).toEqual([]);
   });
 
@@ -394,7 +392,7 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(
         testEnv.createScriptureNode(
           'The servant said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”',
           10,
@@ -402,7 +400,7 @@ describe('ScriptureDocument tests', () => {
           10,
           168,
         ),
-      ]),
+      ),
     ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(10, 68, 10, 69)]);
   });
 
@@ -411,29 +409,31 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
-        testEnv.createScriptureNode(
-          'Abraham said to him, “See to it that you do not take my son back there. ',
-          10,
-          13,
-          10,
-          83,
-        ),
-        testEnv.createScriptureNode(
-          "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land’, he will send his angel before you, and you shall take a wife for my son from there.",
-          11,
-          13,
-          11,
-          272,
-        ),
-        testEnv.createScriptureNode(
-          'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
-          12,
-          13,
-          12,
-          147,
-        ),
-      ]),
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(
+        ScriptureNodeGroup.createFromNodes([
+          testEnv.createScriptureNode(
+            'Abraham said to him, “See to it that you do not take my son back there. ',
+            10,
+            13,
+            10,
+            83,
+          ),
+          testEnv.createScriptureNode(
+            "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land’, he will send his angel before you, and you shall take a wife for my son from there.",
+            11,
+            13,
+            11,
+            272,
+          ),
+          testEnv.createScriptureNode(
+            'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
+            12,
+            13,
+            12,
+            147,
+          ),
+        ]),
+      ),
     ).toEqual([]);
   });
 
@@ -442,29 +442,31 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.quotationErrorFinder.produceDiagnosticsForScripture([
-        testEnv.createScriptureNode(
-          'Abraham said to him, “See to it that you do not take my son back there. ',
-          10,
-          13,
-          10,
-          83,
-        ),
-        testEnv.createScriptureNode(
-          "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land”, he will send his angel before you, and you shall take a wife for my son from there.",
-          11,
-          13,
-          11,
-          272,
-        ),
-        testEnv.createScriptureNode(
-          'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
-          12,
-          13,
-          12,
-          147,
-        ),
-      ]),
+      testEnv.quotationErrorFinder.produceDiagnosticsForScripture(
+        ScriptureNodeGroup.createFromNodes([
+          testEnv.createScriptureNode(
+            'Abraham said to him, “See to it that you do not take my son back there. ',
+            10,
+            13,
+            10,
+            83,
+          ),
+          testEnv.createScriptureNode(
+            "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, ‘To your offspring I will give this land”, he will send his angel before you, and you shall take a wife for my son from there.",
+            11,
+            13,
+            11,
+            272,
+          ),
+          testEnv.createScriptureNode(
+            'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.”',
+            12,
+            13,
+            12,
+            147,
+          ),
+        ]),
+      ),
     ).toEqual([
       testEnv.createUnmatchedOpeningQuoteDiagnostic(11, 147, 11, 148),
       testEnv.createUnmatchedClosingQuoteDiagnostic(12, 147, 12, 148),

@@ -3,7 +3,7 @@ import { Diagnostic, DiagnosticSeverity, Localizer, ScriptureNode } from '@sills
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
-import { PairedPunctuationDirection } from '../utils';
+import { PairedPunctuationDirection, ScriptureNodeGroup } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import {
   AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE,
@@ -51,11 +51,11 @@ export class QuotationIssueFinder implements IssueFinder {
     return this.diagnosticList.toArray();
   }
 
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNode[]): Diagnostic[] {
+  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
     this.diagnosticList = new DiagnosticList();
 
-    if (!Array.isArray(nodes)) {
-      nodes = [nodes];
+    if (!(nodes instanceof ScriptureNodeGroup)) {
+      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
     }
 
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);

@@ -9,7 +9,7 @@ import {
   QuoteMetadata,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
-import { PairedPunctuationDirection } from '../../src/utils';
+import { PairedPunctuationDirection, ScriptureNodeGroup } from '../../src/utils';
 
 describe('QuotationAnalyzer tests', () => {
   describe('Miscellaneous tests', () => {
@@ -1099,7 +1099,11 @@ describe('QuotationAnalyzer tests', () => {
       const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some \u201Ctest text', 5, 15, 5, 30);
       const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some\u201D other text', 5, 45, 5, 55);
 
-      expect(testEnv.quotationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedQuotes()).toEqual([]);
+      expect(
+        testEnv.quotationAnalyzer
+          .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+          .getUnmatchedQuotes(),
+      ).toEqual([]);
     });
 
     it('identifies issues in quotations spanning across ScriptureNodes', () => {
@@ -1107,7 +1111,11 @@ describe('QuotationAnalyzer tests', () => {
       const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('some \u201Ctest \u2018text', 5, 15, 5, 30);
       const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some\u201D other text', 5, 45, 5, 55);
 
-      expect(testEnv.quotationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedQuotes()).toEqual([
+      expect(
+        testEnv.quotationAnalyzer
+          .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+          .getUnmatchedQuotes(),
+      ).toEqual([
         {
           depth: QuotationDepth.Secondary,
           direction: PairedPunctuationDirection.Opening,

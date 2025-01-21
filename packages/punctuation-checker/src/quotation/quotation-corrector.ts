@@ -4,13 +4,11 @@ import {
   OnTypeFormattingProvider,
   Position,
   ScriptureDocument,
-  ScriptureNode,
-  ScriptureNodeType,
   TextDocument,
   TextEdit,
 } from '@sillsdev/lynx';
 
-import { isScriptureDocument, ScriptureNodeGrouper } from '../utils';
+import { isScriptureDocument, ScriptureNodeGroup, ScriptureTextNodeGrouper } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
 
@@ -52,16 +50,20 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     scriptureDocument: ScriptureDocument,
   ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
-    const scriptureNodeGrouper: ScriptureNodeGrouper = new ScriptureNodeGrouper(
-      scriptureDocument.findNodes([ScriptureNodeType.Text]),
-    );
+    const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
 
     let edits: TextEdit[] = [];
-    for (const nonVerseNode of scriptureNodeGrouper.getNonVerseNodes()) {
-      edits = edits.concat(this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, [nonVerseNode]));
+    for (const nonVerseNode of scriptureNodeGrouper.getStandAloneNodes()) {
+      edits = edits.concat(
+        this.correctScriptureNodes(
+          scriptureDocument,
+          quotationAnalyzer,
+          ScriptureNodeGroup.createFromNodes([nonVerseNode]),
+        ),
+      );
     }
     edits = edits.concat(
-      this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, scriptureNodeGrouper.getVerseNodes()),
+      this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, scriptureNodeGrouper.getVerseNodeGroup()),
     );
 
     return edits;
@@ -70,7 +72,7 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
   private correctScriptureNodes(
     scriptureDocument: ScriptureDocument,
     quotationAnalyzer: QuotationAnalyzer,
-    scriptureNodes: ScriptureNode[],
+    scriptureNodes: ScriptureNodeGroup,
   ): TextEdit[] {
     const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(scriptureNodes);
     const edits: TextEdit[] = [];

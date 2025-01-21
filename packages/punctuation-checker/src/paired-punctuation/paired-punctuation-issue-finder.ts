@@ -3,7 +3,7 @@ import { Diagnostic, DiagnosticSeverity, Localizer, ScriptureNode } from '@sills
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
-import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
+import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup } from '../utils';
 import { OverlappingPairs, PairedPunctuationAnalysis, PairedPunctuationAnalyzer } from './paired-punctuation-analyzer';
 import {
   OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE,
@@ -56,11 +56,11 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
     return this.diagnosticList.toArray();
   }
 
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNode[]): Diagnostic[] {
+  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
     this.diagnosticList = new DiagnosticList();
 
-    if (!Array.isArray(nodes)) {
-      nodes = [nodes];
+    if (!(nodes instanceof ScriptureNodeGroup)) {
+      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
     }
 
     const pairedPunctuationAnalyzer: PairedPunctuationAnalyzer = new PairedPunctuationAnalyzer(

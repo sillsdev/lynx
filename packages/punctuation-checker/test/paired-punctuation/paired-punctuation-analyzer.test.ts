@@ -5,7 +5,7 @@ import { OverlappingPairs, PairedPunctuationAnalyzer } from '../../src/paired-pu
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
 import { PairedPunctuationIterator } from '../../src/paired-punctuation/paired-punctuation-utils';
 import { _privateTestingClasses } from '../../src/quotation/quotation-analyzer';
-import { PairedPunctuationDirection } from '../../src/utils';
+import { PairedPunctuationDirection, ScriptureNodeGroup } from '../../src/utils';
 
 describe('Text tests', () => {
   it('identifies no issues with well-formed text', () => {
@@ -187,10 +187,14 @@ describe('ScriptureNode tests', () => {
     const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some) other text', 5, 45, 5, 55);
 
     expect(
-      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedPunctuationMarks(),
+      testEnv.pairedPunctuationAnalyzer
+        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .getUnmatchedPunctuationMarks(),
     ).toEqual([]);
     expect(
-      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getOverlappingPunctuationMarks(),
+      testEnv.pairedPunctuationAnalyzer
+        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .getOverlappingPunctuationMarks(),
     ).toEqual([]);
   });
 
@@ -200,7 +204,9 @@ describe('ScriptureNode tests', () => {
     const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('and some) other text', 5, 45, 5, 55);
 
     expect(
-      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getUnmatchedPunctuationMarks(),
+      testEnv.pairedPunctuationAnalyzer
+        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .getUnmatchedPunctuationMarks(),
     ).toEqual([
       {
         direction: PairedPunctuationDirection.Opening,
@@ -212,7 +218,9 @@ describe('ScriptureNode tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationAnalyzer.analyze([scriptureNode1, scriptureNode2]).getOverlappingPunctuationMarks(),
+      testEnv.pairedPunctuationAnalyzer
+        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .getOverlappingPunctuationMarks(),
     ).toEqual([
       new OverlappingPairs(
         {

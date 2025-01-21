@@ -2,7 +2,8 @@ import { CharacterRegexWhitelist } from '../allowed-character/allowed-character-
 import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuation-config';
 import { QuotationConfig } from '../quotation/quotation-config';
 import { QuotationDepth } from '../quotation/quotation-utils';
-import { CharacterClassRegexBuilder, StringContextMatcher } from '../utils';
+import { CharacterClassRegexBuilder, ContextDirection, StringContextMatcher } from '../utils';
+import { WhitespaceConfig } from '../whitespace/whitespace-config';
 import { RuleSet } from './rule-set';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -79,6 +80,30 @@ export class StandardRuleSets {
         openingPunctuationMark: '{',
         closingPunctuationMark: '}',
       })
+      .build(),
+    new WhitespaceConfig.Builder()
+      .addRequiredWhitespaceRule(
+        ContextDirection.Right,
+        ['.', ',', ';', '!', '?', ')', ']'],
+        [' ', '\n', '', '\u2019', '\u201D'],
+      )
+      .addRequiredWhitespaceRule(
+        ContextDirection.Right,
+        ['\u201D', '\u2019'],
+        [' ', '\n', '', '.', ',', '\u2019', '\u201D'],
+      )
+      .addRequiredWhitespaceRule(
+        ContextDirection.Right,
+        [':'],
+        [' ', '\n', '', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+      )
+      .addRequiredWhitespaceRule(
+        ContextDirection.Left,
+        ['(', '[', '\u201C', '\u2018'],
+        [' ', '\n', '', '\u201C', '\u2018'],
+      )
+      .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
+      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'])
       .build(),
   );
 }

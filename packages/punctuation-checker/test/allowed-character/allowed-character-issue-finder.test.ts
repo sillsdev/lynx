@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest';
 import { AllowedCharacterIssueFinder } from '../../src/allowed-character/allowed-character-issue-finder';
 import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-character/allowed-character-set';
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
-import { CharacterClassRegexBuilder } from '../../src/utils';
+import { CharacterClassRegexBuilder, ScriptureNodeGroup } from '../../src/utils';
 import {
   StubFixedLineWidthTextDocument,
   StubScriptureDocumentManager,
@@ -284,10 +284,12 @@ describe('Tests with ScriptureNodes', () => {
     await testEnv.init();
 
     expect(
-      testEnv.allowedCharacterIssueFinder.produceDiagnosticsForScripture([
-        testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20),
-        testEnv.createScriptureNode('$ome other *verse text', 6, 8, 6, 30),
-      ]),
+      testEnv.allowedCharacterIssueFinder.produceDiagnosticsForScripture(
+        ScriptureNodeGroup.createFromNodes([
+          testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20),
+          testEnv.createScriptureNode('$ome other *verse text', 6, 8, 6, 30),
+        ]),
+      ),
     ).toEqual([
       testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11),
       testEnv.createExpectedScriptureDiagnostic('$', 6, 8, 6, 9),
