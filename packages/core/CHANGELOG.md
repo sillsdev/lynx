@@ -1,5 +1,11 @@
 # @sillsdev/lynx
 
+## 0.2.1
+
+### Patch Changes
+
+- 3c624fb: Add next and previous properties to Scripture nodes
+
 ## 0.2.0
 
 ### Minor Changes
