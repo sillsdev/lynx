@@ -40,7 +40,7 @@ describe('DocumentManager', () => {
 
     const openedPromise = firstValueFrom(env.docManager.opened$);
     await expect(env.docManager.active()).resolves.toHaveLength(0);
-    await env.docManager.fireOpened('file1', 'plaintext', 1, 'This is opened file1.');
+    await env.docManager.fireOpened('file1', { format: 'plaintext', version: 1, content: 'This is opened file1.' });
     await expect(env.docManager.active()).resolves.toHaveLength(1);
     const openedEvent = await openedPromise;
     expect(openedEvent.document.uri).toEqual('file1');
@@ -49,7 +49,7 @@ describe('DocumentManager', () => {
 
   it('fire closed event', async () => {
     const env = new TestEnvironment();
-    await env.docManager.fireOpened('file1', 'plaintext', 1, 'content');
+    await env.docManager.fireOpened('file1', { format: 'plaintext', version: 1, content: 'content' });
 
     const closedPromise = firstValueFrom(env.docManager.closed$);
     await expect(env.docManager.active()).resolves.toHaveLength(1);
@@ -74,7 +74,7 @@ describe('DocumentManager', () => {
     const env = new TestEnvironment();
 
     const changedPromise = firstValueFrom(env.docManager.changed$);
-    await env.docManager.fireChanged('file1', [{ text: 'This is changed file1.' }], 2);
+    await env.docManager.fireChanged('file1', { contentChanges: [{ text: 'This is changed file1.' }], version: 2 });
     const changedEvent = await changedPromise;
     expect(changedEvent.document.uri).toEqual('file1');
     expect(changedEvent.document.version).toEqual(2);
@@ -85,6 +85,18 @@ describe('DocumentManager', () => {
     const doc = await env.docManager.get('file1');
     expect(doc).not.toBeNull();
     expect(doc?.content).toEqual('This is file1.');
+  });
+
+  it('fire reset event', async () => {
+    const env = new TestEnvironment();
+    // cause all documents to be loaded
+    await env.docManager.all();
+
+    const resetPromise = firstValueFrom(env.docManager.reset$);
+    await env.docManager.reset();
+    const resetEvent = await resetPromise;
+    expect(resetEvent.loadedUris).toEqual(['file1', 'file2']);
+    expect(resetEvent.activeUris).toEqual([]);
   });
 });
 

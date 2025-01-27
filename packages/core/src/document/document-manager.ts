@@ -1,6 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 
-import { Document } from './document';
+import { Document, DocumentChanges, DocumentData } from './document';
 import {
   DocumentAccessor,
   DocumentChanged,
@@ -8,6 +8,7 @@ import {
   DocumentCreated,
   DocumentDeleted,
   DocumentOpened,
+  DocumentsReset,
 } from './document-accessor';
 import { DocumentFactory } from './document-factory';
 import { DocumentReader } from './document-reader';
@@ -23,6 +24,7 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
   private readonly openedSubject = new Subject<DocumentOpened<TDoc>>();
   private readonly deletedSubject = new Subject<DocumentDeleted>();
   private readonly changedSubject = new Subject<DocumentChanged<TDoc>>();
+  private readonly resetSubject = new Subject<DocumentsReset>();
 
   constructor(
     private readonly factory: DocumentFactory<TDoc, TChange, TContent>,
@@ -47,6 +49,10 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
 
   get changed$(): Observable<DocumentChanged<TDoc>> {
     return this.changedSubject.asObservable();
+  }
+
+  get reset$(): Observable<DocumentsReset> {
+    return this.resetSubject.asObservable();
   }
 
   add(doc: TDoc): void {
@@ -101,28 +107,35 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
     return Promise.resolve();
   }
 
-  fireOpened(uri: string, format: string, version: number, content: TContent): Promise<void> {
-    const doc = this.factory.create(uri, format, version, content);
-    this.documents.set(uri, doc);
+  async fireOpened(uri: string, data?: DocumentData<TContent>): Promise<void> {
+    let doc: TDoc | undefined = undefined;
+    if (data == null) {
+      doc = await this.reload(uri);
+    } else {
+      doc = this.factory.create(uri, data);
+      this.documents.set(uri, doc);
+    }
     this.activeDocuments.add(uri);
-    this.openedSubject.next({ document: doc });
-    return Promise.resolve();
+    if (doc != null) {
+      this.openedSubject.next({ document: doc });
+    }
   }
 
   fireDeleted(uri: string): Promise<void> {
     this.documents.delete(uri);
+    this.activeDocuments.delete(uri);
     this.deletedSubject.next({ uri: uri });
     return Promise.resolve();
   }
 
-  async fireChanged(uri: string, changes?: readonly TChange[], version?: number): Promise<void> {
+  async fireChanged(uri: string, changes?: DocumentChanges<TChange>): Promise<void> {
     let doc: TDoc | undefined = undefined;
     if (changes == null) {
       doc = await this.reload(uri);
     } else {
       doc = await this.get(uri);
       if (doc != null) {
-        doc = this.factory.update(doc, changes, version ?? 0);
+        doc = this.factory.update(doc, changes);
         this.documents.set(uri, doc);
       }
     }
@@ -131,9 +144,18 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
     }
   }
 
+  reset(): Promise<void> {
+    const loadedUris = Array.from(this.documents.keys());
+    const activeUris = Array.from(this.activeDocuments);
+    this.documents.clear();
+    this.activeDocuments.clear();
+    this.resetSubject.next({ loadedUris, activeUris });
+    return Promise.resolve();
+  }
+
   private async reload(uri: string): Promise<TDoc | undefined> {
     const data = await this.reader?.read(uri);
-    const doc = data == null ? undefined : this.factory.create(uri, data.format, data.version, data.content);
+    const doc = data == null ? undefined : this.factory.create(uri, data);
     if (doc != null) {
       this.documents.set(uri, doc);
     }

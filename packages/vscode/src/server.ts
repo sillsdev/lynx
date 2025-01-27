@@ -96,12 +96,11 @@ connection.onCodeAction(async (params) => {
 });
 
 connection.onDidOpenTextDocument((params) => {
-  void documentManager.fireOpened(
-    params.textDocument.uri,
-    params.textDocument.languageId,
-    params.textDocument.version,
-    params.textDocument.text,
-  );
+  void documentManager.fireOpened(params.textDocument.uri, {
+    format: params.textDocument.languageId,
+    version: params.textDocument.version,
+    content: params.textDocument.text,
+  });
 });
 
 connection.onDidCloseTextDocument((params) => {
@@ -109,7 +108,10 @@ connection.onDidCloseTextDocument((params) => {
 });
 
 connection.onDidChangeTextDocument((params) => {
-  void documentManager.fireChanged(params.textDocument.uri, params.contentChanges, params.textDocument.version);
+  void documentManager.fireChanged(params.textDocument.uri, {
+    contentChanges: params.contentChanges,
+    version: params.textDocument.version,
+  });
 });
 
 connection.onDocumentOnTypeFormatting(async (params) => {

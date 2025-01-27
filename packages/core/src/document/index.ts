@@ -1,4 +1,4 @@
-export type { Document } from './document';
+export type { Document, DocumentChanges, DocumentData } from './document';
 export type {
   DocumentAccessor,
   DocumentChanged,
@@ -6,6 +6,7 @@ export type {
   DocumentCreated,
   DocumentDeleted,
   DocumentOpened,
+  DocumentsReset,
 } from './document-accessor';
 export type { DocumentFactory } from './document-factory';
 export { DocumentManager } from './document-manager';

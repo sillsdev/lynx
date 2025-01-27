@@ -1,4 +1,4 @@
-import { DocumentFactory, TextDocumentChange } from '@sillsdev/lynx';
+import { DocumentChanges, DocumentData, DocumentFactory } from '@sillsdev/lynx';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 
 import { UsfmDocument } from './usfm-document';
@@ -6,12 +6,12 @@ import { UsfmDocument } from './usfm-document';
 export class UsfmDocumentFactory implements DocumentFactory<UsfmDocument> {
   constructor(private readonly styleSheet: UsfmStylesheet) {}
 
-  create(uri: string, format: string, version: number, content: string): UsfmDocument {
-    return new UsfmDocument(uri, format, version, content, this.styleSheet);
+  create(uri: string, data: DocumentData): UsfmDocument {
+    return new UsfmDocument(uri, data.format, data.version, data.content, this.styleSheet);
   }
 
-  update(document: UsfmDocument, changes: TextDocumentChange[], version: number): UsfmDocument {
-    document.update(changes, version);
+  update(document: UsfmDocument, changes: DocumentChanges): UsfmDocument {
+    document.update(changes.contentChanges, changes.version);
     return document;
   }
 }
