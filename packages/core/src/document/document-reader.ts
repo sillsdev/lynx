@@ -1,8 +1,4 @@
-export interface DocumentData<T = string> {
-  format: string;
-  version: number;
-  content: T;
-}
+import { DocumentData } from './document';
 
 export interface DocumentReader<T = string> {
   keys(): string[];

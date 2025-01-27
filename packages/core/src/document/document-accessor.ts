@@ -22,12 +22,18 @@ export interface DocumentChanged<T extends Document> {
   document: T;
 }
 
+export interface DocumentsReset {
+  loadedUris: string[];
+  activeUris: string[];
+}
+
 export interface DocumentAccessor<T extends Document = Document> {
   readonly created$: Observable<DocumentCreated<T>>;
   readonly closed$: Observable<DocumentClosed>;
   readonly opened$: Observable<DocumentOpened<T>>;
   readonly deleted$: Observable<DocumentDeleted>;
   readonly changed$: Observable<DocumentChanged<T>>;
+  readonly reset$: Observable<DocumentsReset>;
 
   get(uri: string): Promise<T | undefined>;
   all(): Promise<T[]>;

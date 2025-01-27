@@ -1,14 +1,14 @@
+import { DocumentChanges, DocumentData } from './document';
 import { DocumentFactory } from './document-factory';
 import { TextDocument } from './text-document';
-import { TextDocumentChange } from './text-document-change';
 
 export class TextDocumentFactory implements DocumentFactory<TextDocument> {
-  create(uri: string, format: string, version: number, content: string): TextDocument {
-    return new TextDocument(uri, format, version, content);
+  create(uri: string, data: DocumentData): TextDocument {
+    return new TextDocument(uri, data.format, data.version, data.content);
   }
 
-  update(document: TextDocument, changes: TextDocumentChange[], version: number): TextDocument {
-    document.update(changes, version);
+  update(document: TextDocument, changes: DocumentChanges): TextDocument {
+    document.update(changes.contentChanges, changes.version);
     return document;
   }
 }
