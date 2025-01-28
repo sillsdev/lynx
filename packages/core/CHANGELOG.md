@@ -1,5 +1,11 @@
 # @sillsdev/lynx
 
+## 0.3.1
+
+### Patch Changes
+
+- bdc975e: Update DocumentReader.keys to be async
+
 ## 0.3.0
 
 ### Minor Changes
