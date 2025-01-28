@@ -71,7 +71,7 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
   async all(): Promise<TDoc[]> {
     const docs = Array.from(this.documents.values());
     if (this.reader != null) {
-      for (const id of this.reader.keys()) {
+      for (const id of await this.reader.keys()) {
         if (this.documents.has(id)) continue;
         const doc = await this.get(id);
         if (doc != null) {

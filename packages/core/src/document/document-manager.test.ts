@@ -64,7 +64,7 @@ describe('DocumentManager', () => {
 
     const deletedPromise = firstValueFrom(env.docManager.deleted$);
     await env.docManager.fireDeleted('file1');
-    env.docReader.keys.mockReturnValue(['file2']);
+    env.docReader.keys.mockResolvedValue(['file2']);
     await expect(env.docManager.all()).resolves.toHaveLength(1);
     const deletedEvent = await deletedPromise;
     expect(deletedEvent.uri).toEqual('file1');
@@ -110,7 +110,7 @@ class TestEnvironment {
     this.docReader.read.mockImplementation((uri) => {
       return Promise.resolve({ format: 'plaintext', version: 1, content: `This is ${uri}.` });
     });
-    this.docReader.keys.mockReturnValue(['file1', 'file2']);
+    this.docReader.keys.mockResolvedValue(['file1', 'file2']);
     this.docFactory = new TextDocumentFactory();
     this.docManager = new DocumentManager(this.docFactory, this.docReader);
   }
