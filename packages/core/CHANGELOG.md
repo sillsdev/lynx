@@ -1,5 +1,12 @@
 # @sillsdev/lynx
 
+## 0.3.0
+
+### Minor Changes
+
+- 81a18a2: Add ability to reset a document manager
+- 81a18a2: Refactor document factories to use new types
+
 ## 0.2.1
 
 ### Patch Changes
