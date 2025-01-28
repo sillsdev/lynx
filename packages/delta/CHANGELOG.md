@@ -1,5 +1,17 @@
 # @sillsdev/lynx-delta
 
+## 0.2.0
+
+### Minor Changes
+
+- 81a18a2: Refactor document factories to use new types
+
+### Patch Changes
+
+- Updated dependencies [81a18a2]
+- Updated dependencies [81a18a2]
+  - @sillsdev/lynx@0.3.0
+
 ## 0.1.1
 
 ### Patch Changes
