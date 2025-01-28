@@ -28,7 +28,7 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "@sillsdev/lynx": "*",
+    "@sillsdev/lynx": "^0.3.0",
     "@sillsdev/machine": "^3.0.2"
   },
   "devDependencies": {
