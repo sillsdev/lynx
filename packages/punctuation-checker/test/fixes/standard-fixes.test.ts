@@ -212,3 +212,203 @@ describe('PunctuationReplacementFix tests', () => {
     });
   });
 });
+
+describe('LeadingSpaceInsertionFix tests', () => {
+  it('inserts the space just before the range identified in the Diagnostic', async () => {
+    const localizer: Localizer = new Localizer();
+    const standardFixProviderFactory: StandardFixProviderFactory<TextDocument> =
+      new StandardFixProviderFactory<TextDocument>(new TextEditFactory(), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'incorrect-leading-whitespace',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'whitespace',
+      message: `This punctuation mark should be preceded by whitespace.`,
+    };
+    const standardFixProvider: StandardFixProvider<TextDocument> = standardFixProviderFactory.createStandardFixProvider(
+      new TextDocument('test', 'no-format', 1, ''),
+    );
+
+    expect(standardFixProvider.leadingSpaceInsertionFix(diagnostic)).toEqual({
+      title: `Add a space before this`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 19,
+            },
+            end: {
+              line: 3,
+              character: 19,
+            },
+          },
+          newText: ' ',
+        },
+      ],
+    });
+  });
+
+  it('also works with ScriptureDocuments', async () => {
+    const localizer: Localizer = new Localizer();
+    const stylesheet = new UsfmStylesheet('usfm.sty');
+    const standardFixProviderFactory: StandardFixProviderFactory<ScriptureDocument> =
+      new StandardFixProviderFactory<ScriptureDocument>(new UsfmEditFactory(stylesheet), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'incorrect-leading-whitespace',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'whitespace',
+      message: `This punctuation mark should be preceded by whitespace.`,
+    };
+    const standardFixProvider: StandardFixProvider<ScriptureDocument> =
+      standardFixProviderFactory.createStandardFixProvider(new ScriptureTextDocument('test', 'usfm', 1, ''));
+
+    expect(standardFixProvider.leadingSpaceInsertionFix(diagnostic)).toEqual({
+      title: `Add a space before this`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 19,
+            },
+            end: {
+              line: 3,
+              character: 19,
+            },
+          },
+          newText: ' ',
+        },
+      ],
+    });
+  });
+});
+
+describe('TrailingSpaceInsertionFix tests', () => {
+  it('inserts the space just after the range identified in the Diagnostic', async () => {
+    const localizer: Localizer = new Localizer();
+    const standardFixProviderFactory: StandardFixProviderFactory<TextDocument> =
+      new StandardFixProviderFactory<TextDocument>(new TextEditFactory(), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'incorrect-trailing-whitespace',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'whitespace',
+      message: `This punctuation mark should be followed by whitespace.`,
+    };
+    const standardFixProvider: StandardFixProvider<TextDocument> = standardFixProviderFactory.createStandardFixProvider(
+      new TextDocument('test', 'no-format', 1, ''),
+    );
+
+    expect(standardFixProvider.trailingSpaceInsertionFix(diagnostic)).toEqual({
+      title: `Add a space after this`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 20,
+            },
+            end: {
+              line: 3,
+              character: 20,
+            },
+          },
+          newText: ' ',
+        },
+      ],
+    });
+  });
+
+  it('also works with ScriptureDocuments', async () => {
+    const localizer: Localizer = new Localizer();
+    const stylesheet = new UsfmStylesheet('usfm.sty');
+    const standardFixProviderFactory: StandardFixProviderFactory<ScriptureDocument> =
+      new StandardFixProviderFactory<ScriptureDocument>(new UsfmEditFactory(stylesheet), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'incorrect-trailing-whitespace',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'whitespace',
+      message: `This punctuation mark should be followed by whitespace.`,
+    };
+    const standardFixProvider: StandardFixProvider<ScriptureDocument> =
+      standardFixProviderFactory.createStandardFixProvider(new ScriptureTextDocument('test', 'usfm', 1, ''));
+
+    expect(standardFixProvider.trailingSpaceInsertionFix(diagnostic)).toEqual({
+      title: `Add a space after this`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 20,
+            },
+            end: {
+              line: 3,
+              character: 20,
+            },
+          },
+          newText: ' ',
+        },
+      ],
+    });
+  });
+});

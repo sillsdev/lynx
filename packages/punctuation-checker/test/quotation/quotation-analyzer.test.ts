@@ -1,6 +1,7 @@
 import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
+import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { _privateTestingClasses, QuotationAnalysis, QuotationAnalyzer } from '../../src/quotation/quotation-analyzer';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import {
@@ -9,7 +10,7 @@ import {
   QuoteMetadata,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
-import { PairedPunctuationDirection, ScriptureNodeGroup } from '../../src/utils';
+import { PairedPunctuationDirection } from '../../src/utils';
 
 describe('QuotationAnalyzer tests', () => {
   describe('Miscellaneous tests', () => {
@@ -17,7 +18,7 @@ describe('QuotationAnalyzer tests', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
       const danglingQuotationAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-        '\u201CSample \u2018text\u2019',
+        testEnv.createTextInput('\u201CSample \u2018text\u2019'),
       );
       expect(danglingQuotationAnalysis.getUnmatchedQuotes()).toEqual([
         {
@@ -30,7 +31,9 @@ describe('QuotationAnalyzer tests', () => {
         },
       ]);
 
-      const emptyQuotationAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('Sample \u2018text\u2019');
+      const emptyQuotationAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+        testEnv.createTextInput('Sample \u2018text\u2019'),
+      );
       expect(emptyQuotationAnalysis.getUnmatchedQuotes()).toEqual([]);
     });
   });
@@ -41,11 +44,13 @@ describe('QuotationAnalyzer tests', () => {
         it('produces no issues for quote-less text', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
-          const emptyStringAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('');
+          const emptyStringAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(testEnv.createTextInput(''));
           expect(emptyStringAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(emptyStringAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
-          const noQuotationAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('Sample text');
+          const noQuotationAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('Sample text'),
+          );
           expect(noQuotationAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(noQuotationAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
         });
@@ -53,13 +58,14 @@ describe('QuotationAnalyzer tests', () => {
         it('produces no issues for well-formed quote pairs', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
-          const singleQuotationPairAnalysis: QuotationAnalysis =
-            testEnv.quotationAnalyzer.analyze('\u201CSample text\u201D');
+          const singleQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('\u201CSample text\u201D'),
+          );
           expect(singleQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(singleQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const multipleQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text\u201D with \u201Cmore sample text\u201D',
+            testEnv.createTextInput('\u201CSample text\u201D with \u201Cmore sample text\u201D'),
           );
           expect(multipleQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(multipleQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
@@ -68,22 +74,26 @@ describe('QuotationAnalyzer tests', () => {
         it('produces no issues when ambiguous quotation marks are well-formed', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
-          const pairOfAmbiguousQuotePairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('""');
+          const pairOfAmbiguousQuotePairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('""'),
+          );
           expect(pairOfAmbiguousQuotePairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(pairOfAmbiguousQuotePairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
-          const midStringAmbiguousQuotePairAnalysis: QuotationAnalysis =
-            testEnv.quotationAnalyzer.analyze('Sample "text"');
+          const midStringAmbiguousQuotePairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('Sample "text"'),
+          );
           expect(midStringAmbiguousQuotePairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(midStringAmbiguousQuotePairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
-          const mismatchedQuotationPairAnalysis: QuotationAnalysis =
-            testEnv.quotationAnalyzer.analyze('\u201CSample text"');
+          const mismatchedQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('\u201CSample text"'),
+          );
           expect(mismatchedQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(mismatchedQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const multipleQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '"Sample text\u201D using \u201Cmixed "quotation" marks\u201D',
+            testEnv.createTextInput('"Sample text\u201D using \u201Cmixed "quotation" marks\u201D'),
           );
           expect(multipleQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(multipleQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
@@ -94,7 +104,9 @@ describe('QuotationAnalyzer tests', () => {
         it('identifies unpaired open quotes', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
-          const isolatedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('\u201C');
+          const isolatedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('\u201C'),
+          );
           expect(isolatedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
@@ -107,7 +119,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const singleOpeningQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            'Sample text with \u201CMore sample text',
+            testEnv.createTextInput('Sample text with \u201CMore sample text'),
           );
           expect(singleOpeningQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -121,7 +133,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text\u201D with \u201CMore sample text',
+            testEnv.createTextInput('\u201CSample text\u201D with \u201CMore sample text'),
           );
           expect(multipleQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -135,7 +147,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleNestedQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text with \u201CMore sample text\u201D',
+            testEnv.createTextInput('\u201CSample text with \u201CMore sample text\u201D'),
           );
           expect(multipleNestedQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -152,7 +164,9 @@ describe('QuotationAnalyzer tests', () => {
         it('identifies unpaired closing quotes', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
-          const isolatedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('\u201D');
+          const isolatedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+            testEnv.createTextInput('\u201D'),
+          );
           expect(isolatedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
               depth: QuotationDepth.Primary,
@@ -165,7 +179,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const singleClosingQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            'Sample text with\u201D more sample text',
+            testEnv.createTextInput('Sample text with\u201D more sample text'),
           );
           expect(singleClosingQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -179,7 +193,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            'Sample text with\u201D \u201Cmore sample text\u201D',
+            testEnv.createTextInput('Sample text with\u201D \u201Cmore sample text\u201D'),
           );
           expect(multipleQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -193,7 +207,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleNestedQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text with\u201D more sample text\u201D',
+            testEnv.createTextInput('\u201CSample text with\u201D more sample text\u201D'),
           );
           expect(multipleNestedQuotesAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -213,7 +227,7 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelEnglishQuotes();
 
           const multipleNestedQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text with\u201C more sample text\u201D',
+            testEnv.createTextInput('\u201CSample text with\u201C more sample text\u201D'),
           );
           expect(multipleNestedQuotesAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -236,25 +250,29 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
           const twoNestedQuotationPairsAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample text with \u2018another nested quote.\u2019\u201D',
+            testEnv.createTextInput('\u201CSample text with \u2018another nested quote.\u2019\u201D'),
           );
           expect(twoNestedQuotationPairsAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(twoNestedQuotationPairsAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const multipleQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample \u2018nested quote\u2019\u201D with \u201Canother quote\u201D',
+            testEnv.createTextInput('\u201CSample \u2018nested quote\u2019\u201D with \u201Canother quote\u201D'),
           );
           expect(multipleQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(multipleQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const multipleNestedQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample \u2018nested quote\u2019\u201D with \u201C\u2018another\u2019 nested quote.\u201D',
+            testEnv.createTextInput(
+              '\u201CSample \u2018nested quote\u2019\u201D with \u201C\u2018another\u2019 nested quote.\u201D',
+            ),
           );
           expect(multipleNestedQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(multipleNestedQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const threeLevelNestedQuotationPairAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CSample \u2018nested quote with yet another \u201Cnested quote\u201D\u2019\u201D',
+            testEnv.createTextInput(
+              '\u201CSample \u2018nested quote with yet another \u201Cnested quote\u201D\u2019\u201D',
+            ),
           );
           expect(threeLevelNestedQuotationPairAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(threeLevelNestedQuotationPairAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
@@ -264,31 +282,31 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
           const nestedAmbiguousQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '"A quote \'within a quote.\'"',
+            testEnv.createTextInput('"A quote \'within a quote.\'"'),
           );
           expect(nestedAmbiguousQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(nestedAmbiguousQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const threeLevelNestedAmbiguousQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '"A quote \'within a quote and "a third."\'"',
+            testEnv.createTextInput('"A quote \'within a quote and "a third."\'"'),
           );
           expect(threeLevelNestedAmbiguousQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(threeLevelNestedAmbiguousQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const firstLevelAmbiguousNestedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '"The first level \u2018of quotes\u2019" is ambiguous.',
+            testEnv.createTextInput('"The first level \u2018of quotes\u2019" is ambiguous.'),
           );
           expect(firstLevelAmbiguousNestedQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(firstLevelAmbiguousNestedQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const secondLevelAmbiguousNestedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            "\u201CThe second level 'of quotes' is ambiguous.\u201D",
+            testEnv.createTextInput("\u201CThe second level 'of quotes' is ambiguous.\u201D"),
           );
           expect(secondLevelAmbiguousNestedQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(secondLevelAmbiguousNestedQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const thirdLevelAmbiguousNestedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThe third \u2018level "of quotes" is ambiguous.\u2019\u201D',
+            testEnv.createTextInput('\u201CThe third \u2018level "of quotes" is ambiguous.\u2019\u201D'),
           );
           expect(thirdLevelAmbiguousNestedQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(thirdLevelAmbiguousNestedQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
@@ -300,7 +318,7 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
           const unclosedPrimaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis has a \u2018nested quote\u2019',
+            testEnv.createTextInput('\u201CThis has a \u2018nested quote\u2019'),
           );
           expect(unclosedPrimaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -314,7 +332,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const unclosedSecondaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis has an \u2018unclosed nested quote\u201D',
+            testEnv.createTextInput('\u201CThis has an \u2018unclosed nested quote\u201D'),
           );
           expect(unclosedSecondaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -328,7 +346,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const unclosedTertiaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis has \u2018an \u201Cunclosed thrid-level\u2019 quote\u201D',
+            testEnv.createTextInput('\u201CThis has \u2018an \u201Cunclosed thrid-level\u2019 quote\u201D'),
           );
           expect(unclosedTertiaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -342,7 +360,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleUnclosedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis has two \u2018unclosed quotes',
+            testEnv.createTextInput('\u201CThis has two \u2018unclosed quotes'),
           );
           expect(multipleUnclosedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -364,7 +382,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleUnclosedQuoteAnalysis2: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis has two \u2018unclosed \u201Cquotes\u201D',
+            testEnv.createTextInput('\u201CThis has two \u2018unclosed \u201Cquotes\u201D'),
           );
           expect(multipleUnclosedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
@@ -386,7 +404,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const ambiguousUnclosedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '"This has an \u2018ambiguous\u2019 unclosed quote',
+            testEnv.createTextInput('"This has an \u2018ambiguous\u2019 unclosed quote'),
           );
           expect(ambiguousUnclosedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -400,7 +418,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const ambiguousUnclosedQuoteAnalysis2: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            "\u201CThis has an 'ambiguous unclosed quote\u201D",
+            testEnv.createTextInput("\u201CThis has an 'ambiguous unclosed quote\u201D"),
           );
           expect(ambiguousUnclosedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
@@ -418,7 +436,9 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithDifferentFirstAndThirdLevelQuotes();
 
           const unpairedThirdAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u2018primary \u201Equote\u201D closing inside a tertiary quote',
+            testEnv.createTextInput(
+              '\u201CThis text has a \u2018primary \u201Equote\u201D closing inside a tertiary quote',
+            ),
           );
           expect(unpairedThirdAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -440,7 +460,9 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const unpairedThirdInSecondAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u2018primary \u201Equote\u2019 closing inside a tertiary quote\u201D',
+            testEnv.createTextInput(
+              '\u201CThis text has a \u2018primary \u201Equote\u2019 closing inside a tertiary quote\u201D',
+            ),
           );
           expect(unpairedThirdInSecondAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -458,7 +480,7 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
           const unpairedPrimaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            'Text with an \u2018unpaired\u2019 closing quote\u201D',
+            testEnv.createTextInput('Text with an \u2018unpaired\u2019 closing quote\u201D'),
           );
           expect(unpairedPrimaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -472,7 +494,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const unpairedSecondaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CText with an unpaired\u2019 closing quote\u201D',
+            testEnv.createTextInput('\u201CText with an unpaired\u2019 closing quote\u201D'),
           );
           expect(unpairedSecondaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -486,7 +508,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleUnpairedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            'This text has multiple\u2019 unpaired quotes\u201D',
+            testEnv.createTextInput('This text has multiple\u2019 unpaired quotes\u201D'),
           );
           expect(multipleUnpairedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -508,7 +530,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const multipleUnpairedQuoteAnalysis2: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has multiple\u201D unpaired\u2019 quotes\u201D',
+            testEnv.createTextInput('\u201CThis text has multiple\u201D unpaired\u2019 quotes\u201D'),
           );
           expect(multipleUnpairedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
@@ -530,7 +552,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const ambiguousUnpairedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has an ambiguous\u201D unpaired" quote',
+            testEnv.createTextInput('\u201CThis text has an ambiguous\u201D unpaired" quote'),
           );
           expect(ambiguousUnpairedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -544,7 +566,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const ambiguousUnpairedQuoteAnalysis2: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            "\u201CThis text has an ambiguous\u201D unpaired' quote",
+            testEnv.createTextInput("\u201CThis text has an ambiguous\u201D unpaired' quote"),
           );
           expect(ambiguousUnpairedQuoteAnalysis2.getUnmatchedQuotes()).toEqual([
             {
@@ -563,7 +585,7 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithDifferentFirstAndThirdLevelQuotes();
 
           const unpairedTertiaryQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CText \u2018with an unpaired\u201F\u2019 closing quote\u201D',
+            testEnv.createTextInput('\u201CText \u2018with an unpaired\u201F\u2019 closing quote\u201D'),
           );
           expect(unpairedTertiaryQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -577,7 +599,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const secondInFirstAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a\u2019 secondary quote closing inside a primary quote\u201D',
+            testEnv.createTextInput('\u201CThis text has a\u2019 secondary quote closing inside a primary quote\u201D'),
           );
           expect(secondInFirstAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -591,7 +613,9 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const thirdInSecondAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a\u2018 tertiary quote\u201F closing inside a secondary quote\u2019\u201D',
+            testEnv.createTextInput(
+              '\u201CThis text has a\u2018 tertiary quote\u201F closing inside a secondary quote\u2019\u201D',
+            ),
           );
           expect(thirdInSecondAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -605,7 +629,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const thirdInFirstAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a tertiary quote\u201F closing inside a primary quote\u201D',
+            testEnv.createTextInput('\u201CThis text has a tertiary quote\u201F closing inside a primary quote\u201D'),
           );
           expect(thirdInFirstAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -627,7 +651,9 @@ describe('QuotationAnalyzer tests', () => {
           // primary opening quote in the midst of a primary quote was already tested above
 
           const secondInSecondAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u2018secondary quote \u2018opening inside a secondary quote',
+            testEnv.createTextInput(
+              '\u201CThis text has a \u2018secondary quote \u2018opening inside a secondary quote',
+            ),
           );
           expect(secondInSecondAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -642,7 +668,9 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const secondInSecondAnalysis2: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u2018secondary quote \u2018opening inside a secondary quote\u2019\u2019\u201D',
+            testEnv.createTextInput(
+              '\u201CThis text has a \u2018secondary quote \u2018opening inside a secondary quote\u2019\u2019\u201D',
+            ),
           );
           expect(secondInSecondAnalysis2.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -657,7 +685,9 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const thirdInThirdAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u2018tertiary quote \u201Copening \u201Cinside a tertiary quote',
+            testEnv.createTextInput(
+              '\u201CThis text has a \u2018tertiary quote \u201Copening \u201Cinside a tertiary quote',
+            ),
           );
           expect(thirdInThirdAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -672,7 +702,7 @@ describe('QuotationAnalyzer tests', () => {
           ]);
 
           const secondInSecondAmbiguousAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            "\u201CThis text has a 'secondary quote \u2018opening inside a secondary quote",
+            testEnv.createTextInput("\u201CThis text has a 'secondary quote \u2018opening inside a secondary quote"),
           );
           expect(secondInSecondAmbiguousAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -691,7 +721,7 @@ describe('QuotationAnalyzer tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithDifferentFirstAndThirdLevelQuotes();
 
           const tertiaryInPrimaryAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            '\u201CThis text has a \u201Etertiary quote opening in a primary context',
+            testEnv.createTextInput('\u201CThis text has a \u201Etertiary quote opening in a primary context'),
           );
           expect(tertiaryInPrimaryAnalysis.getIncorrectlyNestedQuotes()).toEqual([
             {
@@ -714,7 +744,7 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             allQuotesAreTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst level quotes only\u201D')
+              .analyze(allQuotesAreTooDeepTestEnv.createTextInput('\u201CFirst level quotes only\u201D'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -737,7 +767,9 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             allQuotesAreTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst and \u2018second level\u2019 quotes\u201D')
+              .analyze(
+                allQuotesAreTooDeepTestEnv.createTextInput('\u201CFirst and \u2018second level\u2019 quotes\u201D'),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -779,13 +811,15 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             secondLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst level quotes only\u201D')
+              .analyze(secondLevelIsTooDeepTestEnv.createTextInput('\u201CFirst level quotes only\u201D'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             secondLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst and \u2018second level\u2019 quotes\u201D')
+              .analyze(
+                secondLevelIsTooDeepTestEnv.createTextInput('\u201CFirst and \u2018second level\u2019 quotes\u201D'),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -808,7 +842,11 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             secondLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D')
+              .analyze(
+                secondLevelIsTooDeepTestEnv.createTextInput(
+                  '\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -850,19 +888,25 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst level quotes only\u201D')
+              .analyze(thirdLevelIsTooDeepTestEnv.createTextInput('\u201CFirst level quotes only\u201D'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst and \u2018second level\u2019 quotes\u201D')
+              .analyze(
+                thirdLevelIsTooDeepTestEnv.createTextInput('\u201CFirst and \u2018second level\u2019 quotes\u201D'),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D')
+              .analyze(
+                thirdLevelIsTooDeepTestEnv.createTextInput(
+                  '\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -885,7 +929,11 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst, \u2018second, \u201Cthird, and \u2018fourth\u2019\u201D level\u2019 quotes\u201D')
+              .analyze(
+                thirdLevelIsTooDeepTestEnv.createTextInput(
+                  '\u201CFirst, \u2018second, \u201Cthird, and \u2018fourth\u2019\u201D level\u2019 quotes\u201D',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -927,25 +975,35 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst level quotes only\u201D')
+              .analyze(fourthLevelIsTooDeepTestEnv.createTextInput('\u201CFirst level quotes only\u201D'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst and \u2018second level\u2019 quotes\u201D')
+              .analyze(
+                fourthLevelIsTooDeepTestEnv.createTextInput('\u201CFirst and \u2018second level\u2019 quotes\u201D'),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D')
+              .analyze(
+                fourthLevelIsTooDeepTestEnv.createTextInput(
+                  '\u201CFirst, \u2018second, and \u201Cthird\u201D level\u2019 quotes\u201D',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('\u201CFirst, \u2018second, \u201Cthird, and \u2018fourth\u2019\u201D level\u2019 quotes\u201D')
+              .analyze(
+                fourthLevelIsTooDeepTestEnv.createTextInput(
+                  '\u201CFirst, \u2018second, \u201Cthird, and \u2018fourth\u2019\u201D level\u2019 quotes\u201D',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -973,19 +1031,19 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First level quotes only"')
+              .analyze(thirdLevelIsTooDeepTestEnv.createTextInput('"First level quotes only"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First and \'second level\' quotes"')
+              .analyze(thirdLevelIsTooDeepTestEnv.createTextInput('"First and \'second level\' quotes"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First, \'second, and "third" level\' quotes"')
+              .analyze(thirdLevelIsTooDeepTestEnv.createTextInput('"First, \'second, and "third" level\' quotes"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -1008,7 +1066,9 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             thirdLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First, \'second, "third, and \'fourth\'" level\' quotes"')
+              .analyze(
+                thirdLevelIsTooDeepTestEnv.createTextInput('"First, \'second, "third, and \'fourth\'" level\' quotes"'),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -1050,25 +1110,29 @@ describe('QuotationAnalyzer tests', () => {
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First level quotes only"')
+              .analyze(fourthLevelIsTooDeepTestEnv.createTextInput('"First level quotes only"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First and \'second level\' quotes"')
+              .analyze(fourthLevelIsTooDeepTestEnv.createTextInput('"First and \'second level\' quotes"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First, \'second, and "third" level\' quotes"')
+              .analyze(fourthLevelIsTooDeepTestEnv.createTextInput('"First, \'second, and "third" level\' quotes"'))
               .getTooDeeplyNestedQuotes(),
           ).toEqual([]);
 
           expect(
             fourthLevelIsTooDeepTestEnv.quotationAnalyzer
-              .analyze('"First, \'second, "third, and \'fourth\'" level\' quotes"')
+              .analyze(
+                fourthLevelIsTooDeepTestEnv.createTextInput(
+                  '"First, \'second, "third, and \'fourth\'" level\' quotes"',
+                ),
+              )
               .getTooDeeplyNestedQuotes(),
           ).toEqual([
             {
@@ -1101,7 +1165,7 @@ describe('QuotationAnalyzer tests', () => {
 
       expect(
         testEnv.quotationAnalyzer
-          .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+          .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
           .getUnmatchedQuotes(),
       ).toEqual([]);
     });
@@ -1113,7 +1177,7 @@ describe('QuotationAnalyzer tests', () => {
 
       expect(
         testEnv.quotationAnalyzer
-          .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+          .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
           .getUnmatchedQuotes(),
       ).toEqual([
         {
@@ -1134,7 +1198,7 @@ describe('QuotationAnalyzer tests', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
       const unambiguousQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-        'Sample \u201Ctext with no \u2018ambiguous\u2019 quotation\u201D marks.',
+        testEnv.createTextInput('Sample \u201Ctext with no \u2018ambiguous\u2019 quotation\u201D marks.'),
       );
       expect(unambiguousQuoteAnalysis.getAmbiguousQuoteCorrections()).toEqual([]);
     });
@@ -1142,7 +1206,7 @@ describe('QuotationAnalyzer tests', () => {
     it('replaces ambiguous quotation marks with the corresponding unambiguous versions', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
-      const simpleQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze('"');
+      const simpleQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(testEnv.createTextInput('"'));
       expect(simpleQuoteAnalysis.getAmbiguousQuoteCorrections()).toEqual([
         {
           existingQuotationMark: {
@@ -1165,7 +1229,7 @@ describe('QuotationAnalyzer tests', () => {
       ]);
 
       const multipleNestedQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-        '"Sample text with \u2018ambiguous marks\'',
+        testEnv.createTextInput('"Sample text with \u2018ambiguous marks\''),
       );
 
       expect(multipleNestedQuotesAnalysis.getAmbiguousQuoteCorrections()).toEqual([
@@ -1714,5 +1778,13 @@ class TestEnvironment {
         character: characterEnd,
       },
     });
+  }
+
+  createTextInput(text: string): CheckableGroup {
+    return new CheckableGroup([new TextDocumentCheckable(text)]);
+  }
+
+  createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
   }
 }

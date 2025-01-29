@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { CharacterClassRegexBuilder, ContextDirection } from '../../src/utils';
 import { WhitespaceConfig } from '../../src/whitespace/whitespace-config';
 
@@ -136,16 +137,7 @@ describe('Whitespace config tests', () => {
   });
 
   it('considers whitespace around punctuation marks with no listed rules to be correct', () => {
-    const whitespaceConfig: WhitespaceConfig = new WhitespaceConfig.Builder()
-      .addRequiredWhitespaceRule(
-        ContextDirection.Right,
-        ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-        [' ', '\n'],
-      )
-      .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n'])
-      .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'])
-      .build();
+    const whitespaceConfig: WhitespaceConfig = StandardRuleSets.English._getWhitespaceConfig();
 
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('*', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('*', ' ')).toBe(true);
@@ -158,25 +150,27 @@ describe('Whitespace config tests', () => {
   });
 
   it('correctly determines whether leading whitespace is correct', () => {
-    const whitespaceConfig: WhitespaceConfig = new WhitespaceConfig.Builder()
-      .addRequiredWhitespaceRule(
-        ContextDirection.Right,
-        ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-        [' ', '\n'],
-      )
-      .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n'])
-      .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'])
-      .build();
+    const whitespaceConfig: WhitespaceConfig = StandardRuleSets.English._getWhitespaceConfig();
 
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('(', ' ')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('[', ' ')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', ' ')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', ' ')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('"', ' ')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect("'", ' ')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('(', '\n')).toBe(true);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('[', '\n')).toBe(true);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '\n')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '\n')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('"', '')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('(', '\u201C')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '\u201C')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '\u201C')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('"', '\u201C')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect("'", '\u201C')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '\u2018')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '\u2018')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('"', '\u2018')).toBe(true);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect("'", '\u2018')).toBe(true);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('(', '\t')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('[', '\t')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '\t')).toBe(false);
@@ -189,10 +183,8 @@ describe('Whitespace config tests', () => {
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('[', '(')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '(')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '(')).toBe(false);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('(', '')).toBe(false);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('[', '')).toBe(false);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '')).toBe(false);
-    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '')).toBe(false);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201C', '\u201D')).toBe(false);
+    expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u2018', '\u201D')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('.', ' ')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect(')', ' ')).toBe(false);
     expect(whitespaceConfig.isLeadingWhitespaceCorrect('\u201D', ' ')).toBe(false);
@@ -205,27 +197,29 @@ describe('Whitespace config tests', () => {
   });
 
   it('correctly determines whether trailing whitespace is correct', () => {
-    const whitespaceConfig: WhitespaceConfig = new WhitespaceConfig.Builder()
-      .addRequiredWhitespaceRule(
-        ContextDirection.Right,
-        ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-        [' ', '\n'],
-      )
-      .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n'])
-      .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'])
-      .build();
+    const whitespaceConfig: WhitespaceConfig = StandardRuleSets.English._getWhitespaceConfig();
 
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(',', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('?', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(')', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u2019', ' ')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect(':', ' ')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(':', '\n')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(';', '\n')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('!', '\n')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(']', '\n')).toBe(true);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', '\n')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', '')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', '')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect(':', '5')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', ')')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect(',', ')')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', '\u201D')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('"', '\u201D')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', "'")).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect(')', '\u201D')).toBe(true);
+    expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', ')')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', '\t')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(')', '\t')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u2019', '\t')).toBe(false);
@@ -233,10 +227,7 @@ describe('Whitespace config tests', () => {
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(';', 'a')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', 'a')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', ':')).toBe(false);
-    expect(whitespaceConfig.isTrailingWhitespaceCorrect(',', ')')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect(')', '-')).toBe(false);
-    expect(whitespaceConfig.isTrailingWhitespaceCorrect('.', '')).toBe(false);
-    expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201D', '')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('(', ' ')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('\u201C', ' ')).toBe(false);
     expect(whitespaceConfig.isTrailingWhitespaceCorrect('(', '\t')).toBe(false);

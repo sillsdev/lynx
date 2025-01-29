@@ -5,7 +5,6 @@ import {
   DocumentAccessor,
   DocumentManager,
   ScriptureDocument,
-  ScriptureNode,
   TextDocument,
   TextDocumentFactory,
 } from '@sillsdev/lynx';
@@ -15,9 +14,9 @@ import { expect, it } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 
 import { AbstractChecker } from '../src/abstract-checker';
+import { CheckableGroup, TextDocumentCheckable } from '../src/checkable';
 import { DiagnosticFactory } from '../src/diagnostic-factory';
 import { IssueFinder } from '../src/issue-finder';
-import { ScriptureNodeGroup } from '../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from './test-utils';
 
 it('calls produceDiagnostics once when given a TextDocument', async () => {
@@ -25,7 +24,7 @@ it('calls produceDiagnostics once when given a TextDocument', async () => {
 
   expect(await testEnv.getTextDocumentChecker().getDiagnostics('this is a test document')).toEqual([
     {
-      code: 'text-node-passed',
+      code: 'single-text-node-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -49,7 +48,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with a
   expect(await testEnv.getScriptureDocumentChecker().getDiagnostics('\\c 1 \\v 1 this is test scripture text')).toEqual(
     [
       {
-        code: 'scripture-node-group-passed',
+        code: 'single-scripture-node-passed',
         source: 'mock-issue-finder',
         range: {
           start: {
@@ -77,7 +76,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with m
       .getDiagnostics('\\c 1 \\v 1 this is test scripture text \\v 2 some more text \\v 3 and the end'),
   ).toEqual([
     {
-      code: 'scripture-node-group-passed',
+      code: 'multiple-scripture-nodes-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -91,6 +90,33 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with m
       },
       severity: DiagnosticSeverity.Error,
       message: 'this is test scripture text ***some more text ***and the end',
+    },
+  ]);
+});
+
+it('calls produceScriptureDiagnostics once when given a ScriptureDocument a footnote and no other text nodes', async () => {
+  const testEnv: TestEnvironment = new TestEnvironment();
+
+  expect(
+    await testEnv
+      .getScriptureDocumentChecker()
+      .getDiagnostics('\\f + \\fr 1.1: \\ft Some manuscripts do not have \\fq the Son of God.\\f*'),
+  ).toEqual([
+    {
+      code: 'multiple-scripture-nodes-passed',
+      source: 'mock-issue-finder',
+      range: {
+        start: {
+          line: 0,
+          character: 0,
+        },
+        end: {
+          line: 0,
+          character: 1,
+        },
+      },
+      severity: DiagnosticSeverity.Error,
+      message: '1.1: ***Some manuscripts do not have ***the Son of God.',
     },
   ]);
 });
@@ -122,23 +148,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
       message: 'book name',
     },
     {
-      code: 'scripture-node-group-passed',
-      source: 'mock-issue-finder',
-      range: {
-        start: {
-          line: 0,
-          character: 0,
-        },
-        end: {
-          line: 0,
-          character: 1,
-        },
-      },
-      severity: DiagnosticSeverity.Error,
-      message: 'with a footnote ',
-    },
-    {
-      code: 'scripture-node-group-passed',
+      code: 'multiple-scripture-nodes-passed',
       source: 'mock-issue-finder',
       range: {
         start: {
@@ -153,6 +163,22 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
       severity: DiagnosticSeverity.Error,
       message: 'this is test scripture *** text ***some more text ***and the end',
     },
+    {
+      code: 'single-scripture-node-passed',
+      source: 'mock-issue-finder',
+      range: {
+        start: {
+          line: 0,
+          character: 0,
+        },
+        end: {
+          line: 0,
+          character: 1,
+        },
+      },
+      severity: DiagnosticSeverity.Error,
+      message: 'with a footnote ',
+    },
   ]);
 });
 
@@ -161,26 +187,37 @@ class TestEnvironment {
   private readonly scriptureDocumentChecker: AbstractChecker<ScriptureDocument>;
 
   constructor() {
-    const createTextDiagnostic = (text: string) => {
-      return {
-        code: 'text-node-passed',
-        source: 'mock-issue-finder',
-        range: {
-          start: {
-            line: 0,
-            character: 0,
+    const createDiagnostic = (checkableGroup: CheckableGroup) => {
+      const types: string[] = [];
+      const texts: string[] = [];
+      for (const checkable of checkableGroup) {
+        texts.push(checkable.getText());
+        if (checkable instanceof TextDocumentCheckable) {
+          types.push('text');
+        } else {
+          types.push('scripture');
+        }
+      }
+
+      if (texts.length === 1 && types[0] === 'text') {
+        return {
+          code: 'single-text-node-passed',
+          source: 'mock-issue-finder',
+          range: {
+            start: {
+              line: 0,
+              character: 0,
+            },
+            end: {
+              line: 0,
+              character: 1,
+            },
           },
-          end: {
-            line: 0,
-            character: 1,
-          },
-        },
-        severity: DiagnosticSeverity.Error,
-        message: text,
-      };
-    };
-    const createScriptureDiagnostic = (nodes: ScriptureNode | ScriptureNodeGroup) => {
-      if (!(nodes instanceof ScriptureNodeGroup)) {
+          severity: DiagnosticSeverity.Error,
+          message: texts[0],
+        };
+      }
+      if (texts.length === 1 && types[0] === 'scripture') {
         return {
           code: 'single-scripture-node-passed',
           source: 'mock-issue-finder',
@@ -195,11 +232,29 @@ class TestEnvironment {
             },
           },
           severity: DiagnosticSeverity.Error,
-          message: nodes.getText(),
+          message: texts[0],
+        };
+      }
+      if (texts.length > 1 && types[0] === 'text') {
+        return {
+          code: 'multiple-text-nodes-passed',
+          source: 'mock-issue-finder',
+          range: {
+            start: {
+              line: 0,
+              character: 0,
+            },
+            end: {
+              line: 0,
+              character: 1,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+          message: texts.join('***'),
         };
       }
       return {
-        code: 'scripture-node-group-passed',
+        code: 'multiple-scripture-nodes-passed',
         source: 'mock-issue-finder',
         range: {
           start: {
@@ -212,18 +267,12 @@ class TestEnvironment {
           },
         },
         severity: DiagnosticSeverity.Error,
-        message: nodes
-          .toTextSegmentArray()
-          .map((x) => x.getText())
-          .join('***'),
+        message: texts.join('***'),
       };
     };
     const mockIssueFinder = mock<IssueFinder>({
-      produceDiagnostics(text: string): Diagnostic[] {
-        return [createTextDiagnostic(text)];
-      },
-      produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
-        return [createScriptureDiagnostic(nodes)];
+      produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
+        return [createDiagnostic(checkableGroup)];
       },
     });
 

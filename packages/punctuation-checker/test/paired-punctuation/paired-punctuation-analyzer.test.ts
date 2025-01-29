@@ -1,40 +1,40 @@
 import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
+import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { OverlappingPairs, PairedPunctuationAnalyzer } from '../../src/paired-punctuation/paired-punctuation-analyzer';
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
-import { PairedPunctuationIterator } from '../../src/paired-punctuation/paired-punctuation-utils';
 import { _privateTestingClasses } from '../../src/quotation/quotation-analyzer';
-import { PairedPunctuationDirection, ScriptureNodeGroup } from '../../src/utils';
+import { PairedPunctuationDirection } from '../../src/utils';
 
 describe('Text tests', () => {
   it('identifies no issues with well-formed text', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
-    const emptyAnalysis = testEnv.pairedPunctuationAnalyzer.analyze('');
+    const emptyAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(testEnv.createTextInput(''));
     expect(emptyAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(emptyAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const quotesAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '\u201CThe rain in \u2018Spain \u201Cfalls\u201D mainly\u2019 on the plain.\u201D',
+      testEnv.createTextInput('\u201CThe rain in \u2018Spain \u201Cfalls\u201D mainly\u2019 on the plain.\u201D'),
     );
     expect(quotesAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(quotesAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const multiplePairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain) in [Spain] falls {mainly} (on the plain).',
+      testEnv.createTextInput('(The rain) in [Spain] falls {mainly} (on the plain).'),
     );
     expect(multiplePairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(multiplePairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const multipleNestedPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in [Spain {falls} mainly] on the plain).',
+      testEnv.createTextInput('(The rain in [Spain {falls} mainly] on the plain).'),
     );
     expect(multipleNestedPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(multipleNestedPairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const quotesAndOtherPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '\u201CThe rain in (Spain \u2018falls [mainly]\u2019 on the plain).\u201D',
+      testEnv.createTextInput('\u201CThe rain in (Spain \u2018falls [mainly]\u2019 on the plain).\u201D'),
     );
     expect(quotesAndOtherPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([]);
     expect(quotesAndOtherPairsAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
@@ -43,7 +43,7 @@ describe('Text tests', () => {
   it('identifies unmatched punctuation pairs', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
-    const openingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze('(');
+    const openingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(testEnv.createTextInput('('));
     expect(openingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
         direction: PairedPunctuationDirection.Opening,
@@ -53,7 +53,7 @@ describe('Text tests', () => {
       },
     ]);
 
-    const closingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(')');
+    const closingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(testEnv.createTextInput(')'));
     expect(closingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
         direction: PairedPunctuationDirection.Closing,
@@ -64,7 +64,7 @@ describe('Text tests', () => {
     ]);
 
     const unmatchedOpeningParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in [Spain falls] mainly on the plain',
+      testEnv.createTextInput('(The rain in [Spain falls] mainly on the plain'),
     );
     expect(unmatchedOpeningParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
@@ -76,7 +76,7 @@ describe('Text tests', () => {
     ]);
 
     const unmatchedClosingParenAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      'The rain in [Spain falls] mainly on the plain)',
+      testEnv.createTextInput('The rain in [Spain falls] mainly on the plain)'),
     );
     expect(unmatchedClosingParenAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
@@ -88,7 +88,7 @@ describe('Text tests', () => {
     ]);
 
     const nestedUnmatchedOpeningMarkAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in [Spain falls) mainly on the plain',
+      testEnv.createTextInput('(The rain in [Spain falls) mainly on the plain'),
     );
     expect(nestedUnmatchedOpeningMarkAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
@@ -100,7 +100,7 @@ describe('Text tests', () => {
     ]);
 
     const nestedUnmatchedClosingMarkAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in ]Spain falls) mainly on the plain',
+      testEnv.createTextInput('(The rain in ]Spain falls) mainly on the plain'),
     );
     expect(nestedUnmatchedClosingMarkAnalysis.getUnmatchedPunctuationMarks()).toEqual([
       {
@@ -116,17 +116,17 @@ describe('Text tests', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
     const unmatchedOpeningQuoteAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '\u201CThe (rain in [Spain]) falls mainly on the plain',
+      testEnv.createTextInput('\u201CThe (rain in [Spain]) falls mainly on the plain'),
     );
     expect(unmatchedOpeningQuoteAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const unmatchedClosingQuoteAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      'The (rain in [Spain\u201D]) falls mainly on the plain',
+      testEnv.createTextInput('The (rain in [Spain\u201D]) falls mainly on the plain'),
     );
     expect(unmatchedClosingQuoteAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
 
     const noOtherMarksAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '\u201CThe rain in Spain\u2019 falls mainly on the plain\u2019',
+      testEnv.createTextInput('\u201CThe rain in Spain\u2019 falls mainly on the plain\u2019'),
     );
     expect(noOtherMarksAnalysis.getUnmatchedPunctuationMarks()).toEqual([]);
   });
@@ -135,7 +135,7 @@ describe('Text tests', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
     const overlappingPairsAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in [Spain) falls] mainly on the plain.',
+      testEnv.createTextInput('(The rain in [Spain) falls] mainly on the plain.'),
     );
     expect(overlappingPairsAnalysis.getOverlappingPunctuationMarks()).toEqual([
       new OverlappingPairs(
@@ -157,7 +157,7 @@ describe('Text tests', () => {
     ]);
 
     const overlapsWithQuotesAnalysis = testEnv.pairedPunctuationAnalyzer.analyze(
-      '(The rain in \u201CSpain) falls\u201D mainly on the plain.',
+      testEnv.createTextInput('(The rain in \u201CSpain) falls\u201D mainly on the plain.'),
     );
     expect(overlapsWithQuotesAnalysis.getOverlappingPunctuationMarks()).toEqual([
       new OverlappingPairs(
@@ -188,12 +188,12 @@ describe('ScriptureNode tests', () => {
 
     expect(
       testEnv.pairedPunctuationAnalyzer
-        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
         .getUnmatchedPunctuationMarks(),
     ).toEqual([]);
     expect(
       testEnv.pairedPunctuationAnalyzer
-        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
         .getOverlappingPunctuationMarks(),
     ).toEqual([]);
   });
@@ -205,7 +205,7 @@ describe('ScriptureNode tests', () => {
 
     expect(
       testEnv.pairedPunctuationAnalyzer
-        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
         .getUnmatchedPunctuationMarks(),
     ).toEqual([
       {
@@ -219,7 +219,7 @@ describe('ScriptureNode tests', () => {
 
     expect(
       testEnv.pairedPunctuationAnalyzer
-        .analyze(ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]))
+        .analyze(testEnv.createScriptureInput(scriptureNode1, scriptureNode2))
         .getOverlappingPunctuationMarks(),
     ).toEqual([
       new OverlappingPairs(
@@ -276,10 +276,6 @@ class TestEnvironment {
     );
   }
 
-  newPairedPunctuationIterator(text: string): PairedPunctuationIterator {
-    return new PairedPunctuationIterator(this.pairedPunctuationConfig, text);
-  }
-
   createScriptureNode(
     text: string,
     lineStart: number,
@@ -297,5 +293,13 @@ class TestEnvironment {
         character: characterEnd,
       },
     });
+  }
+
+  createTextInput(text: string): CheckableGroup {
+    return new CheckableGroup([new TextDocumentCheckable(text)]);
+  }
+
+  createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
   }
 }

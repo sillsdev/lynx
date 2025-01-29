@@ -1,4 +1,5 @@
-import { PairedPunctuationDirection, ScriptureNodeGroup } from '../utils';
+import { CheckableGroup } from '../checkable';
+import { PairedPunctuationDirection } from '../utils';
 import { QuotationConfig } from './quotation-config';
 import {
   QuotationDepth,
@@ -15,7 +16,7 @@ export class QuotationAnalyzer {
 
   constructor(private readonly quotationConfig: QuotationConfig) {}
 
-  public analyze(input: string | ScriptureNodeGroup): QuotationAnalysis {
+  public analyze(input: CheckableGroup): QuotationAnalysis {
     this.reset();
 
     const quotationIterator: QuotationIterator = new QuotationIterator(this.quotationConfig, input);

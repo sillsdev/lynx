@@ -1,10 +1,10 @@
 import { DiagnosticSeverity, Localizer, ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
+import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
 import { PairedPunctuationIssueFinder } from '../../src/paired-punctuation/paired-punctuation-issue-finder';
-import { ScriptureNodeGroup } from '../../src/utils';
 import { StubFixedLineWidthTextDocument, StubSingleLineTextDocument } from '../test-utils';
 
 describe('Text tests', () => {
@@ -12,7 +12,9 @@ describe('Text tests', () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([]);
   });
 
@@ -21,7 +23,9 @@ describe('Text tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The (rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-opening-parenthesis',
@@ -43,7 +47,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The [rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The [rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-opening-square-bracket',
@@ -65,7 +71,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The {rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The {rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-opening-curly-bracket',
@@ -87,7 +95,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The <rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The <rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-opening-punctuation-mark',
@@ -109,7 +119,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The )rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The )rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-closing-parenthesis',
@@ -131,7 +143,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The ]rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The ]rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-closing-square-bracket',
@@ -153,7 +167,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The }rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The }rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-closing-curly-bracket',
@@ -175,7 +191,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The >rain in Spain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The >rain in Spain falls mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-closing-punctuation-mark',
@@ -197,7 +215,9 @@ describe('Text tests', () => {
     ]);
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in Spain falls] mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The (rain in Spain falls] mainly on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'unmatched-closing-square-bracket',
@@ -237,7 +257,7 @@ describe('Text tests', () => {
 
     expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
-        'The \u2018rain in Spain falls mainly\u2019 on the {plain.',
+        testEnv.createTextInput('The \u2018rain in Spain falls mainly\u2019 on the {plain.'),
       ),
     ).toEqual([
       {
@@ -265,10 +285,14 @@ describe('Text tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in \u201CSpain falls mainly on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The rain in \u201CSpain falls mainly on the plain.'),
+      ),
     ).toEqual([]);
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The rain in (Spain falls mainly) on the plain.\u2019'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The rain in (Spain falls mainly) on the plain.\u2019'),
+      ),
     ).toEqual([]);
   });
 
@@ -277,7 +301,9 @@ describe('Text tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnostics('The (rain in [Spain) falls mainly] on the plain.'),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createTextInput('The (rain in [Spain) falls mainly] on the plain.'),
+      ),
     ).toEqual([
       {
         code: 'overlapping-punctuation-pairs',
@@ -317,7 +343,7 @@ describe('Text tests', () => {
 
     expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
-        'The \u201Crain in {Spain\u201D falls mainly} on the plain.',
+        testEnv.createTextInput('The \u201Crain in {Spain\u201D falls mainly} on the plain.'),
       ),
     ).toEqual([
       {
@@ -365,23 +391,25 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        testEnv.createScriptureNode('Genesis', 3, 13, 3, 20),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(testEnv.createScriptureNode('Genesis', 3, 13, 3, 20)),
       ),
     ).toEqual([]);
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27),
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27)),
       ),
     ).toEqual([]);
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        testEnv.createScriptureNode(
-          'The servant said to him, (Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?)',
-          10,
-          13,
-          10,
-          167,
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(
+          testEnv.createScriptureNode(
+            'The servant said to him, (Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?)',
+            10,
+            13,
+            10,
+            167,
+          ),
         ),
       ),
     ).toEqual([]);
@@ -393,13 +421,15 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        testEnv.createScriptureNode(
-          'The servant said to him, (Perhaps the woman may not be ]willing to follow me to this land. Must I then take your son back to the land from which you came?)',
-          10,
-          13,
-          10,
-          168,
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(
+          testEnv.createScriptureNode(
+            'The servant said to him, (Perhaps the woman may not be ]willing to follow me to this land. Must I then take your son back to the land from which you came?)',
+            10,
+            13,
+            10,
+            168,
+          ),
         ),
       ),
     ).toEqual([
@@ -429,8 +459,8 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        ScriptureNodeGroup.createFromNodes([
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(
           testEnv.createScriptureNode(
             'Abraham said to him, (See to it that you do not take my son back there. ',
             10,
@@ -438,6 +468,7 @@ describe('ScriptureDocument tests', () => {
             10,
             83,
           ),
+
           testEnv.createScriptureNode(
             "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, [To your offspring I will give this land], he will send his angel before you, and you shall take a wife for my son from there.",
             11,
@@ -445,6 +476,7 @@ describe('ScriptureDocument tests', () => {
             11,
             272,
           ),
+
           testEnv.createScriptureNode(
             'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.)',
             12,
@@ -452,7 +484,7 @@ describe('ScriptureDocument tests', () => {
             12,
             147,
           ),
-        ]),
+        ),
       ),
     ).toEqual([]);
   });
@@ -463,8 +495,8 @@ describe('ScriptureDocument tests', () => {
     await testEnv.init();
 
     expect(
-      testEnv.pairedPunctuationErrorFinder.produceDiagnosticsForScripture(
-        ScriptureNodeGroup.createFromNodes([
+      testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
+        testEnv.createScriptureInput(
           testEnv.createScriptureNode(
             'Abraham said to him, (See to it that you do not take my son back there. ',
             10,
@@ -472,6 +504,7 @@ describe('ScriptureDocument tests', () => {
             10,
             83,
           ),
+
           testEnv.createScriptureNode(
             "The Lord, the God of heaven, who took me from my father's house and from the land of my kindred, and who spoke to me and swore to me, [To your offspring I will give this land), he will send his angel before you, and you shall take a wife for my son from there.",
             11,
@@ -479,6 +512,7 @@ describe('ScriptureDocument tests', () => {
             11,
             272,
           ),
+
           testEnv.createScriptureNode(
             'But if the woman is not willing to follow you, then you will be free from this oath of mine; only you must not take my son back there.)',
             12,
@@ -486,7 +520,7 @@ describe('ScriptureDocument tests', () => {
             12,
             147,
           ),
-        ]),
+        ),
       ),
     ).toEqual([
       {
@@ -639,6 +673,10 @@ class TextTestEnvironment {
         .build(),
     );
   }
+
+  createTextInput(text: string): CheckableGroup {
+    return new CheckableGroup([new TextDocumentCheckable(text)]);
+  }
 }
 
 class ScriptureTestEnvironment {
@@ -737,5 +775,9 @@ class ScriptureTestEnvironment {
         character: characterEnd,
       },
     });
+  }
+
+  createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
   }
 }

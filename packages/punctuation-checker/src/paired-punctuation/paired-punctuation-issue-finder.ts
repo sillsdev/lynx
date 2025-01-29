@@ -1,9 +1,10 @@
-import { Diagnostic, DiagnosticSeverity, Localizer, ScriptureNode } from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticSeverity, Localizer } from '@sillsdev/lynx';
 
+import { CheckableGroup } from '../checkable';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
-import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup } from '../utils';
+import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { OverlappingPairs, PairedPunctuationAnalysis, PairedPunctuationAnalyzer } from './paired-punctuation-analyzer';
 import {
   OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE,
@@ -45,28 +46,12 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(text: string): Diagnostic[] {
+  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
     this.reset();
     const pairedPunctuationAnalyzer: PairedPunctuationAnalyzer = new PairedPunctuationAnalyzer(
       this.pairedPunctuationConfig,
     );
-    const analysis: PairedPunctuationAnalysis = pairedPunctuationAnalyzer.analyze(text);
-
-    this.createDiagnostics(analysis);
-    return this.diagnosticList.toArray();
-  }
-
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
-    this.diagnosticList = new DiagnosticList();
-
-    if (!(nodes instanceof ScriptureNodeGroup)) {
-      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
-    }
-
-    const pairedPunctuationAnalyzer: PairedPunctuationAnalyzer = new PairedPunctuationAnalyzer(
-      this.pairedPunctuationConfig,
-    );
-    const analysis: PairedPunctuationAnalysis = pairedPunctuationAnalyzer.analyze(nodes);
+    const analysis: PairedPunctuationAnalysis = pairedPunctuationAnalyzer.analyze(checkableGroup);
 
     this.createDiagnostics(analysis);
     return this.diagnosticList.toArray();

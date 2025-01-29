@@ -84,13 +84,19 @@ export class StandardRuleSets {
     new WhitespaceConfig.Builder()
       .addRequiredWhitespaceRule(
         ContextDirection.Right,
-        ['.', ',', ';', '!', '?', ')', ']'],
-        [' ', '\n', '', '\u2019', '\u201D'],
+        ['.', ',', ';', '!', '?'],
+        [' ', '\n', '', '\u2019', '\u201D', ')', ']'],
+      )
+      .addRequiredWhitespaceRule(ContextDirection.Right, [')', ']'], [' ', '\n', '', '\u2019', '\u201D'])
+      .addRequiredWhitespaceRule(
+        ContextDirection.Right,
+        ['\u201D', '"'],
+        [' ', '\n', '', '.', ',', '\u2019', '\u201D', '"', "'"],
       )
       .addRequiredWhitespaceRule(
         ContextDirection.Right,
-        ['\u201D', '\u2019'],
-        [' ', '\n', '', '.', ',', '\u2019', '\u201D'],
+        ["'", '\u2019'],
+        [' ', '\n', '', '.', ',', '\u2019', '\u201D', '"', "'", 't', 's'],
       )
       .addRequiredWhitespaceRule(
         ContextDirection.Right,
@@ -99,11 +105,11 @@ export class StandardRuleSets {
       )
       .addRequiredWhitespaceRule(
         ContextDirection.Left,
-        ['(', '[', '\u201C', '\u2018'],
-        [' ', '\n', '', '\u201C', '\u2018'],
+        ['(', '[', '\u201C', '\u2018', '"'],
+        [' ', '\n', '', '\u201C', '\u2018', '"', "'"],
       )
       .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'])
+      .addProhibitedWhitespaceRule(ContextDirection.Left, ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D'])
       .build(),
   );
 }

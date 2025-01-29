@@ -9,9 +9,11 @@ import {
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
 
+import { CheckableGroup, TextDocumentCheckable } from './checkable';
 import { DiagnosticFactory } from './diagnostic-factory';
 import { IssueFinder, IssueFinderFactory } from './issue-finder';
-import { isScriptureDocument, ScriptureTextNodeGrouper } from './utils';
+import { ScriptureTextNodeGrouper } from './scripture-grouper';
+import { isScriptureDocument } from './utils';
 
 export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument> implements DiagnosticProvider {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
@@ -76,7 +78,7 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const issueFinder: IssueFinder = this.issueFinderFactory.createIssueFinder(diagnosticFactory);
-    return issueFinder.produceDiagnostics(textDocument.getText());
+    return issueFinder.produceDiagnostics(new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]));
   }
 
   protected validateScriptureDocument(scriptureDocument: ScriptureDocument): Diagnostic[] {
@@ -86,15 +88,9 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
     const issueFinder: IssueFinder = this.issueFinderFactory.createIssueFinder(diagnosticFactory);
 
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
-    for (const nonVerseNode of scriptureNodeGrouper.getStandAloneNodes()) {
-      diagnostics = diagnostics.concat(issueFinder.produceDiagnosticsForScripture(nonVerseNode));
+    for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
+      diagnostics = diagnostics.concat(issueFinder.produceDiagnostics(checkableGroup));
     }
-    for (const nonVerseNodeGroup of scriptureNodeGrouper.getNonVerseNodeGroups()) {
-      diagnostics = diagnostics.concat(issueFinder.produceDiagnosticsForScripture(nonVerseNodeGroup));
-    }
-    diagnostics = diagnostics.concat(
-      issueFinder.produceDiagnosticsForScripture(scriptureNodeGrouper.getVerseNodeGroup()),
-    );
     return diagnostics;
   }
 

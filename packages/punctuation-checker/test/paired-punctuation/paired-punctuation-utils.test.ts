@@ -1,9 +1,10 @@
 import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
+import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
 import { PairedPunctuationIterator } from '../../src/paired-punctuation/paired-punctuation-utils';
-import { PairedPunctuationDirection, ScriptureNodeGroup } from '../../src/utils';
+import { PairedPunctuationDirection } from '../../src/utils';
 
 describe('PairedPunctuationIterator tests', () => {
   describe('Text paired punctuation identification', () => {
@@ -274,9 +275,9 @@ describe('PairedPunctuationIterator tests', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
       const scriptureNode: ScriptureNode = testEnv.createScriptureNode('text (with) parentheses', 1, 5, 1, 28);
 
-      const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
-        ScriptureNodeGroup.createFromNodes([scriptureNode]),
-      );
+      const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator([
+        scriptureNode,
+      ]);
       expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
         startIndex: 5,
@@ -301,9 +302,10 @@ describe('PairedPunctuationIterator tests', () => {
       const scriptureNode1: ScriptureNode = testEnv.createScriptureNode('text (with [brackets', 1, 5, 1, 23);
       const scriptureNode2: ScriptureNode = testEnv.createScriptureNode('different] text)', 2, 3, 2, 19);
 
-      const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
-        ScriptureNodeGroup.createFromNodes([scriptureNode1, scriptureNode2]),
-      );
+      const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator([
+        scriptureNode1,
+        scriptureNode2,
+      ]);
       expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
         startIndex: 5,
@@ -444,8 +446,17 @@ class TestEnvironment {
     );
   }
 
-  newPairedPunctuationIterator(text: string | ScriptureNodeGroup): PairedPunctuationIterator {
-    return new PairedPunctuationIterator(this.pairedPunctuationConfig, text);
+  newPairedPunctuationIterator(text: string | ScriptureNode[]): PairedPunctuationIterator {
+    if (typeof text === 'string') {
+      return new PairedPunctuationIterator(
+        this.pairedPunctuationConfig,
+        new CheckableGroup([new TextDocumentCheckable(text)]),
+      );
+    }
+    return new PairedPunctuationIterator(
+      this.pairedPunctuationConfig,
+      new CheckableGroup(text.map((x) => new ScriptureNodeCheckable(x))),
+    );
   }
 
   createScriptureNode(

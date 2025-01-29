@@ -1,40 +1,39 @@
-import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup, TextSegment } from '../utils';
+import { Checkable, CheckableGroup } from '../checkable';
+import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 
 export class PairedPunctuationIterator {
   private readonly openingOrClosingMarkPattern: RegExp = /[()[\]{}]/g;
   private nextMark: PairedPunctuationMetadata | null = null;
-  private readonly textSegments: TextSegment[];
-  private textSegmentIndex = 0;
+  private currentCheckable: Checkable | undefined;
 
   constructor(
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
-    input: string | ScriptureNodeGroup,
+    private readonly input: CheckableGroup,
   ) {
     this.openingOrClosingMarkPattern = pairedPunctuationConfig.createAllPairedMarksRegex();
-    this.textSegments = this.createTextSegments(input);
+    this.currentCheckable = this.advanceToNextCheckable();
     this.findNext();
   }
 
-  private createTextSegments(input: string | ScriptureNodeGroup): TextSegment[] {
-    if (typeof input === 'string') {
-      return [new TextSegment(input)];
+  private advanceToNextCheckable(): Checkable | undefined {
+    const nextCheckableIteratorResult: IteratorResult<Checkable> = this.input.next();
+    if (nextCheckableIteratorResult.done) {
+      return undefined;
+    } else {
+      return nextCheckableIteratorResult.value;
     }
-    return input.toTextSegmentArray();
   }
 
   private findNext(): void {
-    const match: RegExpExecArray | null = this.openingOrClosingMarkPattern.exec(
-      this.textSegments[this.textSegmentIndex].getText(),
-    );
-    if (match === null) {
-      if (this.textSegmentIndex < this.textSegments.length - 1) {
-        this.textSegmentIndex++;
-        this.findNext();
-        return;
-      }
-
+    if (this.currentCheckable === undefined) {
       this.nextMark = null;
+      return;
+    }
+    const match: RegExpExecArray | null = this.openingOrClosingMarkPattern.exec(this.currentCheckable.getText());
+    if (match === null) {
+      this.currentCheckable = this.advanceToNextCheckable();
+      this.findNext();
       return;
     }
 
@@ -44,9 +43,7 @@ export class PairedPunctuationIterator {
         text: matchingText,
         startIndex: match.index,
         endIndex: match.index + match[0].length,
-        enclosingRange: this.textSegments[this.textSegmentIndex].hasRange()
-          ? this.textSegments[this.textSegmentIndex].getRange()
-          : undefined,
+        enclosingRange: this.currentCheckable.getEnclosingRange(),
         direction: PairedPunctuationDirection.Opening,
       };
     } else {
@@ -54,9 +51,7 @@ export class PairedPunctuationIterator {
         text: matchingText,
         startIndex: match.index,
         endIndex: match.index + match[0].length,
-        enclosingRange: this.textSegments[this.textSegmentIndex].hasRange()
-          ? this.textSegments[this.textSegmentIndex].getRange()
-          : undefined,
+        enclosingRange: this.currentCheckable.getEnclosingRange(),
         direction: PairedPunctuationDirection.Closing,
       };
     }

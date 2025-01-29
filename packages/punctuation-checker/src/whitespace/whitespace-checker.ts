@@ -9,23 +9,25 @@ import {
 } from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
+import { StandardFixProvider, StandardFixProviderFactory } from '../fixes/standard-fixes';
 import { WhitespaceConfig } from './whitespace-config';
-import { WhitespaceIssueFinderFactory } from './whitespace-issue-finder';
+import { WhitespaceDiagnosticData, WhitespaceIssueFinderFactory } from './whitespace-issue-finder';
 
 export const WHITESPACE_CHECKER_LOCALIZER_NAMESPACE = 'whitespace';
+export const LEADING_WHITESPACE_DIAGNOSTIC_CODE = 'incorrect-leading-whitespace';
+export const TRAILING_WHITESPACE_DIAGNOSTIC_CODE = 'incorrect-trailing-whitespace';
 
 export class WhitespaceChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
+
   constructor(
     private readonly localizer: Localizer,
     documentAccessor: DocumentAccessor<T>,
-    _editFactory: EditFactory<T>,
+    editFactory: EditFactory<T>,
     whitespaceConfig: WhitespaceConfig,
   ) {
-    super(
-      'allowed-character-set-checker',
-      documentAccessor,
-      new WhitespaceIssueFinderFactory(localizer, whitespaceConfig),
-    );
+    super('whitespace-checker', documentAccessor, new WhitespaceIssueFinderFactory(localizer, whitespaceConfig));
+    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -40,10 +42,26 @@ export class WhitespaceChecker<T extends TextDocument | ScriptureDocument> exten
         (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
       );
     }
+
+    await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticFix[] {
-    // no fixes available for disallowed characters
+  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
+    if ((diagnostic.data as WhitespaceDiagnosticData).isSpaceAllowed) {
+      const standardFixProvider: StandardFixProvider<T> =
+        this.standardFixProviderFactory.createStandardFixProvider(document);
+
+      switch (diagnostic.code) {
+        case LEADING_WHITESPACE_DIAGNOSTIC_CODE: {
+          return [standardFixProvider.leadingSpaceInsertionFix(diagnostic)];
+          break;
+        }
+        case TRAILING_WHITESPACE_DIAGNOSTIC_CODE: {
+          return [standardFixProvider.trailingSpaceInsertionFix(diagnostic)];
+          break;
+        }
+      }
+    }
     return [];
   }
 }

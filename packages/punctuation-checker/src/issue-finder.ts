@@ -1,12 +1,10 @@
-import { Diagnostic, ScriptureNode } from '@sillsdev/lynx';
+import { Diagnostic } from '@sillsdev/lynx';
 
+import { CheckableGroup } from './checkable';
 import { DiagnosticFactory } from './diagnostic-factory';
-import { ScriptureNodeGroup } from './utils';
 
 export interface IssueFinder {
-  produceDiagnostics(text: string): Diagnostic[];
-
-  produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[];
+  produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[];
 }
 
 export interface IssueFinderFactory {

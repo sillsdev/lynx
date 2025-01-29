@@ -1,4 +1,5 @@
-import { PairedPunctuationDirection, PairedPunctuationMetadata, ScriptureNodeGroup } from '../utils';
+import { CheckableGroup } from '../checkable';
+import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 import { PairedPunctuationIterator } from './paired-punctuation-utils';
 
@@ -8,7 +9,7 @@ export class PairedPunctuationAnalyzer {
 
   constructor(private readonly pairedPunctuationConfig: PairedPunctuationConfig) {}
 
-  public analyze(input: string | ScriptureNodeGroup): PairedPunctuationAnalysis {
+  public analyze(input: CheckableGroup): PairedPunctuationAnalysis {
     this.reset();
 
     const pairedPunctuationIterator: PairedPunctuationIterator = new PairedPunctuationIterator(

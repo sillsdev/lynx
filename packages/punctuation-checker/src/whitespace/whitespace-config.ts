@@ -22,6 +22,28 @@ export class WhitespaceConfig {
     return this.rulesByPunctuationMark.get(punctuationMark)?.isTrailingWhitespaceCorrect(rightContext) ?? true;
   }
 
+  public getAllowableLeadingWhitespaceCharacters(punctuationMark: string): WhitespaceCharacterSet {
+    if (this.rulesByPunctuationMark.has(punctuationMark)) {
+      return (
+        this.rulesByPunctuationMark
+          .get(punctuationMark)
+          ?.getAllowableWhitespaceCharactersByDirection(ContextDirection.Left) ?? new WhitespaceCharacterSet()
+      );
+    }
+    return new WhitespaceCharacterSet();
+  }
+
+  public getAllowableTrailingWhitespaceCharacters(punctuationMark: string): WhitespaceCharacterSet {
+    if (this.rulesByPunctuationMark.has(punctuationMark)) {
+      return (
+        this.rulesByPunctuationMark
+          .get(punctuationMark)
+          ?.getAllowableWhitespaceCharactersByDirection(ContextDirection.Right) ?? new WhitespaceCharacterSet()
+      );
+    }
+    return new WhitespaceCharacterSet();
+  }
+
   public static Builder = class {
     readonly whitespaceConfig: WhitespaceConfig = new WhitespaceConfig();
 
@@ -84,6 +106,13 @@ class BidirectionalWhitespaceRule {
     this.prohibitedWhitespaceDirections.add(contextDirection);
   }
 
+  getAllowableWhitespaceCharactersByDirection(direction: ContextDirection): WhitespaceCharacterSet {
+    if (this.acceptableWhitespaceByDirection.has(direction)) {
+      return this.acceptableWhitespaceByDirection.get(direction) ?? new WhitespaceCharacterSet();
+    }
+    return new WhitespaceCharacterSet();
+  }
+
   isLeadingWhitespaceCorrect(leftContext: string): boolean {
     if (
       this.prohibitedWhitespaceDirections.has(ContextDirection.Left) &&
@@ -117,14 +146,14 @@ class BidirectionalWhitespaceRule {
   }
 }
 
-class WhitespaceCharacterSet {
+export class WhitespaceCharacterSet {
   private readonly whitespaceCharacters: Set<string> = new Set<string>();
 
-  public addWhitespaceCharacter(whitespaceCharacter: string): void {
+  addWhitespaceCharacter(whitespaceCharacter: string): void {
     this.whitespaceCharacters.add(whitespaceCharacter);
   }
 
-  public isCharacterInSet(whitespaceCharacter: string): boolean {
+  isCharacterInSet(whitespaceCharacter: string): boolean {
     return this.whitespaceCharacters.has(whitespaceCharacter);
   }
 }

@@ -1,6 +1,6 @@
 {
   "diagnosticMessagesByCode": {
-    "incorrect-leading-whitespace": "This punctuation mark should be preceded by whitespace.",
-    "incorrect-trailing-whitespace": "This punctuation mark should be followed by whitespace."
+    "incorrect-leading-whitespace": "The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately preceded by \u201C{{precedingCharacter}}\u201D.",
+    "incorrect-trailing-whitespace": "The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately followed by \u201C{{followingCharacter}}\u201D."
   }
 }

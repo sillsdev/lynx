@@ -1,4 +1,12 @@
-import { Diagnostic, DiagnosticFix, EditFactory, Localizer, ScriptureDocument, TextDocument } from '@sillsdev/lynx';
+import {
+  Diagnostic,
+  DiagnosticFix,
+  EditFactory,
+  Localizer,
+  Range,
+  ScriptureDocument,
+  TextDocument,
+} from '@sillsdev/lynx';
 
 const LOCALIZER_NAMESPACE = 'standardPunctuationFixes';
 
@@ -29,6 +37,62 @@ class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
       isPreferred: true,
       diagnostic: diagnostic,
       edits: this.editFactory.createTextEdit(this.document, diagnostic.range, replacementCharacter),
+    };
+  }
+
+  public leadingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix {
+    return {
+      title: this.localizer.t(`leadingSpaceInsertionFix`, {
+        ns: LOCALIZER_NAMESPACE,
+      }),
+      isPreferred: true,
+      diagnostic: diagnostic,
+      edits: this.editFactory.createTextEdit(
+        this.document,
+        this.getRangeForLeadingCharacterInsertion(diagnostic.range),
+        ' ',
+      ),
+    };
+  }
+
+  private getRangeForLeadingCharacterInsertion(range: Range): Range {
+    return {
+      start: {
+        line: range.start.line,
+        character: range.start.character,
+      },
+      end: {
+        line: range.start.line,
+        character: range.start.character,
+      },
+    };
+  }
+
+  public trailingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix {
+    return {
+      title: this.localizer.t(`trailingSpaceInsertionFix`, {
+        ns: LOCALIZER_NAMESPACE,
+      }),
+      isPreferred: true,
+      diagnostic: diagnostic,
+      edits: this.editFactory.createTextEdit(
+        this.document,
+        this.getRangeForTrailingCharacterInsertion(diagnostic.range),
+        ' ',
+      ),
+    };
+  }
+
+  private getRangeForTrailingCharacterInsertion(range: Range): Range {
+    return {
+      start: {
+        line: range.end.line,
+        character: range.end.character,
+      },
+      end: {
+        line: range.end.line,
+        character: range.end.character,
+      },
     };
   }
 }

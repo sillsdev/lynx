@@ -8,7 +8,9 @@ import {
   TextEdit,
 } from '@sillsdev/lynx';
 
-import { isScriptureDocument, ScriptureNodeGroup, ScriptureTextNodeGrouper } from '../utils';
+import { CheckableGroup, TextDocumentCheckable } from '../checkable';
+import { ScriptureTextNodeGrouper } from '../scripture-grouper';
+import { isScriptureDocument } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
 
@@ -53,18 +55,9 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
 
     let edits: TextEdit[] = [];
-    for (const nonVerseNode of scriptureNodeGrouper.getStandAloneNodes()) {
-      edits = edits.concat(
-        this.correctScriptureNodes(
-          scriptureDocument,
-          quotationAnalyzer,
-          ScriptureNodeGroup.createFromNodes([nonVerseNode]),
-        ),
-      );
+    for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
+      edits = edits.concat(this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, checkableGroup));
     }
-    edits = edits.concat(
-      this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, scriptureNodeGrouper.getVerseNodeGroup()),
-    );
 
     return edits;
   }
@@ -72,9 +65,9 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
   private correctScriptureNodes(
     scriptureDocument: ScriptureDocument,
     quotationAnalyzer: QuotationAnalyzer,
-    scriptureNodes: ScriptureNodeGroup,
+    checkableGroup: CheckableGroup,
   ): TextEdit[] {
-    const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(scriptureNodes);
+    const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(checkableGroup);
     const edits: TextEdit[] = [];
 
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
@@ -103,7 +96,9 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     textDocument: TextDocument,
   ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
-    const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(textDocument.getText());
+    const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(
+      new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]),
+    );
 
     const edits: TextEdit[] = [];
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {

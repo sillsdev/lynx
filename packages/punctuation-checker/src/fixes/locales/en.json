@@ -1,4 +1,6 @@
 {
+  "leadingSpaceInsertionFix": "Add a space before this",
   "punctuationRemovalFix": "Delete punctuation mark",
-  "punctuationReplacementFix": "Replace this character with {{replacementCharacter}}"
+  "punctuationReplacementFix": "Replace this character with {{replacementCharacter}}",
+  "trailingSpaceInsertionFix": "Add a space after this"
 }

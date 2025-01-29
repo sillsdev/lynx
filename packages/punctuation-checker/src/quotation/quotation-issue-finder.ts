@@ -1,9 +1,10 @@
-import { Diagnostic, DiagnosticSeverity, Localizer, ScriptureNode } from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticSeverity, Localizer } from '@sillsdev/lynx';
 
+import { CheckableGroup } from '../checkable';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
-import { PairedPunctuationDirection, ScriptureNodeGroup } from '../utils';
+import { PairedPunctuationDirection } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import {
   AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE,
@@ -42,24 +43,10 @@ export class QuotationIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(text: string): Diagnostic[] {
+  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
     this.reset();
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
-    const analysis: QuotationAnalysis = quotationAnalyzer.analyze(text);
-
-    this.createDiagnostics(analysis);
-    return this.diagnosticList.toArray();
-  }
-
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
-    this.diagnosticList = new DiagnosticList();
-
-    if (!(nodes instanceof ScriptureNodeGroup)) {
-      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
-    }
-
-    const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
-    const analysis: QuotationAnalysis = quotationAnalyzer.analyze(nodes);
+    const analysis: QuotationAnalysis = quotationAnalyzer.analyze(checkableGroup);
 
     this.createDiagnostics(analysis);
     return this.diagnosticList.toArray();

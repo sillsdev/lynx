@@ -1,9 +1,9 @@
-import { Diagnostic, DiagnosticSeverity, Localizer, Range, ScriptureNode } from '@sillsdev/lynx';
+import { Diagnostic, DiagnosticSeverity, Localizer, Range } from '@sillsdev/lynx';
 
+import { CheckableGroup } from '../checkable';
 import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
-import { ScriptureNodeGroup } from '../utils';
 import { ALLOWED_CHARACTER_CHECKER_LOCALIZER_NAMESPACE } from './allowed-character-checker';
 import { AllowedCharacterSet } from './allowed-character-set';
 
@@ -31,32 +31,15 @@ export class AllowedCharacterIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(input: string): Diagnostic[] {
+  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
     this.diagnosticList = new DiagnosticList();
 
-    let match: RegExpExecArray | null;
-    while ((match = this.characterRegex.exec(input))) {
-      const character = match[0];
-
-      this.checkCharacter(character, match.index, match.index + match[0].length);
-    }
-
-    return this.diagnosticList.toArray();
-  }
-
-  public produceDiagnosticsForScripture(nodes: ScriptureNode | ScriptureNodeGroup): Diagnostic[] {
-    this.diagnosticList = new DiagnosticList();
-
-    if (!(nodes instanceof ScriptureNodeGroup)) {
-      nodes = ScriptureNodeGroup.createFromNodes([nodes]);
-    }
-
-    for (const node of nodes) {
+    for (const checkable of checkableGroup) {
       let match: RegExpExecArray | null;
-      while ((match = this.characterRegex.exec(node.getText()))) {
+      while ((match = this.characterRegex.exec(checkable.getText()))) {
         const character = match[0];
 
-        this.checkCharacter(character, match.index, match.index + match[0].length, node.range);
+        this.checkCharacter(character, match.index, match.index + match[0].length, checkable.getEnclosingRange());
       }
     }
 
