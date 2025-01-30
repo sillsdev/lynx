@@ -17,7 +17,8 @@ import { AllowedCharacterSet, CharacterRegexWhitelist } from '../../src/allowed-
 import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-punctuation-config';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { RuleType } from '../../src/rule-set/rule-set';
-import { CharacterClassRegexBuilder } from '../../src/utils';
+import { CharacterClassRegexBuilder, ContextDirection } from '../../src/utils';
+import { WhitespaceConfig } from '../../src/whitespace/whitespace-config';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
 
 const defaultLocalizer: Localizer = new Localizer();
@@ -42,9 +43,18 @@ describe('DiagnosticProviderFactory tests', () => {
       closingPunctuationMark: '>',
     })
     .build();
+  const whitespaceConfig: WhitespaceConfig = new WhitespaceConfig.Builder()
+    .addRequiredWhitespaceRule(ContextDirection.Left, ['{'], [' '])
+    .addRequiredWhitespaceRule(ContextDirection.Right, ['}'], [' '])
+    .build();
 
   it('creates all known checkers when createDiagnosticProviderFactories is called', async () => {
-    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const ruleSet: RuleSet = new RuleSet(
+      allowedCharacterSet,
+      quotationConfig,
+      pairedPunctuationConfig,
+      whitespaceConfig,
+    );
     const diagnosticProviders: DiagnosticProvider[] = ruleSet.createDiagnosticProviders<TextDocument>(
       defaultLocalizer,
       stubDocumentManager,
@@ -59,6 +69,7 @@ describe('DiagnosticProviderFactory tests', () => {
     expect(diagnosticProviders[0].id).toEqual('allowed-character-set-checker');
     expect(diagnosticProviders[1].id).toEqual('quotation-mark-checker');
     expect(diagnosticProviders[2].id).toEqual('paired-punctuation-checker');
+    expect(diagnosticProviders[3].id).toEqual('whitespace-checker');
 
     // ensure that they're the checkers we specified
     expect(await diagnosticProviders[0].getDiagnostics('A')).toHaveLength(1);
@@ -69,10 +80,18 @@ describe('DiagnosticProviderFactory tests', () => {
 
     expect(await diagnosticProviders[2].getDiagnostics('<')).toHaveLength(1);
     expect(await diagnosticProviders[2].getDiagnostics('<>')).toHaveLength(0);
+
+    expect(await diagnosticProviders[3].getDiagnostics('h{')).toHaveLength(1);
+    expect(await diagnosticProviders[3].getDiagnostics(' {')).toHaveLength(0);
   });
 
   it('creates the appropriate checker when passed a rule type', async () => {
-    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const ruleSet: RuleSet = new RuleSet(
+      allowedCharacterSet,
+      quotationConfig,
+      pairedPunctuationConfig,
+      whitespaceConfig,
+    );
 
     // ensure that we get the right type of checkers
     expect(
@@ -104,7 +123,17 @@ describe('DiagnosticProviderFactory tests', () => {
         new Localizer(),
         stubDocumentManager,
         new TextEditFactory(),
-        [RuleType.PairedPunctuation, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
+        [RuleType.Whitespace],
+      )[0].id,
+    ).toEqual('whitespace-checker');
+
+    // Arbitrary order
+    expect(
+      ruleSet.createSelectedDiagnosticProviders<TextDocument>(
+        new Localizer(),
+        stubDocumentManager,
+        new TextEditFactory(),
+        [RuleType.PairedPunctuation, RuleType.Whitespace, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
       )[0].id,
     ).toEqual('paired-punctuation-checker');
     expect(
@@ -112,16 +141,24 @@ describe('DiagnosticProviderFactory tests', () => {
         new Localizer(),
         stubDocumentManager,
         new TextEditFactory(),
-        [RuleType.PairedPunctuation, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
+        [RuleType.PairedPunctuation, RuleType.Whitespace, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
       )[1].id,
+    ).toEqual('whitespace-checker');
+    expect(
+      ruleSet.createSelectedDiagnosticProviders<TextDocument>(
+        new Localizer(),
+        stubDocumentManager,
+        new TextEditFactory(),
+        [RuleType.PairedPunctuation, RuleType.Whitespace, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
+      )[2].id,
     ).toEqual('quotation-mark-checker');
     expect(
       ruleSet.createSelectedDiagnosticProviders<TextDocument>(
         new Localizer(),
         stubDocumentManager,
         new TextEditFactory(),
-        [RuleType.PairedPunctuation, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
-      )[2].id,
+        [RuleType.PairedPunctuation, RuleType.Whitespace, RuleType.QuotationMarkPairing, RuleType.AllowedCharacters],
+      )[3].id,
     ).toEqual('allowed-character-set-checker');
 
     // ensure that they're the checkers we specified
@@ -129,7 +166,7 @@ describe('DiagnosticProviderFactory tests', () => {
       defaultLocalizer,
       stubDocumentManager,
       new TextEditFactory(),
-      [RuleType.AllowedCharacters, RuleType.QuotationMarkPairing, RuleType.PairedPunctuation],
+      [RuleType.AllowedCharacters, RuleType.QuotationMarkPairing, RuleType.PairedPunctuation, RuleType.Whitespace],
     );
     for (const diagnosticProvider of diagnosticProviders) {
       await diagnosticProvider.init();
@@ -144,10 +181,18 @@ describe('DiagnosticProviderFactory tests', () => {
 
     expect(await diagnosticProviders[2].getDiagnostics('<>')).toHaveLength(0);
     expect(await diagnosticProviders[2].getDiagnostics('<')).toHaveLength(1);
+
+    expect(await diagnosticProviders[3].getDiagnostics('h{')).toHaveLength(1);
+    expect(await diagnosticProviders[3].getDiagnostics(' {')).toHaveLength(0);
   });
 
   it('creates all known on-type formatters when createOnTypeFormattingProviders is called', async () => {
-    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const ruleSet: RuleSet = new RuleSet(
+      allowedCharacterSet,
+      quotationConfig,
+      pairedPunctuationConfig,
+      whitespaceConfig,
+    );
     const onTypeFormatters: OnTypeFormattingProvider[] = ruleSet.createOnTypeFormattingProviders<TextDocument>(
       stubDocumentManager,
       new TextEditFactory(),
@@ -168,7 +213,12 @@ describe('DiagnosticProviderFactory tests', () => {
       new UsfmDocumentFactory(stylesheet),
     );
 
-    const ruleSet: RuleSet = new RuleSet(allowedCharacterSet, quotationConfig, pairedPunctuationConfig);
+    const ruleSet: RuleSet = new RuleSet(
+      allowedCharacterSet,
+      quotationConfig,
+      pairedPunctuationConfig,
+      whitespaceConfig,
+    );
     const diagnosticProviders: DiagnosticProvider[] = ruleSet.createDiagnosticProviders<ScriptureDocument>(
       defaultLocalizer,
       stubScriptureDocumentManager,
