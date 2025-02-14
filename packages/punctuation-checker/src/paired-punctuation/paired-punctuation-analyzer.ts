@@ -33,7 +33,7 @@ export class PairedPunctuationAnalyzer {
     this.processPunctuationMarkByDirection(punctuationMark);
   }
 
-  private processPunctuationMarkByDirection(punctuationMark: PairedPunctuationMetadata) {
+  private processPunctuationMarkByDirection(punctuationMark: PairedPunctuationMetadata): void {
     if (punctuationMark.direction === PairedPunctuationDirection.Opening) {
       this.processOpeningQuotationMark(punctuationMark);
     } else if (punctuationMark.direction === PairedPunctuationDirection.Closing) {

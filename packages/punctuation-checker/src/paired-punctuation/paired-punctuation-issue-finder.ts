@@ -57,7 +57,7 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
     return this.diagnosticList.toArray();
   }
 
-  private createDiagnostics(analysis: PairedPunctuationAnalysis) {
+  private createDiagnostics(analysis: PairedPunctuationAnalysis): void {
     this.createUnmatchedPunctuationDiagnostics(analysis);
     this.createOverlappingPunctuationDiagnostics(analysis);
   }

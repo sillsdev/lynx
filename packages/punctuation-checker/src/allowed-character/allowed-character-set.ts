@@ -3,7 +3,7 @@ export interface AllowedCharacterSet {
 }
 
 export class CharacterRegexWhitelist implements AllowedCharacterSet {
-  private readonly characterRegex;
+  private readonly characterRegex: RegExp;
 
   constructor(characterRegex: RegExp) {
     this.characterRegex = new RegExp('^' + characterRegex.source + '$', characterRegex.flags);

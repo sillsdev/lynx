@@ -6,7 +6,7 @@ export interface PairedPunctuationRule {
 export class AmbiguousPunctuationMap {
   private readonly punctuationMap: Map<string, Set<string>> = new Map<string, Set<string>>();
 
-  public mapAmbiguousPunctuation(ambigiousMark: string, unambiguousMark: string) {
+  public mapAmbiguousPunctuation(ambigiousMark: string, unambiguousMark: string): void {
     if (!this.punctuationMap.has(ambigiousMark)) {
       this.punctuationMap.set(ambigiousMark, new Set<string>());
     }

@@ -39,7 +39,7 @@ export class UnresolvedQuoteMetadata {
     return this.directions.size;
   }
 
-  public findBestDepth(depthScoringFunction: (depth: QuotationDepth) => number) {
+  public findBestDepth(depthScoringFunction: (depth: QuotationDepth) => number): QuotationDepth {
     let bestScore = Number.NEGATIVE_INFINITY;
     let bestDepth: QuotationDepth = QuotationDepth.Primary;
     for (const d of this.depths) {
@@ -53,7 +53,9 @@ export class UnresolvedQuoteMetadata {
     return bestDepth;
   }
 
-  public findBestDirection(directionScoringFunction: (depth: PairedPunctuationDirection) => number) {
+  public findBestDirection(
+    directionScoringFunction: (depth: PairedPunctuationDirection) => number,
+  ): PairedPunctuationDirection {
     let bestScore = Number.NEGATIVE_INFINITY;
     let bestDirection: PairedPunctuationDirection = PairedPunctuationDirection.Opening;
     for (const direction of this.directions) {
@@ -79,7 +81,7 @@ export class UnresolvedQuoteMetadata {
     };
   }
 
-  private checkForValidResolution(chosenDepth: QuotationDepth, chosenDirection: PairedPunctuationDirection) {
+  private checkForValidResolution(chosenDepth: QuotationDepth, chosenDirection: PairedPunctuationDirection): void {
     if (!this.isDepthPossible(chosenDepth)) {
       throw new Error(
         `Cannot resolve quote metadata with depth ${chosenDepth.asNumber().toFixed()}, as this depth is not possible.`,
@@ -182,7 +184,7 @@ export class QuotationDepth {
   public static Secondary: QuotationDepth = new QuotationDepth(2);
   public static Tertiary: QuotationDepth = new QuotationDepth(3);
 
-  public static fromNumber(depth: number) {
+  public static fromNumber(depth: number): QuotationDepth {
     if (depth < 1) {
       throw new Error(`Depth of quotation cannot be less than 1. Provided depth was ${depth.toString()}.`);
     }
@@ -227,7 +229,7 @@ export class QuotationDepth {
     return this.depth < otherDepth.depth;
   }
 
-  public equals(otherDepth: QuotationDepth) {
+  public equals(otherDepth: QuotationDepth): boolean {
     return this.depth === otherDepth.depth;
   }
 }

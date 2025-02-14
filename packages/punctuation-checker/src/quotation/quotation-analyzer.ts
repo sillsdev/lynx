@@ -48,7 +48,7 @@ export class QuotationAnalyzer {
     return quotationResolver.resolve(unresolvedQuotationMark);
   }
 
-  private processQuotationMarkByDirection(quotationMark: QuoteMetadata) {
+  private processQuotationMarkByDirection(quotationMark: QuoteMetadata): void {
     if (quotationMark.direction === PairedPunctuationDirection.Opening) {
       this.processOpeningQuotationMark(quotationMark);
     } else if (quotationMark.direction === PairedPunctuationDirection.Closing) {
@@ -175,7 +175,7 @@ class QuotationResolver {
   private canPreferenceBeSatisfied(
     unresolvedQuotationMark: UnresolvedQuoteMetadata,
     preference: DepthAndDirectionPreference,
-  ) {
+  ): boolean {
     return (
       unresolvedQuotationMark.isDepthPossible(preference.depth) &&
       unresolvedQuotationMark.isDirectionPossible(preference.direction)
