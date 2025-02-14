@@ -47,6 +47,7 @@ describe('CharacterClassRegexBuilder tests', () => {
 
   it('escapes special characters', () => {
     const dashRegex: RegExp = new CharacterClassRegexBuilder().addCharacter('-').build();
+    // ESLint errors on the escaped dash, but the two regexes are not equal if it is removed
     // eslint-disable-next-line no-useless-escape
     expect(dashRegex).toEqual(/[\-]/u);
 

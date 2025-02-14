@@ -191,11 +191,12 @@ describe('integration tests', () => {
       await standardEnglishCharacterChecker.init();
       await testEnv.allowedCharacterCheckerLocalizer.init();
 
-      expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$')).toEqual([
+      expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$~')).toEqual([
         testEnv.createExpectedDiagnostic('&amp;', 0, 1),
         testEnv.createExpectedDiagnostic('{', 1, 2),
         testEnv.createExpectedDiagnostic('+', 2, 3),
         testEnv.createExpectedDiagnostic('$', 3, 4),
+        testEnv.createExpectedDiagnostic('~', 4, 5),
       ]);
     });
 

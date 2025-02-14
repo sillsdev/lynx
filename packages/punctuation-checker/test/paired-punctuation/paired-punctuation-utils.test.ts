@@ -12,21 +12,33 @@ describe('PairedPunctuationIterator tests', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
 
       const emptyStringPairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator('');
-      expect(emptyStringPairedPunctuationIterator.hasNext()).toBe(false);
+      expect(emptyStringPairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
 
       const noPunctuationPairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
         'The rain in Spain falls mainly on the plain',
       );
-      expect(noPunctuationPairedPunctuationIterator.hasNext()).toBe(false);
+      expect(noPunctuationPairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
 
       const noPairedPunctuationPairedPunctuationIterator: PairedPunctuationIterator =
         testEnv.newPairedPunctuationIterator('The #rain, in @Spain! falls& mainly? on^ the plain*');
-      expect(noPairedPunctuationPairedPunctuationIterator.hasNext()).toBe(false);
+      expect(noPairedPunctuationPairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
 
       const pairedPunctuationNotInTheConfigIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
         '\u201EThe rain in `Spain` falls <mainly> on the plain\u201F',
       );
-      expect(pairedPunctuationNotInTheConfigIterator.hasNext()).toBe(false);
+      expect(pairedPunctuationNotInTheConfigIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
     });
 
     it('identifies properly paired punctuation in the context of a sentence', () => {
@@ -35,61 +47,81 @@ describe('PairedPunctuationIterator tests', () => {
       const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
         '\u201CThe rain\u201D in [Spain {falls} mainly] (on the plain).',
       );
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 0,
-        endIndex: 1,
-        text: '\u201C',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 0,
+          endIndex: 1,
+          text: '\u201C',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 9,
-        endIndex: 10,
-        text: '\u201D',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 9,
+          endIndex: 10,
+          text: '\u201D',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 14,
-        endIndex: 15,
-        text: '[',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 14,
+          endIndex: 15,
+          text: '[',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 21,
-        endIndex: 22,
-        text: '{',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 21,
+          endIndex: 22,
+          text: '{',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 27,
-        endIndex: 28,
-        text: '}',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 27,
+          endIndex: 28,
+          text: '}',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 35,
-        endIndex: 36,
-        text: ']',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 35,
+          endIndex: 36,
+          text: ']',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 37,
-        endIndex: 38,
-        text: '(',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 37,
+          endIndex: 38,
+          text: '(',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 50,
-        endIndex: 51,
-        text: ')',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 50,
+          endIndex: 51,
+          text: ')',
+        },
+      });
+      expect(pairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
       });
     });
 
@@ -99,61 +131,81 @@ describe('PairedPunctuationIterator tests', () => {
       const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator(
         '\u201DThe rain\u201C in [Spain [falls{ mainly) (on the plain].',
       );
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 0,
-        endIndex: 1,
-        text: '\u201D',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 0,
+          endIndex: 1,
+          text: '\u201D',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 9,
-        endIndex: 10,
-        text: '\u201C',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 9,
+          endIndex: 10,
+          text: '\u201C',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 14,
-        endIndex: 15,
-        text: '[',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 14,
+          endIndex: 15,
+          text: '[',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 21,
-        endIndex: 22,
-        text: '[',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 21,
+          endIndex: 22,
+          text: '[',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 27,
-        endIndex: 28,
-        text: '{',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 27,
+          endIndex: 28,
+          text: '{',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 35,
-        endIndex: 36,
-        text: ')',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 35,
+          endIndex: 36,
+          text: ')',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 37,
-        endIndex: 38,
-        text: '(',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 37,
+          endIndex: 38,
+          text: '(',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 50,
-        endIndex: 51,
-        text: ']',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 50,
+          endIndex: 51,
+          text: ']',
+        },
+      });
+      expect(pairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
       });
     });
 
@@ -163,61 +215,81 @@ describe('PairedPunctuationIterator tests', () => {
       const pairedPunctuationIterator: PairedPunctuationIterator = backwardsTestEnv.newPairedPunctuationIterator(
         '\u201CThe rain\u201D in [Spain {falls} mainly] (on the plain).',
       );
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 0,
-        endIndex: 1,
-        text: '\u201C',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 0,
+          endIndex: 1,
+          text: '\u201C',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 9,
-        endIndex: 10,
-        text: '\u201D',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 9,
+          endIndex: 10,
+          text: '\u201D',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 14,
-        endIndex: 15,
-        text: '[',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 14,
+          endIndex: 15,
+          text: '[',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 21,
-        endIndex: 22,
-        text: '{',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 21,
+          endIndex: 22,
+          text: '{',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 27,
-        endIndex: 28,
-        text: '}',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 27,
+          endIndex: 28,
+          text: '}',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 35,
-        endIndex: 36,
-        text: ']',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 35,
+          endIndex: 36,
+          text: ']',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 37,
-        endIndex: 38,
-        text: '(',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 37,
+          endIndex: 38,
+          text: '(',
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 50,
-        endIndex: 51,
-        text: ')',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 50,
+          endIndex: 51,
+          text: ')',
+        },
+      });
+      expect(pairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
       });
 
       const bizarreTestEnv: TestEnvironment = TestEnvironment.createWithBizarrePairedPunctuation();
@@ -225,47 +297,63 @@ describe('PairedPunctuationIterator tests', () => {
       const bizarrePairedPunctuationIterator: PairedPunctuationIterator = bizarreTestEnv.newPairedPunctuationIterator(
         'The +rain in /Spain +falls- mainly\\ on the- plain.',
       );
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 4,
-        endIndex: 5,
-        text: '+',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 4,
+          endIndex: 5,
+          text: '+',
+        },
       });
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 13,
-        endIndex: 14,
-        text: '/',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 13,
+          endIndex: 14,
+          text: '/',
+        },
       });
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Opening,
-        startIndex: 20,
-        endIndex: 21,
-        text: '+',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Opening,
+          startIndex: 20,
+          endIndex: 21,
+          text: '+',
+        },
       });
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 26,
-        endIndex: 27,
-        text: '-',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 26,
+          endIndex: 27,
+          text: '-',
+        },
       });
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 34,
-        endIndex: 35,
-        text: '\\',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 34,
+          endIndex: 35,
+          text: '\\',
+        },
       });
-      expect(bizarrePairedPunctuationIterator.hasNext()).toBe(true);
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
-        direction: PairedPunctuationDirection.Closing,
-        startIndex: 42,
-        endIndex: 43,
-        text: '-',
+        done: false,
+        value: {
+          direction: PairedPunctuationDirection.Closing,
+          startIndex: 42,
+          endIndex: 43,
+          text: '-',
+        },
+      });
+      expect(bizarrePairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
       });
     });
   });
@@ -278,23 +366,30 @@ describe('PairedPunctuationIterator tests', () => {
       const pairedPunctuationIterator: PairedPunctuationIterator = testEnv.newPairedPunctuationIterator([
         scriptureNode,
       ]);
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        startIndex: 5,
-        endIndex: 6,
-        enclosingRange: scriptureNode.range,
-        text: '(',
-        direction: PairedPunctuationDirection.Opening,
+        done: false,
+        value: {
+          startIndex: 5,
+          endIndex: 6,
+          enclosingRange: scriptureNode.range,
+          text: '(',
+          direction: PairedPunctuationDirection.Opening,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        startIndex: 10,
-        endIndex: 11,
-        enclosingRange: scriptureNode.range,
-        text: ')',
-        direction: PairedPunctuationDirection.Closing,
+        done: false,
+        value: {
+          startIndex: 10,
+          endIndex: 11,
+          enclosingRange: scriptureNode.range,
+          text: ')',
+          direction: PairedPunctuationDirection.Closing,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(false);
+      expect(pairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
     });
 
     it('identifies paired punctuation in multiple ScriptureNodes', () => {
@@ -306,39 +401,50 @@ describe('PairedPunctuationIterator tests', () => {
         scriptureNode1,
         scriptureNode2,
       ]);
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        startIndex: 5,
-        endIndex: 6,
-        enclosingRange: scriptureNode1.range,
-        text: '(',
-        direction: PairedPunctuationDirection.Opening,
+        done: false,
+        value: {
+          startIndex: 5,
+          endIndex: 6,
+          enclosingRange: scriptureNode1.range,
+          text: '(',
+          direction: PairedPunctuationDirection.Opening,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        startIndex: 11,
-        endIndex: 12,
-        enclosingRange: scriptureNode1.range,
-        text: '[',
-        direction: PairedPunctuationDirection.Opening,
+        done: false,
+        value: {
+          startIndex: 11,
+          endIndex: 12,
+          enclosingRange: scriptureNode1.range,
+          text: '[',
+          direction: PairedPunctuationDirection.Opening,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toEqual({
-        startIndex: 9,
-        endIndex: 10,
-        enclosingRange: scriptureNode2.range,
-        text: ']',
-        direction: PairedPunctuationDirection.Closing,
+        done: false,
+        value: {
+          startIndex: 9,
+          endIndex: 10,
+          enclosingRange: scriptureNode2.range,
+          text: ']',
+          direction: PairedPunctuationDirection.Closing,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(true);
       expect(pairedPunctuationIterator.next()).toStrictEqual({
-        startIndex: 15,
-        endIndex: 16,
-        enclosingRange: scriptureNode2.range,
-        text: ')',
-        direction: PairedPunctuationDirection.Closing,
+        done: false,
+        value: {
+          startIndex: 15,
+          endIndex: 16,
+          enclosingRange: scriptureNode2.range,
+          text: ')',
+          direction: PairedPunctuationDirection.Closing,
+        },
       });
-      expect(pairedPunctuationIterator.hasNext()).toBe(false);
+      expect(pairedPunctuationIterator.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
     });
   });
 });

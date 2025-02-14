@@ -682,6 +682,154 @@ describe('Standard English rule set tests', () => {
     });
   });
 
+  describe('Punctuation context checking', () => {
+    const standardEnglishRuleSet = StandardRuleSets.English;
+    const punctuationContextConfig = standardEnglishRuleSet._getPunctuationContextConfig();
+
+    it('specifies standard punctuation context rules for English', () => {
+      expect(punctuationContextConfig.isLeadingContextCorrect('.', ' ')).toBe(false);
+      expect(punctuationContextConfig.isLeadingContextCorrect('.', 'c')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect('.', '\u201C')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect('.', '\u201D')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect(',', ' ')).toBe(false);
+      expect(punctuationContextConfig.isLeadingContextCorrect(',', '0')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect(',', '\u2019')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect('\u201D', ' ')).toBe(false);
+      expect(punctuationContextConfig.isLeadingContextCorrect('\u201D', '\u2019')).toBe(true);
+      expect(punctuationContextConfig.isLeadingContextCorrect('\u201D', '.')).toBe(true);
+
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', ' ')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', '5')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', 'a')).toBe(false);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', '\u2019')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', '\u201D')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', ')')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect('.', ',')).toBe(false);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', ' ')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', ')')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', ',')).toBe(false);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', 'j')).toBe(false);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', '\u2019')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', '\u201D')).toBe(true);
+      expect(punctuationContextConfig.isTrailingContextCorrect(',', '.')).toBe(false);
+    });
+
+    it('identifies no issues with well-formed English Biblical text', async () => {
+      const localizer: Localizer = new Localizer();
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
+      const punctuationContextChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.PunctuationContext],
+        )[0];
+      await punctuationContextChecker.init();
+      await localizer.init();
+
+      expect(
+        await punctuationContextChecker.getDiagnostics(`Let the young woman to whom I shall say, ‘Please let down your jar that I may drink’,
+          and who shall say, ‘Drink, and I will water your camels,’ let her be the one whom you have appointed for your servant Isaac.”`),
+      ).toEqual([]);
+    });
+
+    it('identifies intentionally planted issues into otherwise well-formed English Biblical text', async () => {
+      const localizer: Localizer = new Localizer();
+      const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
+      const punctuationContextChecker: DiagnosticProvider =
+        standardEnglishRuleSet.createSelectedDiagnosticProviders<TextDocument>(
+          localizer,
+          stubDocumentManager,
+          new TextEditFactory(),
+          [RuleType.PunctuationContext],
+        )[0];
+      await punctuationContextChecker.init();
+      await localizer.init();
+
+      expect(
+        await punctuationContextChecker.getDiagnostics(`Let the young woman to whom I shall say,‘Please let down your jar that I may drink,’
+          and who shall say, ‘ Drink, and I will water your camels,’ let her be the one whom you have appointed for your servant Isaac. ”`),
+      ).toEqual([
+        {
+          code: 'incorrect-trailing-context',
+          source: 'punctuation-context-checker',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 39,
+            },
+            end: {
+              line: 0,
+              character: 40,
+            },
+          },
+          message: 'The punctuation mark \u201C,\u201D should not be immediately followed by \u201C\u2018\u201D.',
+          data: {
+            isSpaceAllowed: true,
+          },
+        },
+        {
+          code: 'incorrect-leading-context',
+          source: 'punctuation-context-checker',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 40,
+            },
+            end: {
+              line: 0,
+              character: 41,
+            },
+          },
+          message: 'The punctuation mark \u201C\u2018\u201D should not be immediately preceded by \u201C,\u201D.',
+          data: {
+            isSpaceAllowed: true,
+          },
+        },
+        {
+          code: 'incorrect-trailing-context',
+          source: 'punctuation-context-checker',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 114,
+            },
+            end: {
+              line: 0,
+              character: 115,
+            },
+          },
+          message: 'The punctuation mark \u201C\u2018\u201D should not be immediately followed by \u201C \u201D.',
+          data: {
+            isSpaceAllowed: false,
+          },
+        },
+        {
+          code: 'incorrect-leading-context',
+          source: 'punctuation-context-checker',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 221,
+            },
+            end: {
+              line: 0,
+              character: 222,
+            },
+          },
+          message: 'The punctuation mark \u201C\u201D\u201D should not be immediately preceded by \u201C \u201D.',
+          data: {
+            isSpaceAllowed: false,
+          },
+        },
+      ]);
+    });
+  });
+
   describe('Smart quotes (a.k.a. quote correction)', () => {
     const standardEnglishRuleSet = StandardRuleSets.English;
 

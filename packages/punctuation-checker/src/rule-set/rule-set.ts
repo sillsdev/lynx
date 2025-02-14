@@ -12,17 +12,17 @@ import { AllowedCharacterChecker } from '../allowed-character/allowed-character-
 import { AllowedCharacterSet } from '../allowed-character/allowed-character-set';
 import { PairedPunctuationChecker } from '../paired-punctuation/paired-punctuation-checker';
 import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuation-config';
+import { PunctuationContextChecker } from '../punctuation-context/punctuation-context-checker';
+import { PunctuationContextConfig } from '../punctuation-context/punctuation-context-config';
 import { QuotationChecker } from '../quotation/quotation-checker';
 import { QuotationConfig } from '../quotation/quotation-config';
 import { QuotationCorrector } from '../quotation/quotation-corrector';
-import { WhitespaceChecker } from '../whitespace/whitespace-checker';
-import { WhitespaceConfig } from '../whitespace/whitespace-config';
 
 export enum RuleType {
   AllowedCharacters = 1,
   QuotationMarkPairing = 2,
   PairedPunctuation = 3,
-  Whitespace = 4,
+  PunctuationContext = 4,
 }
 
 export class RuleSet {
@@ -30,7 +30,7 @@ export class RuleSet {
     private readonly allowedCharacterSet: AllowedCharacterSet,
     private readonly quotationConfig: QuotationConfig,
     private readonly pairedPunctuationConfig: PairedPunctuationConfig,
-    private readonly whitespaceConfig: WhitespaceConfig,
+    private readonly punctuationContextConfig: PunctuationContextConfig,
   ) {}
 
   public createDiagnosticProviders<T extends TextDocument | ScriptureDocument>(
@@ -42,7 +42,7 @@ export class RuleSet {
       this.createAllowedCharacterChecker(localizer, documentAccessor),
       this.createQuotationChecker(localizer, documentAccessor, editFactory),
       this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory),
-      this.createWhitespaceChecker(localizer, documentAccessor, editFactory),
+      this.createPunctuationContextChecker(localizer, documentAccessor, editFactory),
     ];
   }
 
@@ -67,8 +67,10 @@ export class RuleSet {
             this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory),
           );
           break;
-        case RuleType.Whitespace:
-          diagnosticProviderFactories.push(this.createWhitespaceChecker(localizer, documentAccessor, editFactory));
+        case RuleType.PunctuationContext:
+          diagnosticProviderFactories.push(
+            this.createPunctuationContextChecker(localizer, documentAccessor, editFactory),
+          );
           break;
       }
     }
@@ -99,12 +101,12 @@ export class RuleSet {
     return new PairedPunctuationChecker<T>(localizer, documentAccessor, editFactory, this.pairedPunctuationConfig);
   }
 
-  private createWhitespaceChecker<T extends TextDocument | ScriptureDocument>(
+  private createPunctuationContextChecker<T extends TextDocument | ScriptureDocument>(
     localizer: Localizer,
     documentAccessor: DocumentAccessor<T>,
     editFactory: EditFactory<T>,
   ): DiagnosticProvider {
-    return new WhitespaceChecker<T>(localizer, documentAccessor, editFactory, this.whitespaceConfig);
+    return new PunctuationContextChecker<T>(localizer, documentAccessor, editFactory, this.punctuationContextConfig);
   }
 
   public createOnTypeFormattingProviders<T extends TextDocument | ScriptureDocument>(
@@ -133,7 +135,7 @@ export class RuleSet {
     return this.pairedPunctuationConfig;
   }
 
-  _getWhitespaceConfig(): WhitespaceConfig {
-    return this.whitespaceConfig;
+  _getPunctuationContextConfig(): PunctuationContextConfig {
+    return this.punctuationContextConfig;
   }
 }

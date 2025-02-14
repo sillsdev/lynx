@@ -9,6 +9,7 @@ export class PairedPunctuationConfig {
   private correspondingMarkMap: Map<string, string> = new Map<string, string>();
   private quotationMarks: Set<string> = new Set<string>();
 
+  // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 

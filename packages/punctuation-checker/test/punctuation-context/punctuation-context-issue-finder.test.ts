@@ -13,11 +13,11 @@ import { describe, expect, it } from 'vitest';
 
 import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
+import { PunctuationContextConfig } from '../../src/punctuation-context/punctuation-context-config';
+import type { PunctuationContextIssueFinder } from '../../src/punctuation-context/punctuation-context-issue-finder';
+import { PunctuationContextIssueFinderFactory } from '../../src/punctuation-context/punctuation-context-issue-finder';
 import { ScriptureTextNodeGrouper } from '../../src/scripture-grouper';
 import { ContextDirection } from '../../src/utils';
-import { WhitespaceConfig } from '../../src/whitespace/whitespace-config';
-import type { WhitespaceIssueFinder } from '../../src/whitespace/whitespace-issue-finder';
-import { WhitespaceIssueFinderFactory } from '../../src/whitespace/whitespace-issue-finder';
 import {
   StubFixedLineWidthTextDocument,
   StubScriptureDocumentManager,
@@ -25,89 +25,91 @@ import {
 } from '../test-utils';
 
 describe('Tests with plain-text strings', () => {
-  it('produces no Diagnostics for text with well-formed whitespace', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardWhitespace();
+  it('produces no Diagnostics for text with well-formed punctuation context', async () => {
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('end of sentence. start of next')),
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('end of sentence. start of next')),
     ).toEqual([]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('spaces (on both sides) of parentheses')),
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
+        testEnv.createInput('spaces (on both sides) of parentheses'),
+      ),
     ).toEqual([]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput('this contains: colons; semicolons, and commas'),
       ),
     ).toEqual([]);
   });
 
-  it('produces Diagnostics for text with missing required whitespace', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardWhitespace();
+  it('produces Diagnostics for text with missing required punctuation context', async () => {
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('no space after.period'))).toEqual([
-      testEnv.createExpectedTrailingWhitespaceDiagnostic('.', 'p', 14, 15),
-    ]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('no space(before parenthesis')),
-    ).toEqual([testEnv.createExpectedLeadingWhitespaceDiagnostic('(', 'e', 8, 9)]);
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space after.period')),
+    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 'p', 14, 15)]);
+    expect(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space(before parenthesis')),
+    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 8, 9)]);
   });
 
   it('produces no Diagnostics for punctuation marks at the beginning/end of the string', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardWhitespace();
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput('\u201Cquote at start and end of string\u201D'),
       ),
     ).toEqual([]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('period ending the sentence.')),
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('period ending the sentence.')),
     ).toEqual([]);
   });
 });
 
 describe('Tests with ScriptureNodes', () => {
-  it('produces no Diagnostics for single ScriptureNodes with well-formed whitespace', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardWhitespace();
+  it('produces no Diagnostics for single ScriptureNodes with well-formed punctuation context', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('space. after the period', 1, 15, 1, 38)),
       ),
     ).toEqual([]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('correct (spaces around the) parentheses', 2, 1, 2, 40)),
       ),
     ).toEqual([]);
   });
 
-  it('produces Diagnostics for whitespace errors in a single ScriptureNode', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardWhitespace();
+  it('produces Diagnostics for punctuation context errors in a single ScriptureNode', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('missing.space', 3, 16, 3, 29)),
       ),
-    ).toEqual([testEnv.createExpectedTrailingWhitespaceDiagnostic('.', 's', 3, 23, 3, 24)]);
+    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 's', 3, 23, 3, 24)]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('no space(before parenthesis', 4, 5, 4, 32)),
       ),
-    ).toEqual([testEnv.createExpectedLeadingWhitespaceDiagnostic('(', 'e', 4, 13, 4, 14)]);
+    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 4, 13, 4, 14)]);
   });
 
-  it('produces no Diagnostics for well-formed whitespace that spans across ScriptureNodes', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardWhitespace();
+  it('produces no Diagnostics for well-formed punctuation context that spans across ScriptureNodes', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with period.', 5, 12, 5, 29),
           testEnv.createScriptureNode(' starts with space', 5, 31, 5, 49),
@@ -116,7 +118,7 @@ describe('Tests with ScriptureNodes', () => {
     ).toEqual([]);
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with a space ', 6, 1, 6, 19),
           testEnv.createScriptureNode('(starts with a parenthesis', 6, 35, 6, 61),
@@ -125,30 +127,30 @@ describe('Tests with ScriptureNodes', () => {
     ).toEqual([]);
   });
 
-  it('produces Diagnostics for whitespace errors that occur across ScriptureNodes', async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardWhitespace();
+  it('produces Diagnostics for punctuation context errors that occur across ScriptureNodes', async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with a period.', 18, 15, 18, 34),
           testEnv.createScriptureNode('no space to start', 18, 41, 18, 58),
         ),
       ),
-    ).toEqual([testEnv.createExpectedTrailingWhitespaceDiagnostic('.', 'n', 18, 33, 18, 34)]);
+    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 'n', 18, 33, 18, 34)]);
     expect(
-      testEnv.whitespaceIssueFinder.produceDiagnostics(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends without a space', 9, 122, 9, 142),
           testEnv.createScriptureNode('\u201Cstarts with a quote', 9, 151, 9, 171),
         ),
       ),
-    ).toEqual([testEnv.createExpectedLeadingWhitespaceDiagnostic('\u201C', 'e', 9, 151, 9, 152)]);
+    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('\u201C', 'e', 9, 151, 9, 152)]);
   });
 
-  it("doesn't consider whitespace across ScriptureNodes when the whitespace is possibly truncated", async () => {
-    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithNonStandardWhitespace();
+  it("doesn't consider punctuation context across ScriptureNodes when the punctuation context is possibly truncated", async () => {
+    const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithNonStandardContextRules();
     await testEnv.init();
 
     // Due to the way the USFM parser works (it tries to intelligently add spaces),
@@ -158,14 +160,14 @@ describe('Tests with ScriptureNodes', () => {
       '\\c 1 \\v 1 First sentence{- Second sentence',
     );
     const correctVerseNodeGroup = new ScriptureTextNodeGrouper(correctDoc).getCheckableGroups().next().value;
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(correctVerseNodeGroup)).toEqual([]);
+    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctVerseNodeGroup)).toEqual([]);
 
     const incorrectDoc: ScriptureDocument = await testEnv.createScriptureDocument(
       `\\c 1 \\v 1 First sentence{\\v 2 -Second sentence`,
     );
     const incorrectVerseNodeGroup = new ScriptureTextNodeGrouper(incorrectDoc).getCheckableGroups().next().value;
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(incorrectVerseNodeGroup)).toEqual([
-      testEnv.createExpectedTrailingWhitespaceDiagnostic('{', ' ', 0, 24, 0, 25, false),
+    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(incorrectVerseNodeGroup)).toEqual([
+      testEnv.createExpectedTrailingContextDiagnostic('{', ' ', 0, 24, 0, 25, false),
     ]);
 
     const correctBecauseOfTruncationDoc: ScriptureDocument = await testEnv.createScriptureDocument(
@@ -174,38 +176,40 @@ describe('Tests with ScriptureNodes', () => {
     const correctBecauseOfTruncationVerseNodeGroup = new ScriptureTextNodeGrouper(correctBecauseOfTruncationDoc)
       .getCheckableGroups()
       .next().value;
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(correctBecauseOfTruncationVerseNodeGroup)).toEqual([]);
+    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctBecauseOfTruncationVerseNodeGroup)).toEqual(
+      [],
+    );
   });
 });
 
 describe('Miscellaneous tests', () => {
   it('gets its messages from the localizer', async () => {
     const customLocalizer: Localizer = new Localizer();
-    customLocalizer.addNamespace('whitespace', (language: string) => {
+    customLocalizer.addNamespace('punctuation-context', (language: string) => {
       if (language === 'en') {
         return {
           diagnosticMessagesByCode: {
-            'incorrect-leading-whitespace': 'you need some whitespace first',
-            'incorrect-trailing-whitespace': 'you need some whitespace after this',
+            'incorrect-leading-context': 'you need some whitespace first',
+            'incorrect-trailing-context': 'you need some whitespace after this',
           },
         };
       } else if (language === 'es') {
         return {
           diagnosticMessagesByCode: {
-            'incorrect-leading-whitespace': 'Primero necesitas un poco de espacio en blanco',
-            'incorrect-trailing-whitespace': 'Necesitas un poco de espacio en blanco después de esto.',
+            'incorrect-leading-context': 'Primero necesitas un poco de espacio en blanco',
+            'incorrect-trailing-context': 'Necesitas un poco de espacio en blanco después de esto.',
           },
         };
       }
     });
 
     const testEnv: TextTestEnvironment =
-      TextTestEnvironment.createWithStandardWhitespaceAndCustomLocalizer(customLocalizer);
+      TextTestEnvironment.createWithStandardContextRulesAndCustomLocalizer(customLocalizer);
     await testEnv.init();
 
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
+    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
       {
-        code: 'incorrect-trailing-whitespace',
+        code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {
           start: {
@@ -217,7 +221,7 @@ describe('Miscellaneous tests', () => {
             character: 9,
           },
         },
-        source: 'whitespace-checker',
+        source: 'punctuation-context-checker',
         message: 'you need some whitespace after this',
         data: {
           isSpaceAllowed: true,
@@ -226,9 +230,9 @@ describe('Miscellaneous tests', () => {
     ]);
 
     await customLocalizer.changeLanguage('es');
-    expect(testEnv.whitespaceIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
+    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
       {
-        code: 'incorrect-trailing-whitespace',
+        code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {
           start: {
@@ -240,7 +244,7 @@ describe('Miscellaneous tests', () => {
             character: 9,
           },
         },
-        source: 'whitespace-checker',
+        source: 'punctuation-context-checker',
         message: 'Necesitas un poco de espacio en blanco después de esto.',
         data: {
           isSpaceAllowed: true,
@@ -251,35 +255,35 @@ describe('Miscellaneous tests', () => {
 });
 
 class TextTestEnvironment {
-  readonly whitespaceIssueFinderLocalizer: Localizer;
-  readonly whitespaceIssueFinder: WhitespaceIssueFinder;
+  readonly PunctuationContextIssueFinderLocalizer: Localizer;
+  readonly PunctuationContextIssueFinder: PunctuationContextIssueFinder;
 
   constructor(
-    private readonly whitespaceConfig: WhitespaceConfig,
+    private readonly punctuationContextConfig: PunctuationContextConfig,
     private readonly customLocalizer?: Localizer,
   ) {
-    this.whitespaceIssueFinderLocalizer = this.createDefaultLocalizer();
+    this.PunctuationContextIssueFinderLocalizer = this.createDefaultLocalizer();
 
     const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
-      'whitespace-checker',
+      'punctuation-context-checker',
       new StubSingleLineTextDocument(''),
     );
 
     if (this.customLocalizer !== undefined) {
-      this.whitespaceIssueFinder = new WhitespaceIssueFinderFactory(
+      this.PunctuationContextIssueFinder = new PunctuationContextIssueFinderFactory(
         this.customLocalizer,
-        whitespaceConfig,
+        punctuationContextConfig,
       ).createIssueFinder(stubDiagnosticFactory);
     } else {
-      this.whitespaceIssueFinder = new WhitespaceIssueFinderFactory(
-        this.whitespaceIssueFinderLocalizer,
-        whitespaceConfig,
+      this.PunctuationContextIssueFinder = new PunctuationContextIssueFinderFactory(
+        this.PunctuationContextIssueFinderLocalizer,
+        punctuationContextConfig,
       ).createIssueFinder(stubDiagnosticFactory);
     }
   }
 
   public async init(): Promise<void> {
-    await this.whitespaceIssueFinderLocalizer.init();
+    await this.PunctuationContextIssueFinderLocalizer.init();
     if (this.customLocalizer !== undefined) {
       await this.customLocalizer.init();
     }
@@ -287,12 +291,12 @@ class TextTestEnvironment {
 
   private createDefaultLocalizer(): Localizer {
     const defaultLocalizer: Localizer = new Localizer();
-    defaultLocalizer.addNamespace('whitespace', (_language: string) => {
+    defaultLocalizer.addNamespace('punctuation-context', (_language: string) => {
       return {
         diagnosticMessagesByCode: {
-          'incorrect-leading-whitespace':
+          'incorrect-leading-context':
             'The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately preceded by \u201C{{precedingCharacter}}\u201D.',
-          'incorrect-trailing-whitespace':
+          'incorrect-trailing-context':
             'The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately followed by \u201C{{followingCharacter}}\u201D.',
         },
       };
@@ -300,30 +304,30 @@ class TextTestEnvironment {
     return defaultLocalizer;
   }
 
-  static createWithStandardWhitespace(): TextTestEnvironment {
+  static createWithStandardContextRules(): TextTestEnvironment {
     return new TextTestEnvironment(
-      new WhitespaceConfig.Builder()
-        .addRequiredWhitespaceRule(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(
           ContextDirection.Right,
           ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
           [' ', '\n', ''],
         )
-        .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
+        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
         .build(),
     );
   }
 
-  static createWithStandardWhitespaceAndCustomLocalizer(customLocalizer: Localizer): TextTestEnvironment {
+  static createWithStandardContextRulesAndCustomLocalizer(customLocalizer: Localizer): TextTestEnvironment {
     return new TextTestEnvironment(
-      new WhitespaceConfig.Builder()
-        .addRequiredWhitespaceRule(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(
           ContextDirection.Right,
           ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
           [' ', '\n', ''],
         )
-        .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .addProhibitedWhitespaceRule(ContextDirection.Left, [
+        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
+        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
+        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
           '.',
           ',',
           ':',
@@ -340,15 +344,15 @@ class TextTestEnvironment {
     );
   }
 
-  createExpectedLeadingWhitespaceDiagnostic(
+  createExpectedLeadingContextDiagnostic(
     punctuationMark: string,
     precedingCharacter: string,
     startIndex: number,
     endIndex: number,
   ): Diagnostic {
     return {
-      code: 'incorrect-leading-whitespace',
-      source: 'whitespace-checker',
+      code: 'incorrect-leading-context',
+      source: 'punctuation-context-checker',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -367,15 +371,15 @@ class TextTestEnvironment {
     };
   }
 
-  createExpectedTrailingWhitespaceDiagnostic(
+  createExpectedTrailingContextDiagnostic(
     punctuationMark: string,
     followingCharacter: string,
     startIndex: number,
     endIndex: number,
   ): Diagnostic {
     return {
-      code: 'incorrect-trailing-whitespace',
-      source: 'whitespace-checker',
+      code: 'incorrect-trailing-context',
+      source: 'punctuation-context-checker',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -400,21 +404,21 @@ class TextTestEnvironment {
 }
 
 class ScriptureTestEnvironment {
-  readonly whitespaceIssueFinderLocalizer: Localizer;
-  readonly whitespaceIssueFinder: WhitespaceIssueFinder;
+  readonly PunctuationContextIssueFinderLocalizer: Localizer;
+  readonly PunctuationContextIssueFinder: PunctuationContextIssueFinder;
   readonly scriptureDocumentManager: DocumentManager<ScriptureDocument>;
 
-  constructor(private readonly whitespaceConfig: WhitespaceConfig) {
-    this.whitespaceIssueFinderLocalizer = this.createDefaultLocalizer();
+  constructor(private readonly punctuationContextConfig: PunctuationContextConfig) {
+    this.PunctuationContextIssueFinderLocalizer = this.createDefaultLocalizer();
 
     const stubDiagnosticFactory: DiagnosticFactory = new DiagnosticFactory(
-      'whitespace-checker',
+      'punctuation-context-checker',
       new StubFixedLineWidthTextDocument(''),
     );
 
-    this.whitespaceIssueFinder = new WhitespaceIssueFinderFactory(
-      this.whitespaceIssueFinderLocalizer,
-      whitespaceConfig,
+    this.PunctuationContextIssueFinder = new PunctuationContextIssueFinderFactory(
+      this.PunctuationContextIssueFinderLocalizer,
+      punctuationContextConfig,
     ).createIssueFinder(stubDiagnosticFactory);
 
     const stylesheet: UsfmStylesheet = new UsfmStylesheet('usfm.sty');
@@ -422,17 +426,17 @@ class ScriptureTestEnvironment {
   }
 
   public async init(): Promise<void> {
-    await this.whitespaceIssueFinderLocalizer.init();
+    await this.PunctuationContextIssueFinderLocalizer.init();
   }
 
   private createDefaultLocalizer(): Localizer {
     const defaultLocalizer: Localizer = new Localizer();
-    defaultLocalizer.addNamespace('whitespace', (_language: string) => {
+    defaultLocalizer.addNamespace('punctuation-context', (_language: string) => {
       return {
         diagnosticMessagesByCode: {
-          'incorrect-leading-whitespace':
+          'incorrect-leading-context':
             'The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately preceded by \u201C{{precedingCharacter}}\u201D.',
-          'incorrect-trailing-whitespace':
+          'incorrect-trailing-context':
             'The punctuation mark \u201C{{punctuationMark}}\u201D should not be immediately followed by \u201C{{followingCharacter}}\u201D.',
         },
       };
@@ -440,17 +444,17 @@ class ScriptureTestEnvironment {
     return defaultLocalizer;
   }
 
-  static createWithStandardWhitespace(): ScriptureTestEnvironment {
+  static createWithStandardContextRules(): ScriptureTestEnvironment {
     return new ScriptureTestEnvironment(
-      new WhitespaceConfig.Builder()
-        .addRequiredWhitespaceRule(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(
           ContextDirection.Right,
           ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
           [' ', '\n', ''],
         )
-        .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .addProhibitedWhitespaceRule(ContextDirection.Left, [
+        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
+        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
+        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
           '.',
           ',',
           ':',
@@ -466,18 +470,18 @@ class ScriptureTestEnvironment {
     );
   }
 
-  static createWithNonStandardWhitespace(): ScriptureTestEnvironment {
+  static createWithNonStandardContextRules(): ScriptureTestEnvironment {
     return new ScriptureTestEnvironment(
-      new WhitespaceConfig.Builder()
-        .addRequiredWhitespaceRule(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(
           ContextDirection.Right,
           ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
           [' ', '\n', ''],
         )
-        .addRequiredWhitespaceRule(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .addRequiredWhitespaceRule(ContextDirection.Right, ['{'], ['-', ''])
-        .addProhibitedWhitespaceRule(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .addProhibitedWhitespaceRule(ContextDirection.Left, [
+        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
+        .addAcceptableContextCharacters(ContextDirection.Right, ['{'], ['-', ''])
+        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
+        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
           '.',
           ',',
           ':',
@@ -493,7 +497,7 @@ class ScriptureTestEnvironment {
     );
   }
 
-  createExpectedLeadingWhitespaceDiagnostic(
+  createExpectedLeadingContextDiagnostic(
     punctuationMark: string,
     precedingCharacter: string,
     startLine: number,
@@ -503,8 +507,8 @@ class ScriptureTestEnvironment {
     isSpaceAllowed = true,
   ): Diagnostic {
     return {
-      code: 'incorrect-leading-whitespace',
-      source: 'whitespace-checker',
+      code: 'incorrect-leading-context',
+      source: 'punctuation-context-checker',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -523,7 +527,7 @@ class ScriptureTestEnvironment {
     };
   }
 
-  createExpectedTrailingWhitespaceDiagnostic(
+  createExpectedTrailingContextDiagnostic(
     punctuationMark: string,
     followingCharacter: string,
     startLine: number,
@@ -533,8 +537,8 @@ class ScriptureTestEnvironment {
     isSpaceAllowed = true,
   ): Diagnostic {
     return {
-      code: 'incorrect-trailing-whitespace',
-      source: 'whitespace-checker',
+      code: 'incorrect-trailing-context',
+      source: 'punctuation-context-checker',
       severity: DiagnosticSeverity.Warning,
       range: {
         start: {
@@ -555,8 +559,7 @@ class ScriptureTestEnvironment {
 
   async createScriptureDocument(usfm: string): Promise<ScriptureDocument> {
     const doc = await this.scriptureDocumentManager.get(usfm);
-    // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
-    return doc as ScriptureDocument;
+    return doc!;
   }
 
   createScriptureNode(

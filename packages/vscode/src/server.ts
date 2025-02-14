@@ -1,5 +1,6 @@
 import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
 import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
+import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
 import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import {
@@ -23,10 +24,17 @@ const stylesheet = new UsfmStylesheet('usfm.sty');
 const documentFactory = new UsfmDocumentFactory(stylesheet);
 const editFactory = new UsfmEditFactory(stylesheet);
 const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
+const ruleSet = StandardRuleSets.English;
 const workspace = new Workspace({
   localizer,
-  diagnosticProviders: [new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory)],
-  onTypeFormattingProviders: [new SimpleQuoteFormattingProvider(documentManager, editFactory)],
+  diagnosticProviders: [
+    ...ruleSet.createDiagnosticProviders(localizer, documentManager, editFactory),
+    new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory),
+  ],
+  onTypeFormattingProviders: [
+    ...ruleSet.createOnTypeFormattingProviders(documentManager, editFactory),
+    new SimpleQuoteFormattingProvider(documentManager, editFactory),
+  ],
 });
 
 let hasWorkspaceFolderCapability = false;

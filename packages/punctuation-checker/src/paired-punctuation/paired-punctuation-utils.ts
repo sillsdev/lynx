@@ -2,8 +2,8 @@ import { Checkable, CheckableGroup } from '../checkable';
 import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 
-export class PairedPunctuationIterator {
-  private readonly openingOrClosingMarkPattern: RegExp = /[()[\]{}]/g;
+export class PairedPunctuationIterator implements IterableIterator<PairedPunctuationMetadata> {
+  private readonly openingOrClosingMarkPattern: RegExp;
   private nextMark: PairedPunctuationMetadata | null = null;
   private currentCheckable: Checkable | undefined;
 
@@ -57,16 +57,23 @@ export class PairedPunctuationIterator {
     }
   }
 
-  public hasNext(): boolean {
-    return this.nextMark !== null;
+  [Symbol.iterator](): this {
+    return this;
   }
 
-  public next(): PairedPunctuationMetadata {
-    const markToReturn: PairedPunctuationMetadata | null = this.nextMark;
-    if (markToReturn === null) {
-      throw new Error(`PairedPunctuationIterator's next() function called after hasNext() returned false`);
+  next(): IteratorResult<PairedPunctuationMetadata> {
+    if (this.nextMark !== null) {
+      const markToReturn = {
+        done: false,
+        value: this.nextMark,
+      };
+
+      this.findNext();
+      return markToReturn;
     }
-    this.findNext();
-    return markToReturn;
+    return {
+      done: true,
+      value: undefined,
+    };
   }
 }

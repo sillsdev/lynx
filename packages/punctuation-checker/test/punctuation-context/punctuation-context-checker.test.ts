@@ -2,19 +2,19 @@ import { DiagnosticSeverity, Localizer, TextDocument, TextDocumentFactory, TextE
 import { describe, expect, it } from 'vitest';
 
 import { StandardRuleSets } from '../../src';
+import { PunctuationContextChecker } from '../../src/punctuation-context/punctuation-context-checker';
+import { PunctuationContextConfig } from '../../src/punctuation-context/punctuation-context-config';
 import { ContextDirection } from '../../src/utils';
-import { WhitespaceChecker } from '../../src/whitespace/whitespace-checker';
-import { WhitespaceConfig } from '../../src/whitespace/whitespace-config';
 import { StubTextDocumentManager } from '../test-utils';
 
-describe('WhitespaceChecker tests', () => {
-  it('produces DiagnosticFixes for whitespace issues', async () => {
+describe('PunctuationContextChecker tests', () => {
+  it('produces DiagnosticFixes for punctuation context issues', async () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
     await testEnv.init();
 
     expect(
-      await testEnv.whitespaceChecker.getDiagnosticFixes('No.space', {
-        code: 'incorrect-trailing-whitespace',
+      await testEnv.punctuationContextChecker.getDiagnosticFixes('No.space', {
+        code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {
           start: {
@@ -26,7 +26,7 @@ describe('WhitespaceChecker tests', () => {
             character: 3,
           },
         },
-        source: 'whitespace-checker',
+        source: 'punctuation-context-checker',
         message: `The punctuation mark \u201C.\u201D should not be immediately followed by \u201Cs\u201D.`,
         data: {
           isSpaceAllowed: true,
@@ -37,7 +37,7 @@ describe('WhitespaceChecker tests', () => {
         title: `Add a space after this`,
         isPreferred: true,
         diagnostic: {
-          code: 'incorrect-trailing-whitespace',
+          code: 'incorrect-trailing-context',
           severity: DiagnosticSeverity.Warning,
           range: {
             start: {
@@ -49,7 +49,7 @@ describe('WhitespaceChecker tests', () => {
               character: 3,
             },
           },
-          source: 'whitespace-checker',
+          source: 'punctuation-context-checker',
           message: `The punctuation mark \u201C.\u201D should not be immediately followed by \u201Cs\u201D.`,
           data: {
             isSpaceAllowed: true,
@@ -76,22 +76,21 @@ describe('WhitespaceChecker tests', () => {
 
   it('gets its messages from the localizer', async () => {
     const customLocalizer: Localizer = new Localizer();
-    customLocalizer.addNamespace('whitespace', (_language: string) => {
+    customLocalizer.addNamespace('punctuation-context', (_language: string) => {
       return {
         diagnosticMessagesByCode: {
-          'incorrect-leading-whitespace': "<--- There's supposed to be a space here",
-          'incorrect-trailing-whitespace': 'Looks like you forgot something --->',
+          'incorrect-leading-context': "<--- There's supposed to be a space here",
+          'incorrect-trailing-context': 'Looks like you forgot something --->',
         },
       };
     });
 
-    const testEnv: TestEnvironment =
-      TestEnvironment.createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer);
+    const testEnv: TestEnvironment = TestEnvironment.createWithStandardContextRulesAndCustomLocalizer(customLocalizer);
     await testEnv.init();
 
-    expect(await testEnv.whitespaceChecker.getDiagnostics('Errors(all)around')).toEqual([
+    expect(await testEnv.punctuationContextChecker.getDiagnostics('Errors(all)around')).toEqual([
       {
-        code: 'incorrect-leading-whitespace',
+        code: 'incorrect-leading-context',
         severity: DiagnosticSeverity.Warning,
         range: {
           start: {
@@ -103,14 +102,14 @@ describe('WhitespaceChecker tests', () => {
             character: 7,
           },
         },
-        source: 'whitespace-checker',
+        source: 'punctuation-context-checker',
         message: `<--- There's supposed to be a space here`,
         data: {
           isSpaceAllowed: true,
         },
       },
       {
-        code: 'incorrect-trailing-whitespace',
+        code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {
           start: {
@@ -122,7 +121,7 @@ describe('WhitespaceChecker tests', () => {
             character: 11,
           },
         },
-        source: 'whitespace-checker',
+        source: 'punctuation-context-checker',
         message: `Looks like you forgot something --->`,
         data: {
           isSpaceAllowed: true,
@@ -132,52 +131,54 @@ describe('WhitespaceChecker tests', () => {
   });
 
   it('uses the PairedPunctuationConfig that is passed to it', async () => {
-    const testEnv: TestEnvironment = TestEnvironment.createWithCustomWhitespace(
-      new WhitespaceConfig.Builder().addRequiredWhitespaceRule(ContextDirection.Right, ['+'], [' ']).build(),
+    const testEnv: TestEnvironment = TestEnvironment.createWithCustomConfig(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(ContextDirection.Right, ['+'], [' '])
+        .build(),
     );
     await testEnv.init();
 
-    expect(await testEnv.whitespaceChecker.getDiagnostics('This should be+ correct')).toHaveLength(0);
-    expect(await testEnv.whitespaceChecker.getDiagnostics('This should be +incorrect')).toHaveLength(1);
+    expect(await testEnv.punctuationContextChecker.getDiagnostics('This should be+ correct')).toHaveLength(0);
+    expect(await testEnv.punctuationContextChecker.getDiagnostics('This should be +incorrect')).toHaveLength(1);
   });
 });
 
 class TestEnvironment {
-  readonly whitespaceChecker: WhitespaceChecker<TextDocument>;
+  readonly punctuationContextChecker: PunctuationContextChecker<TextDocument>;
 
-  private readonly whitespaceCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
+  private readonly punctuationContextCheckerLocalizer: Localizer; // since QuotationChecker populates the localizer on its own
 
   constructor(
-    private readonly whitespaceConfig: WhitespaceConfig,
+    private readonly punctuationContextConfig: PunctuationContextConfig,
     private readonly customLocalizer?: Localizer,
   ) {
-    this.whitespaceCheckerLocalizer = new Localizer();
+    this.punctuationContextCheckerLocalizer = new Localizer();
 
     const stubDocumentManager: StubTextDocumentManager = new StubTextDocumentManager(new TextDocumentFactory());
-    this.whitespaceChecker = new WhitespaceChecker<TextDocument>(
-      this.customLocalizer ?? this.whitespaceCheckerLocalizer,
+    this.punctuationContextChecker = new PunctuationContextChecker<TextDocument>(
+      this.customLocalizer ?? this.punctuationContextCheckerLocalizer,
       stubDocumentManager,
       new TextEditFactory(),
-      this.whitespaceConfig,
+      this.punctuationContextConfig,
     );
   }
 
   public async init(): Promise<void> {
-    await this.whitespaceChecker.init();
-    await this.whitespaceCheckerLocalizer.init();
+    await this.punctuationContextChecker.init();
+    await this.punctuationContextCheckerLocalizer.init();
 
     await this.customLocalizer?.init();
   }
 
   static createWithStandardPairedPunctuation(): TestEnvironment {
-    return new TestEnvironment(StandardRuleSets.English._getWhitespaceConfig());
+    return new TestEnvironment(StandardRuleSets.English._getPunctuationContextConfig());
   }
 
-  static createWithCustomWhitespace(whitespaceConfig: WhitespaceConfig): TestEnvironment {
-    return new TestEnvironment(whitespaceConfig);
+  static createWithCustomConfig(punctuationContextConfig: PunctuationContextConfig): TestEnvironment {
+    return new TestEnvironment(punctuationContextConfig);
   }
 
-  static createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer: Localizer): TestEnvironment {
-    return new TestEnvironment(StandardRuleSets.English._getWhitespaceConfig(), customLocalizer);
+  static createWithStandardContextRulesAndCustomLocalizer(customLocalizer: Localizer): TestEnvironment {
+    return new TestEnvironment(StandardRuleSets.English._getPunctuationContextConfig(), customLocalizer);
   }
 }

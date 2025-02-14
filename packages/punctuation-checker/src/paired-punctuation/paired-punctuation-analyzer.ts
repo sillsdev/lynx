@@ -16,8 +16,8 @@ export class PairedPunctuationAnalyzer {
       this.pairedPunctuationConfig,
       input,
     );
-    while (pairedPunctuationIterator.hasNext()) {
-      this.processPunctuationMark(pairedPunctuationIterator.next());
+    for (const pairedPunctuationMetadata of pairedPunctuationIterator) {
+      this.processPunctuationMark(pairedPunctuationMetadata);
     }
     this.handleUnmatchedPunctuationMarks();
 

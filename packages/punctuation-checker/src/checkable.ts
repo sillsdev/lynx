@@ -55,15 +55,15 @@ export class ScriptureNodeCheckable extends Checkable {
     return this.scriptureNode.range;
   }
   public isLeadingWhitespacePossiblyTruncated(): boolean {
-    return this.isNodePrecededByParagraphMarker(this.scriptureNode);
+    return this.isNodePrecededByParagraphOrChapterMarker(this.scriptureNode);
   }
   public isTrailingWhitespacePossiblyTruncated(): boolean {
     return this.isNodeFollowedByParagraphMarker(this.scriptureNode);
   }
 
-  private isNodePrecededByParagraphMarker(node: ScriptureNode): boolean {
+  private isNodePrecededByParagraphOrChapterMarker(node: ScriptureNode): boolean {
     if (node.previous !== undefined) {
-      if (node.previous.type === ScriptureNodeType.Paragraph) {
+      if (node.previous.type === ScriptureNodeType.Paragraph || node.previous.type === ScriptureNodeType.Chapter) {
         return true;
       }
       return false;
@@ -72,14 +72,14 @@ export class ScriptureNodeCheckable extends Checkable {
       if (node.parent.type === ScriptureNodeType.Paragraph) {
         return true;
       }
-      return this.isNodePrecededByParagraphMarker(node.parent);
+      return this.isNodePrecededByParagraphOrChapterMarker(node.parent);
     }
     return false;
   }
 
   private isNodeFollowedByParagraphMarker(node: ScriptureNode): boolean {
     if (node.next !== undefined) {
-      if (node.next.type === ScriptureNodeType.Paragraph) {
+      if (node.next.type === ScriptureNodeType.Paragraph || node.next.type === ScriptureNodeType.Chapter) {
         return true;
       }
       return false;

@@ -65,29 +65,31 @@ export class QuotationChecker<T extends TextDocument | ScriptureDocument> extend
     }
 
     if (diagnostic.code === INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE) {
-      const fixes: DiagnosticFix[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
-      interface QuoteParentDepth {
-        depth: number;
-      }
-      const expectedQuotationMark: string | undefined = this.getExpectedQuotationMarkForDepth(
-        (diagnostic.data as QuoteParentDepth).depth,
-      );
-      if (expectedQuotationMark !== undefined) {
-        fixes.push(standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark));
-      }
-
-      return fixes;
+      return this.getIncorrectlyNestedQuoteFixes(diagnostic, standardFixProvider);
     }
 
     if (diagnostic.code === AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE) {
-      interface QuotationMarkCorrection {
-        existingQuotationMark: string;
-        correctedQuotationMark: string;
-      }
-      const expectedQuotationMark: string = (diagnostic.data as QuotationMarkCorrection).correctedQuotationMark;
-      return [standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
+      return this.getAmbiguousQuoteFixes(diagnostic, standardFixProvider);
     }
     return [];
+  }
+
+  private getIncorrectlyNestedQuoteFixes(
+    diagnostic: Diagnostic,
+    standardFixProvider: StandardFixProvider<T>,
+  ): DiagnosticFix[] {
+    const fixes: DiagnosticFix[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
+    interface QuoteParentDepth {
+      depth: number;
+    }
+    const expectedQuotationMark: string | undefined = this.getExpectedQuotationMarkForDepth(
+      (diagnostic.data as QuoteParentDepth).depth,
+    );
+    if (expectedQuotationMark !== undefined) {
+      fixes.push(standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark));
+    }
+
+    return fixes;
   }
 
   private getExpectedQuotationMarkForDepth(parentDepth: number): string | undefined {
@@ -96,5 +98,14 @@ export class QuotationChecker<T extends TextDocument | ScriptureDocument> extend
       QuotationDepth.fromNumber(expectedQuotationDepth),
       PairedPunctuationDirection.Opening,
     );
+  }
+
+  private getAmbiguousQuoteFixes(diagnostic: Diagnostic, standardFixProvider: StandardFixProvider<T>): DiagnosticFix[] {
+    interface QuotationMarkCorrection {
+      existingQuotationMark: string;
+      correctedQuotationMark: string;
+    }
+    const expectedQuotationMark: string = (diagnostic.data as QuotationMarkCorrection).correctedQuotationMark;
+    return [standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
   }
 }

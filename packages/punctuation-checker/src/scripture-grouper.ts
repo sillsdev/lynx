@@ -41,7 +41,7 @@ export class ScriptureTextNodeGrouper {
     }
 
     if (ScriptureTextNodeGrouper.prohibitedVerseAncestorTypes.has(node.type)) {
-      // create a new group of nodes
+      // create a new group of nodes for an embed
       const newNodeGroup: ScriptureNode[] = [];
       for (const child of node.children) {
         this.processNode(child, newNodeGroup);

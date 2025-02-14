@@ -5,31 +5,31 @@ import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
 import {
-  LEADING_WHITESPACE_DIAGNOSTIC_CODE,
-  TRAILING_WHITESPACE_DIAGNOSTIC_CODE,
-  WHITESPACE_CHECKER_LOCALIZER_NAMESPACE,
-} from './whitespace-checker';
-import { WhitespaceConfig } from './whitespace-config';
+  LEADING_CONTEXT_DIAGNOSTIC_CODE,
+  PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
+  TRAILING_CONTEXT_DIAGNOSTIC_CODE,
+} from './punctuation-context-checker';
+import { PunctuationContextConfig } from './punctuation-context-config';
 
-class WhitespaceIssueFinderFactory implements IssueFinderFactory {
+class PunctuationContextIssueFinderFactory implements IssueFinderFactory {
   constructor(
     private readonly localizer: Localizer,
-    private readonly whitespaceConfig: WhitespaceConfig,
+    private readonly whitespaceConfig: PunctuationContextConfig,
   ) {}
 
-  public createIssueFinder(diagnosticFactory: DiagnosticFactory): WhitespaceIssueFinder {
-    return new WhitespaceIssueFinder(this.localizer, diagnosticFactory, this.whitespaceConfig);
+  public createIssueFinder(diagnosticFactory: DiagnosticFactory): PunctuationContextIssueFinder {
+    return new PunctuationContextIssueFinder(this.localizer, diagnosticFactory, this.whitespaceConfig);
   }
 }
 
-class WhitespaceIssueFinder implements IssueFinder {
+class PunctuationContextIssueFinder implements IssueFinder {
   private diagnosticList: DiagnosticList;
   private punctuationRegex: RegExp;
 
   constructor(
     private readonly localizer: Localizer,
     private readonly diagnosticFactory: DiagnosticFactory,
-    private readonly whitespaceConfig: WhitespaceConfig,
+    private readonly whitespaceConfig: PunctuationContextConfig,
   ) {
     this.punctuationRegex = this.whitespaceConfig.createPunctuationRegex();
     this.diagnosticList = new DiagnosticList();
@@ -39,24 +39,28 @@ class WhitespaceIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
 
     for (const checkable of checkableGroup) {
-      let match: RegExpExecArray | null;
-      while ((match = this.punctuationRegex.exec(checkable.getText()))) {
-        const punctuationMark = match[0];
-
-        const leftContext = this.getLeftContextForMatch(checkable, match);
-        const rightContext = this.getRightContextForMatch(checkable, match);
-        this.checkWhitespaceAroundPunctuationMark(
-          punctuationMark,
-          leftContext,
-          rightContext,
-          match.index,
-          match.index + match[0].length,
-          checkable.getEnclosingRange(),
-        );
-      }
+      this.processCheckable(checkable);
     }
 
     return this.diagnosticList.toArray();
+  }
+
+  private processCheckable(checkable: Checkable): void {
+    let match: RegExpExecArray | null;
+    while ((match = this.punctuationRegex.exec(checkable.getText()))) {
+      const punctuationMark = match[0];
+      const leftContext = this.getLeftContextForMatch(checkable, match);
+      const rightContext = this.getRightContextForMatch(checkable, match);
+
+      this.checkWhitespaceAroundPunctuationMark(
+        punctuationMark,
+        leftContext,
+        rightContext,
+        match.index,
+        match.index + match[0].length,
+        checkable.getEnclosingRange(),
+      );
+    }
   }
 
   private getLeftContextForMatch(checkable: Checkable, match: RegExpExecArray): string {
@@ -116,7 +120,7 @@ class WhitespaceIssueFinder implements IssueFinder {
     characterEndIndex: number,
     enclosingRange?: Range,
   ): void {
-    if (!this.whitespaceConfig.isLeadingWhitespaceCorrect(punctuationMark, leftContext)) {
+    if (!this.whitespaceConfig.isLeadingContextCorrect(punctuationMark, leftContext)) {
       this.addIncorrectLeadingWhitespaceWarning(
         punctuationMark,
         leftContext,
@@ -125,7 +129,7 @@ class WhitespaceIssueFinder implements IssueFinder {
         enclosingRange,
       );
     }
-    if (!this.whitespaceConfig.isTrailingWhitespaceCorrect(punctuationMark, rightContext)) {
+    if (!this.whitespaceConfig.isTrailingContextCorrect(punctuationMark, rightContext)) {
       this.addIncorrectTrailingWhitespaceWarning(
         punctuationMark,
         rightContext,
@@ -143,7 +147,7 @@ class WhitespaceIssueFinder implements IssueFinder {
     characterEndIndex: number,
     enclosingRange?: Range,
   ) {
-    const code: string = LEADING_WHITESPACE_DIAGNOSTIC_CODE;
+    const code: string = LEADING_CONTEXT_DIAGNOSTIC_CODE;
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
       .setCode(code)
@@ -151,13 +155,13 @@ class WhitespaceIssueFinder implements IssueFinder {
       .setRange(characterStartIndex, characterEndIndex, enclosingRange)
       .setMessage(
         this.localizer.t(`diagnosticMessagesByCode.${code}`, {
-          ns: WHITESPACE_CHECKER_LOCALIZER_NAMESPACE,
+          ns: PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
           punctuationMark: character,
           precedingCharacter: leftContext,
         }),
       )
       .setData({
-        isSpaceAllowed: this.whitespaceConfig.getAllowableLeadingWhitespaceCharacters(character).isCharacterInSet(' '),
+        isSpaceAllowed: this.whitespaceConfig.getAllowableLeadingCharacters(character).isCharacterInSet(' '),
       } as WhitespaceDiagnosticData)
       .build();
 
@@ -171,7 +175,7 @@ class WhitespaceIssueFinder implements IssueFinder {
     characterEndIndex: number,
     enclosingRange?: Range,
   ) {
-    const code: string = TRAILING_WHITESPACE_DIAGNOSTIC_CODE;
+    const code: string = TRAILING_CONTEXT_DIAGNOSTIC_CODE;
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
       .setCode(code)
@@ -179,13 +183,13 @@ class WhitespaceIssueFinder implements IssueFinder {
       .setRange(characterStartIndex, characterEndIndex, enclosingRange)
       .setMessage(
         this.localizer.t(`diagnosticMessagesByCode.${code}`, {
-          ns: WHITESPACE_CHECKER_LOCALIZER_NAMESPACE,
+          ns: PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
           punctuationMark: character,
           followingCharacter: rightContext,
         }),
       )
       .setData({
-        isSpaceAllowed: this.whitespaceConfig.getAllowableTrailingWhitespaceCharacters(character).isCharacterInSet(' '),
+        isSpaceAllowed: this.whitespaceConfig.getAllowableTrailingCharacters(character).isCharacterInSet(' '),
       } as WhitespaceDiagnosticData)
       .build();
 
@@ -197,4 +201,4 @@ interface WhitespaceDiagnosticData {
   isSpaceAllowed: boolean;
 }
 
-export { WhitespaceDiagnosticData, type WhitespaceIssueFinder, WhitespaceIssueFinderFactory };
+export { type PunctuationContextIssueFinder, PunctuationContextIssueFinderFactory, WhitespaceDiagnosticData };

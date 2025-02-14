@@ -12,6 +12,7 @@ export class QuotationConfig {
   private closingQuoteRegex = /\u201D/;
   private ambiguousQuoteRegex = /"/;
 
+  // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 

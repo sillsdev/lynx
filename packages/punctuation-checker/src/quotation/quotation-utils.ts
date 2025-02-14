@@ -19,6 +19,7 @@ export class UnresolvedQuoteMetadata {
   private text = '';
   private isAutocorrectable = false;
 
+  // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
@@ -246,7 +247,7 @@ export interface QuoteCorrection {
   correctedQuotationMark: QuoteMetadata;
 }
 
-export class QuotationIterator {
+export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetadata> {
   private readonly openingOrClosingQuotePattern: RegExp = /[\u201C\u201D]/g;
   private nextQuote: UnresolvedQuoteMetadata | null = null;
   private currentCheckable: Checkable | undefined;
@@ -317,16 +318,23 @@ export class QuotationIterator {
     return this.quotationConfig.shouldIgnoreQuotationMark(quoteMatch[0], leftContext, rightContext);
   }
 
-  public hasNext(): boolean {
-    return this.nextQuote !== null;
+  [Symbol.iterator](): this {
+    return this;
   }
 
-  public next(): UnresolvedQuoteMetadata {
-    const quoteToReturn: UnresolvedQuoteMetadata | null = this.nextQuote;
-    if (quoteToReturn === null) {
-      throw new Error(`QuoteIterator's next() function called after hasNext() returned false`);
+  next(): IteratorResult<UnresolvedQuoteMetadata> {
+    if (this.nextQuote !== null) {
+      const markToReturn = {
+        done: false,
+        value: this.nextQuote,
+      };
+
+      this.findNext();
+      return markToReturn;
     }
-    this.findNext();
-    return quoteToReturn;
+    return {
+      done: true,
+      value: undefined,
+    };
   }
 }

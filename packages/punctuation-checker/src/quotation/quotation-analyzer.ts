@@ -20,8 +20,8 @@ export class QuotationAnalyzer {
     this.reset();
 
     const quotationIterator: QuotationIterator = new QuotationIterator(this.quotationConfig, input);
-    while (quotationIterator.hasNext()) {
-      this.processQuotationMark(quotationIterator.next());
+    for (const unresolvedQuotationMetadata of quotationIterator) {
+      this.processQuotationMark(unresolvedQuotationMetadata);
     }
     this.handleUnmatchedQuotationMarks();
 
