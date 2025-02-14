@@ -18,7 +18,7 @@ export class StubScriptureDocumentManager extends DocumentManager<ScriptureDocum
 
   get(text: string): Promise<ScriptureDocument | undefined> {
     return new Promise<ScriptureDocument>((resolve) => {
-      resolve(this.usfmDocumentFactory.create('test', 'usfm', 1, text));
+      resolve(this.usfmDocumentFactory.create('test', { format: 'usfm', version: 1, content: text }));
     });
   }
 }

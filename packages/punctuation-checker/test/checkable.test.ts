@@ -39,13 +39,12 @@ describe('ScriptureDocumentCheckable tests', () => {
     const scriptureDocumentFactory: DocumentFactory<ScriptureDocument> = new UsfmDocumentFactory(stylesheet);
 
     it('works for a single verse node with no paragraphs', () => {
-      const noParagraphMarkerDoc: ScriptureDocument = scriptureDocumentFactory.create(
-        'test',
-        'usfm',
-        1,
-        `\\c 1
+      const noParagraphMarkerDoc: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
        \\v 1 In the beginning`,
-      );
+      });
       const onlyScriptureNode: ScriptureNodeCheckable = new ScriptureTextNodeGrouper(noParagraphMarkerDoc)
         .getCheckableGroups()
         .next()
@@ -55,13 +54,12 @@ describe('ScriptureDocumentCheckable tests', () => {
     });
 
     it('works for verse text surrounded by paragraphs on both sides', () => {
-      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create(
-        'test',
-        'usfm',
-        1,
-        `\\c 1
+      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
        \\v 1 \\q1 The Word Became Flesh \\p`,
-      );
+      });
       const onlyScriptureNode: ScriptureNodeCheckable = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
         .getCheckableGroups()
         .next()
@@ -71,13 +69,12 @@ describe('ScriptureDocumentCheckable tests', () => {
     });
 
     it("works for nodes that are near, but don't border paragraphs", () => {
-      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create(
-        'test',
-        'usfm',
-        1,
-        `\\c 1
+      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
          \\p \\v 1 The Word Became Flesh \\v 2 \\p`,
-      );
+      });
       const onlyScriptureNode: ScriptureNodeCheckable = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
         .getCheckableGroups()
         .next()
@@ -87,13 +84,12 @@ describe('ScriptureDocumentCheckable tests', () => {
     });
 
     it('works for multiple verse text nodes, only some of which border paragraphs', () => {
-      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create(
-        'test',
-        'usfm',
-        1,
-        `\\c 1
+      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
        \\v 1 \\q1 The Word \\qs Became Flesh\\qs* \\p`,
-      );
+      });
       const verseNodeGroup: CheckableGroup = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
         .getCheckableGroups()
         .next().value;
