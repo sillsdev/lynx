@@ -72,6 +72,98 @@ describe('PunctuationContextChecker tests', () => {
         ],
       },
     ]);
+
+    expect(
+      await testEnv.punctuationContextChecker.getDiagnosticFixes('No(space', {
+        code: 'incorrect-leading-context',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 2,
+          },
+          end: {
+            line: 0,
+            character: 3,
+          },
+        },
+        source: 'punctuation-context-checker',
+        message: `The punctuation mark \u201C.\u201D should not be immediately preceded by \u201Cs\u201D.`,
+        data: {
+          isSpaceAllowed: true,
+        },
+      }),
+    ).toEqual([
+      {
+        title: `Add a space before this`,
+        isPreferred: true,
+        diagnostic: {
+          code: 'incorrect-leading-context',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 2,
+            },
+            end: {
+              line: 0,
+              character: 3,
+            },
+          },
+          source: 'punctuation-context-checker',
+          message: `The punctuation mark \u201C.\u201D should not be immediately preceded by \u201Cs\u201D.`,
+          data: {
+            isSpaceAllowed: true,
+          },
+        },
+        edits: [
+          {
+            range: {
+              start: {
+                line: 0,
+                character: 2,
+              },
+              end: {
+                line: 0,
+                character: 2,
+              },
+            },
+            newText: ' ',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('does not provide any DiagnosticFixes when the insertion of a space would not fix the problem', async () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithCustomConfig(
+      new PunctuationContextConfig.Builder()
+        .addAcceptableContextCharacters(ContextDirection.Right, ['+'], ['t'])
+        .build(),
+    );
+    await testEnv.init();
+
+    expect(
+      await testEnv.punctuationContextChecker.getDiagnosticFixes('No+space', {
+        code: 'incorrect-trailing-context',
+        severity: DiagnosticSeverity.Warning,
+        range: {
+          start: {
+            line: 0,
+            character: 2,
+          },
+          end: {
+            line: 0,
+            character: 3,
+          },
+        },
+        source: 'punctuation-context-checker',
+        message: `The punctuation mark \u201C+\u201D should not be immediately followed by \u201Cs\u201D.`,
+        data: {
+          isSpaceAllowed: false,
+        },
+      }),
+    ).toEqual([]);
   });
 
   it('gets its messages from the localizer', async () => {
