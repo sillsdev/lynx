@@ -506,7 +506,7 @@ class ScriptureTestEnvironment {
   }
 
   createScriptureDocument(id: string, usfm: string): ScriptureDocument {
-    return this.scriptureDocumentFactory.create(id, 'usfm', 1, usfm);
+    return this.scriptureDocumentFactory.create(id, { format: 'usfm', version: 1, content: usfm });
   }
 
   createScriptureNode(

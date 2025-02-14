@@ -1028,7 +1028,7 @@ class ScriptureTestEnvironment {
   }
 
   createScriptureDocument(usfm: string): ScriptureDocument {
-    return this.scriptureDocumentFactory.create('test-uri', 'usfm', 1, usfm);
+    return this.scriptureDocumentFactory.create('test-uri', { format: 'usfm', version: 1, content: usfm });
   }
 
   createScriptureNode(
