@@ -1,6 +1,6 @@
 {
   "name": "@sillsdev/lynx-punctuation-checker",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "type": "module",
   "types": "./dist/index.d.ts",
@@ -8,14 +8,19 @@
   "module": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts --format cjs,esm --clean --sourcemap",
-    "dev": "tsup src/index.ts --dts --format cjs,esm --watch",
+    "build": "tsup-node",
+    "dev": "tsup-node --watch --sourcemap",
     "check-types": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest"
@@ -25,8 +30,8 @@
   "license": "MIT",
   "dependencies": {
     "rxjs": "^7.8.1",
-    "@sillsdev/lynx": "*",
-    "@sillsdev/lynx-usfm": "*"
+    "@sillsdev/lynx": "^0.3.0",
+    "@sillsdev/lynx-usfm": "^0.3.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
