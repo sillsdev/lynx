@@ -4,7 +4,7 @@ export default [
   {
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.dev.json',
+        project: './tsconfig.json',
       },
     },
   },

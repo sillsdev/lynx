@@ -1,4 +1,4 @@
 import library from '@repo/tsup-config/library.js';
 import { defineConfig } from 'tsup';
 
-export default defineConfig({ ...library() });
+export default defineConfig({ ...library({ hasLocalizations: true }) });

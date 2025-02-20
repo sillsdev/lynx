@@ -40,12 +40,10 @@ export class PunctuationContextChecker<T extends TextDocument | ScriptureDocumen
     // Ideally, we'd like to be able to inject an initialization function, so that
     // tests can provide different messages, but due to the way variable dynamic imports
     // work, the namespace loading function can only appear in this file at this location
-    if (!this.localizer.hasNamespace(PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE)) {
-      this.localizer.addNamespace(
-        PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
-        (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
-      );
-    }
+    this.localizer.addNamespace(
+      PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
+      (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
+    );
 
     await this.standardFixProviderFactory.init();
   }

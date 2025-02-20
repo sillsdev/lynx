@@ -7,7 +7,8 @@ export default (config = { hasLocalizations: false }) => {
   if (config.hasLocalizations) {
     configOptions = {
       ...configOptions,
-      onSuccess: 'copy-folder src/locales dist/locales',
+      onSuccess:
+        'find src -name "locales" -type d -printf \'%P\n\' | while read dir; do copy-folder src/$dir dist/$dir; done',
       esbuildOptions(options) {
         options.supported = {
           'import-attributes': true,

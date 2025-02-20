@@ -26,12 +26,8 @@ export class Localizer {
     await this.i18n.loadNamespaces(Array.from(this.backend.namespaces));
   }
 
-  hasNamespace(namespace: string): boolean {
-    return this.backend.hasNamespace(namespace);
-  }
-
   addNamespace(namespace: string, loader: (language: string) => unknown): void {
-    if (this.i18n.hasLoadedNamespace(namespace)) {
+    if (this.backend.hasNamespace(namespace)) {
       return;
     }
     this.backend.addNamespace(namespace, loader);
