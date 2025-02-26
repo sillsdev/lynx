@@ -27,7 +27,7 @@ export class Localizer {
   }
 
   addNamespace(namespace: string, loader: (language: string) => unknown): void {
-    if (this.i18n.hasLoadedNamespace(namespace)) {
+    if (this.backend.hasNamespace(namespace)) {
       return;
     }
     this.backend.addNamespace(namespace, loader);
@@ -52,6 +52,10 @@ class LocalBackend {
 
   init(_services: unknown, _backendOptions: unknown, _i18nextOptions: unknown): void {
     // do nothing
+  }
+
+  hasNamespace(namespace: string): boolean {
+    return this.namespaceLoaders.has(namespace);
   }
 
   addNamespace(namespace: string, loader: (language: string) => unknown): void {

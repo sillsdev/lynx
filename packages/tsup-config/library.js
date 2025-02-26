@@ -7,7 +7,7 @@ export default (config = { hasLocalizations: false }) => {
   if (config.hasLocalizations) {
     configOptions = {
       ...configOptions,
-      onSuccess: 'copy-folder src/locales dist/locales',
+      onSuccess: 'cpy "src/**/locales/**" dist',
       esbuildOptions(options) {
         options.supported = {
           'import-attributes': true,

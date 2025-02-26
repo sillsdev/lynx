@@ -1,0 +1,44 @@
+{
+  "name": "@sillsdev/lynx-punctuation-checker",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup-node",
+    "dev": "tsup-node --watch --sourcemap",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "SIL Global",
+  "license": "MIT",
+  "dependencies": {
+    "rxjs": "^7.8.1",
+    "@sillsdev/lynx": "^0.3.0",
+    "@sillsdev/lynx-usfm": "^0.3.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/tsup-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "^9.9.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.5.4"
+  }
+}

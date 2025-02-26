@@ -7,7 +7,7 @@
     "library.js"
   ],
   "devDependencies": {
-    "copy-folder-util": "^1.1.4",
+    "cpy-cli": "^5.0.0",
     "tsup": "^8.3.5"
   }
 }
