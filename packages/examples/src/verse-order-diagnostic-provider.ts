@@ -111,6 +111,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
                   chapter: chapterNumber,
                   verse: prevVerseNumber.toString(),
                 }),
+                moreInfo: this.localizer.t('verseOutOfOrder.moreInfo', { ns: 'verseOrder' }),
                 source: this.id,
               });
             }
@@ -139,6 +140,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
             chapter: chapterNumber,
             verse: missingVerse.toString(),
           }),
+          moreInfo: this.localizer.t('missingVerse.moreInfo', { ns: 'verseOrder' }),
           source: this.id,
           data: missingVerse,
         });

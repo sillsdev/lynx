@@ -13,5 +13,6 @@ export interface Diagnostic {
   range: Range;
   severity: DiagnosticSeverity;
   message: string;
+  moreInfo?: string;
   data?: unknown;
 }
