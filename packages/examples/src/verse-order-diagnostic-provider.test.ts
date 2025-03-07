@@ -46,6 +46,8 @@ describe('VerseOrderDiagnosticProvider', () => {
     expect(diagnostics).has.length(1);
     expect(diagnostics[0].code).toEqual(1);
     expect(diagnostics[0].range).toEqual({ start: { line: 3, character: 0 }, end: { line: 3, character: 4 } });
+    expect(diagnostics[0].message).toEqual('Verse 3 occurs out of order in chapter 1.');
+    expect(diagnostics[0].moreInfo).toContain('Verses should occur in ascending order');
   });
 
   it('missing verse', async () => {
@@ -72,6 +74,8 @@ describe('VerseOrderDiagnosticProvider', () => {
     expect(diagnostics).has.length(1);
     expect(diagnostics[0].code).toEqual(2);
     expect(diagnostics[0].range).toEqual({ start: { line: 3, character: 0 }, end: { line: 3, character: 4 } });
+    expect(diagnostics[0].message).toContain('Verse 2 is missing from chapter 1.');
+    expect(diagnostics[0].moreInfo).toContain('A chapter should contain verse markers');
   });
 });
 
