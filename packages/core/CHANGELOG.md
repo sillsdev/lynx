@@ -1,5 +1,11 @@
 # @sillsdev/lynx
 
+## 0.3.2
+
+### Patch Changes
+
+- 7cca31d: Add "moreInfo" property to diagnostics
+
 ## 0.3.1
 
 ### Patch Changes
