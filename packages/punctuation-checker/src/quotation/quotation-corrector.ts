@@ -14,13 +14,15 @@ import { isScriptureDocument } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
 
-export class QuotationCorrector<T extends TextDocument | ScriptureDocument> implements OnTypeFormattingProvider {
+export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>
+  implements OnTypeFormattingProvider<TEdit>
+{
   readonly id = 'quote-corrector';
   readonly onTypeTriggerCharacters: ReadonlySet<string>;
 
   constructor(
-    private readonly documentManager: DocumentAccessor<T>,
-    private readonly editFactory: EditFactory<T>,
+    private readonly documentManager: DocumentAccessor<TDoc>,
+    private readonly editFactory: EditFactory<TDoc, TEdit>,
     private readonly quotationConfig: QuotationConfig,
   ) {
     this.onTypeTriggerCharacters = this.quotationConfig.createAmbiguousQuotationMarkSet();
@@ -30,7 +32,7 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     return Promise.resolve();
   }
 
-  public async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<TextEdit[] | undefined> {
+  public async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<TEdit[] | undefined> {
     const doc = await this.documentManager.get(uri);
     if (doc == null) {
       return undefined;
@@ -39,9 +41,7 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     return this.correctDocument(doc);
   }
 
-  private correctDocument(
-    doc: TextDocument | ScriptureDocument,
-  ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
+  private correctDocument(doc: TDoc): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     if (isScriptureDocument(doc)) {
       return this.correctScriptureDocument(doc);
     }
@@ -50,11 +50,11 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
 
   private correctScriptureDocument(
     scriptureDocument: ScriptureDocument,
-  ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
+  ): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
 
-    let edits: TextEdit[] = [];
+    let edits: TEdit[] = [];
     for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
       edits = edits.concat(this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, checkableGroup));
     }
@@ -66,14 +66,14 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     scriptureDocument: ScriptureDocument,
     quotationAnalyzer: QuotationAnalyzer,
     checkableGroup: CheckableGroup,
-  ): TextEdit[] {
+  ): TEdit[] {
     const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(checkableGroup);
-    const edits: TextEdit[] = [];
+    const edits: TEdit[] = [];
 
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
       edits.push(
         ...this.editFactory.createTextEdit(
-          scriptureDocument as T,
+          scriptureDocument as TDoc,
           {
             start: scriptureDocument.positionAt(
               quoteCorrection.existingQuotationMark.startIndex,
@@ -92,19 +92,17 @@ export class QuotationCorrector<T extends TextDocument | ScriptureDocument> impl
     return edits;
   }
 
-  private correctTextDocument(
-    textDocument: TextDocument,
-  ): TextEdit[] | PromiseLike<TextEdit[] | undefined> | undefined {
+  private correctTextDocument(textDocument: TextDocument): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
     const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(
       new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]),
     );
 
-    const edits: TextEdit[] = [];
+    const edits: TEdit[] = [];
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
       edits.push(
         ...this.editFactory.createTextEdit(
-          textDocument as T,
+          textDocument as TDoc,
           {
             start: textDocument.positionAt(quoteCorrection.existingQuotationMark.startIndex),
             end: textDocument.positionAt(quoteCorrection.existingQuotationMark.endIndex),

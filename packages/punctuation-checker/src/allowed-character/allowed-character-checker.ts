@@ -5,6 +5,7 @@ import {
   Localizer,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
@@ -13,10 +14,13 @@ import { AllowedCharacterSet } from './allowed-character-set';
 
 export const ALLOWED_CHARACTER_CHECKER_LOCALIZER_NAMESPACE = 'allowedCharacters';
 
-export class AllowedCharacterChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
+export class AllowedCharacterChecker<
+  TDoc extends TextDocument | ScriptureDocument,
+  TEdit = TextEdit,
+> extends AbstractChecker<TDoc, TEdit> {
   constructor(
     private readonly localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
+    documentAccessor: DocumentAccessor<TDoc>,
     allowedCharacterSet: AllowedCharacterSet,
   ) {
     super(
@@ -38,7 +42,7 @@ export class AllowedCharacterChecker<T extends TextDocument | ScriptureDocument>
     );
   }
 
-  protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticFix[] {
+  protected getFixes(_document: TDoc, _diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
     // no fixes available for disallowed characters
     return [];
   }

@@ -6,6 +6,7 @@ import {
   OnTypeFormattingProvider,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 import { AllowedCharacterChecker } from '../allowed-character/allowed-character-checker';
@@ -33,11 +34,11 @@ export class RuleSet {
     private readonly punctuationContextConfig: PunctuationContextConfig,
   ) {}
 
-  public createDiagnosticProviders<T extends TextDocument | ScriptureDocument>(
+  public createDiagnosticProviders<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): DiagnosticProvider[] {
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): DiagnosticProvider<TEdit>[] {
     return [
       this.createAllowedCharacterChecker(localizer, documentAccessor),
       this.createQuotationChecker(localizer, documentAccessor, editFactory),
@@ -46,13 +47,13 @@ export class RuleSet {
     ];
   }
 
-  public createSelectedDiagnosticProviders<T extends TextDocument | ScriptureDocument>(
+  public createSelectedDiagnosticProviders<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
     selectedRules: RuleType[],
-  ): DiagnosticProvider[] {
-    const diagnosticProviderFactories: DiagnosticProvider[] = [];
+  ): DiagnosticProvider<TEdit>[] {
+    const diagnosticProviderFactories: DiagnosticProvider<TEdit>[] = [];
 
     for (const rule of selectedRules) {
       switch (rule) {
@@ -78,48 +79,48 @@ export class RuleSet {
     return diagnosticProviderFactories;
   }
 
-  private createAllowedCharacterChecker<T extends TextDocument | ScriptureDocument>(
+  private createAllowedCharacterChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-  ): DiagnosticProvider {
+    documentAccessor: DocumentAccessor<TDoc>,
+  ): DiagnosticProvider<TEdit> {
     return new AllowedCharacterChecker(localizer, documentAccessor, this.allowedCharacterSet);
   }
 
-  private createQuotationChecker<T extends TextDocument | ScriptureDocument>(
+  private createQuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): DiagnosticProvider {
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): DiagnosticProvider<TEdit> {
     return new QuotationChecker(localizer, documentAccessor, editFactory, this.quotationConfig);
   }
 
-  private createPairedPunctuationChecker<T extends TextDocument | ScriptureDocument>(
+  private createPairedPunctuationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): DiagnosticProvider {
-    return new PairedPunctuationChecker<T>(localizer, documentAccessor, editFactory, this.pairedPunctuationConfig);
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): DiagnosticProvider<TEdit> {
+    return new PairedPunctuationChecker(localizer, documentAccessor, editFactory, this.pairedPunctuationConfig);
   }
 
-  private createPunctuationContextChecker<T extends TextDocument | ScriptureDocument>(
+  private createPunctuationContextChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): DiagnosticProvider {
-    return new PunctuationContextChecker<T>(localizer, documentAccessor, editFactory, this.punctuationContextConfig);
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): DiagnosticProvider<TEdit> {
+    return new PunctuationContextChecker(localizer, documentAccessor, editFactory, this.punctuationContextConfig);
   }
 
-  public createOnTypeFormattingProviders<T extends TextDocument | ScriptureDocument>(
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): OnTypeFormattingProvider[] {
+  public createOnTypeFormattingProviders<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): OnTypeFormattingProvider<TEdit>[] {
     return [this.createQuoteCorrector(documentAccessor, editFactory)];
   }
 
-  private createQuoteCorrector<T extends TextDocument | ScriptureDocument>(
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-  ): OnTypeFormattingProvider {
+  private createQuoteCorrector<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+  ): OnTypeFormattingProvider<TEdit> {
     return new QuotationCorrector(documentAccessor, editFactory, this.quotationConfig);
   }
 
