@@ -6,6 +6,7 @@ import {
   Localizer,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
@@ -26,21 +27,24 @@ export const UNMATCHED_OPENING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-ope
 export const UNMATCHED_CLOSING_PUNCTUATION_MARK_DIAGNOSTIC_CODE = 'unmatched-closing-punctuation-mark';
 export const OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE = 'overlapping-punctuation-pairs';
 
-export class PairedPunctuationChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
-  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
+export class PairedPunctuationChecker<
+  TDoc extends TextDocument | ScriptureDocument,
+  TEdit = TextEdit,
+> extends AbstractChecker<TDoc, TEdit> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<TDoc, TEdit>;
 
   constructor(
     private readonly localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
-    private readonly pairedPunctuationConfig: PairedPunctuationConfig,
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
+    pairedPunctuationConfig: PairedPunctuationConfig,
   ) {
     super(
       'paired-punctuation-checker',
       documentAccessor,
       new PairedPunctuationIssueFinderFactory(localizer, pairedPunctuationConfig),
     );
-    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
+    this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -57,8 +61,8 @@ export class PairedPunctuationChecker<T extends TextDocument | ScriptureDocument
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
-    const standardFixProvider: StandardFixProvider<T> =
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+    const standardFixProvider: StandardFixProvider<TDoc, TEdit> =
       this.standardFixProviderFactory.createStandardFixProvider(document);
     if (
       diagnostic.code === UNMATCHED_CLOSING_CURLY_BRACKET_DIAGNOSTIC_CODE ||

@@ -6,6 +6,7 @@ import {
   Localizer,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
@@ -17,13 +18,16 @@ export const PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE = 'punctuation-cont
 export const LEADING_CONTEXT_DIAGNOSTIC_CODE = 'incorrect-leading-context';
 export const TRAILING_CONTEXT_DIAGNOSTIC_CODE = 'incorrect-trailing-context';
 
-export class PunctuationContextChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
-  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
+export class PunctuationContextChecker<
+  TDoc extends TextDocument | ScriptureDocument,
+  TEdit = TextEdit,
+> extends AbstractChecker<TDoc, TEdit> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<TDoc, TEdit>;
 
   constructor(
     private readonly localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
     punctuationContextConfig: PunctuationContextConfig,
   ) {
     super(
@@ -31,7 +35,7 @@ export class PunctuationContextChecker<T extends TextDocument | ScriptureDocumen
       documentAccessor,
       new PunctuationContextIssueFinderFactory(localizer, punctuationContextConfig),
     );
-    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
+    this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -48,13 +52,13 @@ export class PunctuationContextChecker<T extends TextDocument | ScriptureDocumen
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
     // The only fix we offer is to insert a space
     if (!(diagnostic.data as WhitespaceDiagnosticData).isSpaceAllowed) {
       return [];
     }
 
-    const standardFixProvider: StandardFixProvider<T> =
+    const standardFixProvider: StandardFixProvider<TDoc, TEdit> =
       this.standardFixProviderFactory.createStandardFixProvider(document);
 
     switch (diagnostic.code) {

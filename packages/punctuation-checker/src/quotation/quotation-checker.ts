@@ -6,6 +6,7 @@ import {
   Localizer,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 import { AbstractChecker } from '../abstract-checker';
@@ -24,17 +25,20 @@ export const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'incorrectly-nested-quot
 export const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE = 'ambiguous-quotation-mark';
 export const TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'deeply-nested-quotation-mark';
 
-export class QuotationChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
-  private readonly standardFixProviderFactory: StandardFixProviderFactory<T>;
+export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit> extends AbstractChecker<
+  TDoc,
+  TEdit
+> {
+  private readonly standardFixProviderFactory: StandardFixProviderFactory<TDoc, TEdit>;
 
   constructor(
     private readonly localizer: Localizer,
-    documentAccessor: DocumentAccessor<T>,
-    editFactory: EditFactory<T>,
+    documentAccessor: DocumentAccessor<TDoc>,
+    editFactory: EditFactory<TDoc, TEdit>,
     private readonly quotationConfig: QuotationConfig,
   ) {
     super('quotation-mark-checker', documentAccessor, new QuotationIssueFinderFactory(localizer, quotationConfig));
-    this.standardFixProviderFactory = new StandardFixProviderFactory<T>(editFactory, localizer);
+    this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }
 
   async init(): Promise<void> {
@@ -51,8 +55,8 @@ export class QuotationChecker<T extends TextDocument | ScriptureDocument> extend
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[] {
-    const standardFixProvider: StandardFixProvider<T> =
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+    const standardFixProvider: StandardFixProvider<TDoc, TEdit> =
       this.standardFixProviderFactory.createStandardFixProvider(document);
 
     if (diagnostic.code === UNMATCHED_OPENING_QUOTE_DIAGNOSTIC_CODE) {
@@ -74,9 +78,9 @@ export class QuotationChecker<T extends TextDocument | ScriptureDocument> extend
 
   private getIncorrectlyNestedQuoteFixes(
     diagnostic: Diagnostic,
-    standardFixProvider: StandardFixProvider<T>,
-  ): DiagnosticFix[] {
-    const fixes: DiagnosticFix[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
+    standardFixProvider: StandardFixProvider<TDoc, TEdit>,
+  ): DiagnosticFix<TEdit>[] {
+    const fixes: DiagnosticFix<TEdit>[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
     interface QuoteParentDepth {
       depth: number;
     }
@@ -98,7 +102,10 @@ export class QuotationChecker<T extends TextDocument | ScriptureDocument> extend
     );
   }
 
-  private getAmbiguousQuoteFixes(diagnostic: Diagnostic, standardFixProvider: StandardFixProvider<T>): DiagnosticFix[] {
+  private getAmbiguousQuoteFixes(
+    diagnostic: Diagnostic,
+    standardFixProvider: StandardFixProvider<TDoc, TEdit>,
+  ): DiagnosticFix<TEdit>[] {
     interface QuotationMarkCorrection {
       existingQuotationMark: string;
       correctedQuotationMark: string;

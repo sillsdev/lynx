@@ -6,18 +6,19 @@ import {
   Range,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 
 const LOCALIZER_NAMESPACE = 'standardPunctuationFixes';
 
-class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
+class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit> {
   constructor(
-    private readonly document: T,
-    private readonly editFactory: EditFactory<T>,
+    private readonly document: TDoc,
+    private readonly editFactory: EditFactory<TDoc, TEdit>,
     private readonly localizer: Localizer,
   ) {}
 
-  public punctuationRemovalFix(diagnostic: Diagnostic): DiagnosticFix {
+  public punctuationRemovalFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
     return {
       title: this.localizer.t(`punctuationRemovalFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -28,7 +29,7 @@ class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
     };
   }
 
-  public punctuationReplacementFix(diagnostic: Diagnostic, replacementCharacter: string): DiagnosticFix {
+  public punctuationReplacementFix(diagnostic: Diagnostic, replacementCharacter: string): DiagnosticFix<TEdit> {
     return {
       title: this.localizer.t(`punctuationReplacementFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -40,7 +41,7 @@ class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
     };
   }
 
-  public leadingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix {
+  public leadingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
     return {
       title: this.localizer.t(`leadingSpaceInsertionFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -68,7 +69,7 @@ class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
     };
   }
 
-  public trailingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix {
+  public trailingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
     return {
       title: this.localizer.t(`trailingSpaceInsertionFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -97,9 +98,9 @@ class StandardFixProvider<T extends TextDocument | ScriptureDocument> {
   }
 }
 
-class StandardFixProviderFactory<T extends TextDocument | ScriptureDocument> {
+class StandardFixProviderFactory<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit> {
   constructor(
-    private readonly editFactory: EditFactory<T>,
+    private readonly editFactory: EditFactory<TDoc, TEdit>,
     private readonly localizer: Localizer,
   ) {}
 
@@ -115,7 +116,7 @@ class StandardFixProviderFactory<T extends TextDocument | ScriptureDocument> {
     return Promise.resolve();
   }
 
-  public createStandardFixProvider(document: T): StandardFixProvider<T> {
+  public createStandardFixProvider(document: TDoc): StandardFixProvider<TDoc, TEdit> {
     return new StandardFixProvider(document, this.editFactory, this.localizer);
   }
 }

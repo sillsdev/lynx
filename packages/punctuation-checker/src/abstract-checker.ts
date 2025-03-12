@@ -6,6 +6,7 @@ import {
   DocumentAccessor,
   ScriptureDocument,
   TextDocument,
+  TextEdit,
 } from '@sillsdev/lynx';
 import { map, merge, Observable, switchMap } from 'rxjs';
 
@@ -15,12 +16,14 @@ import { IssueFinder, IssueFinderFactory } from './issue-finder';
 import { ScriptureTextNodeGrouper } from './scripture-grouper';
 import { isScriptureDocument } from './utils';
 
-export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument> implements DiagnosticProvider {
+export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>
+  implements DiagnosticProvider<TEdit>
+{
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(
     public readonly id: string,
-    private readonly documentAccessor: DocumentAccessor<T>,
+    private readonly documentAccessor: DocumentAccessor<TDoc>,
     private readonly issueFinderFactory: IssueFinderFactory,
   ) {
     this.diagnosticsChanged$ = merge(
@@ -59,7 +62,7 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
     return this.validateDocument(doc);
   }
 
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix[]> {
+  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<TEdit>[]> {
     const doc = await this.documentAccessor.get(uri);
     if (doc == null) {
       return [];
@@ -67,7 +70,7 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
     return this.getFixes(doc, diagnostic);
   }
 
-  private validateDocument(document: T): Diagnostic[] {
+  private validateDocument(document: TDoc): Diagnostic[] {
     if (isScriptureDocument(document)) {
       return this.validateScriptureDocument(document);
     }
@@ -94,5 +97,5 @@ export abstract class AbstractChecker<T extends TextDocument | ScriptureDocument
     return diagnostics;
   }
 
-  protected abstract getFixes(document: T, diagnostic: Diagnostic): DiagnosticFix[];
+  protected abstract getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[];
 }
