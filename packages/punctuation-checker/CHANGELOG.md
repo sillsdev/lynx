@@ -1,5 +1,11 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.2
+
+### Patch Changes
+
+- 236cfbf: Add support for specifying edit type
+
 ## 0.1.1
 
 ### Patch Changes
