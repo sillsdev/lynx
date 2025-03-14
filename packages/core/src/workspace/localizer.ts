@@ -13,6 +13,9 @@ export class Localizer {
         partialBundledLanguages: true,
         ns: [],
         resources: {},
+        interpolation: {
+          escapeValue: false,
+        },
       })
       .use(this.backend);
   }
