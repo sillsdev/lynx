@@ -93,8 +93,14 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
     return docs;
   }
 
-  async fireCreated(uri: string): Promise<void> {
-    const doc = await this.get(uri);
+  async fireCreated(uri: string, data?: DocumentData<TContent>): Promise<void> {
+    let doc: TDoc | undefined = undefined;
+    if (data == null) {
+      doc = await this.reload(uri);
+    } else {
+      doc = this.factory.create(uri, data);
+      this.documents.set(uri, doc);
+    }
     if (doc != null) {
       this.createdSubject.next({ document: doc });
     }
@@ -154,7 +160,10 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
   }
 
   private async reload(uri: string): Promise<TDoc | undefined> {
-    const data = await this.reader?.read(uri);
+    if (this.reader == null) {
+      return this.documents.get(uri);
+    }
+    const data = await this.reader.read(uri);
     const doc = data == null ? undefined : this.factory.create(uri, data);
     if (doc != null) {
       this.documents.set(uri, doc);

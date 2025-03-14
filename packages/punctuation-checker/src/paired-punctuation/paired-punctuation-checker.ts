@@ -38,11 +38,13 @@ export class PairedPunctuationChecker<
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
     pairedPunctuationConfig: PairedPunctuationConfig,
+    validateAllDocuments = false,
   ) {
     super(
       'paired-punctuation-checker',
       documentAccessor,
       new PairedPunctuationIssueFinderFactory(localizer, pairedPunctuationConfig),
+      validateAllDocuments,
     );
     this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }

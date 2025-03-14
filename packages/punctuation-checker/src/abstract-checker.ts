@@ -1,4 +1,6 @@
 import {
+  activeDiagnosticsChanged$,
+  allDiagnosticsChanged$,
   Diagnostic,
   DiagnosticFix,
   DiagnosticProvider,
@@ -8,7 +10,7 @@ import {
   TextDocument,
   TextEdit,
 } from '@sillsdev/lynx';
-import { map, merge, Observable, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { CheckableGroup, TextDocumentCheckable } from './checkable';
 import { DiagnosticFactory } from './diagnostic-factory';
@@ -25,29 +27,13 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     public readonly id: string,
     private readonly documentAccessor: DocumentAccessor<TDoc>,
     private readonly issueFinderFactory: IssueFinderFactory,
+    validateAllDocuments = false,
   ) {
-    this.diagnosticsChanged$ = merge(
-      documentAccessor.opened$.pipe(
-        map((e) => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document),
-        })),
-      ),
-      documentAccessor.changed$.pipe(
-        map((e) => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document),
-        })),
-      ),
-      documentAccessor.closed$.pipe(
-        switchMap(async (e) => {
-          const doc = await this.documentAccessor.get(e.uri);
-          return { uri: e.uri, version: doc?.version, diagnostics: [] };
-        }),
-      ),
-    );
+    if (validateAllDocuments) {
+      this.diagnosticsChanged$ = allDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+    } else {
+      this.diagnosticsChanged$ = activeDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+    }
   }
 
   init(): Promise<void> {

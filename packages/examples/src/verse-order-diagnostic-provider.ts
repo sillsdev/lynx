@@ -1,4 +1,6 @@
 import {
+  activeDiagnosticsChanged$,
+  allDiagnosticsChanged$,
   Diagnostic,
   DiagnosticFix,
   DiagnosticProvider,
@@ -13,7 +15,7 @@ import {
   ScriptureVerse,
   TextEdit,
 } from '@sillsdev/lynx';
-import { map, merge, Observable, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticProvider<T> {
   public readonly id = 'verse-order';
@@ -23,29 +25,13 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     private readonly localizer: Localizer,
     private readonly documents: DocumentAccessor<ScriptureDocument>,
     private readonly editFactory: ScriptureEditFactory<ScriptureDocument, T>,
+    validateAllDocuments = false,
   ) {
-    this.diagnosticsChanged$ = merge(
-      documents.opened$.pipe(
-        map((e) => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document),
-        })),
-      ),
-      documents.changed$.pipe(
-        map((e) => ({
-          uri: e.document.uri,
-          version: e.document.version,
-          diagnostics: this.validateDocument(e.document),
-        })),
-      ),
-      documents.closed$.pipe(
-        switchMap(async (e) => {
-          const doc = await this.documents.get(e.uri);
-          return { uri: e.uri, version: doc?.version, diagnostics: [] };
-        }),
-      ),
-    );
+    if (validateAllDocuments) {
+      this.diagnosticsChanged$ = allDiagnosticsChanged$(documents, (doc) => this.validateDocument(doc));
+    } else {
+      this.diagnosticsChanged$ = activeDiagnosticsChanged$(documents, (doc) => this.validateDocument(doc));
+    }
   }
 
   init(): Promise<void> {
