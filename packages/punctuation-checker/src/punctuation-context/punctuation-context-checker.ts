@@ -29,11 +29,13 @@ export class PunctuationContextChecker<
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
     punctuationContextConfig: PunctuationContextConfig,
+    validateAllDocuments = false,
   ) {
     super(
       'punctuation-context-checker',
       documentAccessor,
       new PunctuationContextIssueFinderFactory(localizer, punctuationContextConfig),
+      validateAllDocuments,
     );
     this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }

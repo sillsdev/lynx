@@ -36,8 +36,14 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
     private readonly quotationConfig: QuotationConfig,
+    validateAllDocuments = false,
   ) {
-    super('quotation-mark-checker', documentAccessor, new QuotationIssueFinderFactory(localizer, quotationConfig));
+    super(
+      'quotation-mark-checker',
+      documentAccessor,
+      new QuotationIssueFinderFactory(localizer, quotationConfig),
+      validateAllDocuments,
+    );
     this.standardFixProviderFactory = new StandardFixProviderFactory<TDoc, TEdit>(editFactory, localizer);
   }
 
