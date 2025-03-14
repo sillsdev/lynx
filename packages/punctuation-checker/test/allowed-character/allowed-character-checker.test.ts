@@ -192,7 +192,7 @@ describe('integration tests', () => {
       await testEnv.allowedCharacterCheckerLocalizer.init();
 
       expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$~')).toEqual([
-        testEnv.createExpectedDiagnostic('&amp;', 0, 1),
+        testEnv.createExpectedDiagnostic('&', 0, 1),
         testEnv.createExpectedDiagnostic('{', 1, 2),
         testEnv.createExpectedDiagnostic('+', 2, 3),
         testEnv.createExpectedDiagnostic('$', 3, 4),
@@ -292,7 +292,7 @@ describe('ScriptureDocument tests', () => {
       testEnv.createExpectedScriptureDiagnostic('$', 2, 16, 2, 17),
       testEnv.createExpectedScriptureDiagnostic('@', 4, 16, 4, 17),
       testEnv.createExpectedScriptureDiagnostic('|', 7, 9, 7, 10),
-      testEnv.createExpectedScriptureDiagnostic('&amp;', 7, 15, 7, 16),
+      testEnv.createExpectedScriptureDiagnostic('&', 7, 15, 7, 16),
     ]);
   });
 });
