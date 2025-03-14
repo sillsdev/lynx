@@ -22,11 +22,13 @@ export class AllowedCharacterChecker<
     private readonly localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
     allowedCharacterSet: AllowedCharacterSet,
+    validateAllDocuments = false,
   ) {
     super(
       'allowed-character-set-checker',
       documentAccessor,
       new AllowedCharacterIssueFinderFactory(localizer, allowedCharacterSet),
+      validateAllDocuments,
     );
   }
 

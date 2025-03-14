@@ -38,12 +38,13 @@ export class RuleSet {
     localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
+    validateAllDocuments = false,
   ): DiagnosticProvider<TEdit>[] {
     return [
-      this.createAllowedCharacterChecker(localizer, documentAccessor),
-      this.createQuotationChecker(localizer, documentAccessor, editFactory),
-      this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory),
-      this.createPunctuationContextChecker(localizer, documentAccessor, editFactory),
+      this.createAllowedCharacterChecker(localizer, documentAccessor, validateAllDocuments),
+      this.createQuotationChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
+      this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
+      this.createPunctuationContextChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
     ];
   }
 
@@ -52,25 +53,30 @@ export class RuleSet {
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
     selectedRules: RuleType[],
+    validateAllDocuments = false,
   ): DiagnosticProvider<TEdit>[] {
     const diagnosticProviderFactories: DiagnosticProvider<TEdit>[] = [];
 
     for (const rule of selectedRules) {
       switch (rule) {
         case RuleType.AllowedCharacters:
-          diagnosticProviderFactories.push(this.createAllowedCharacterChecker(localizer, documentAccessor));
+          diagnosticProviderFactories.push(
+            this.createAllowedCharacterChecker(localizer, documentAccessor, validateAllDocuments),
+          );
           break;
         case RuleType.QuotationMarkPairing:
-          diagnosticProviderFactories.push(this.createQuotationChecker(localizer, documentAccessor, editFactory));
+          diagnosticProviderFactories.push(
+            this.createQuotationChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
+          );
           break;
         case RuleType.PairedPunctuation:
           diagnosticProviderFactories.push(
-            this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory),
+            this.createPairedPunctuationChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
           );
           break;
         case RuleType.PunctuationContext:
           diagnosticProviderFactories.push(
-            this.createPunctuationContextChecker(localizer, documentAccessor, editFactory),
+            this.createPunctuationContextChecker(localizer, documentAccessor, editFactory, validateAllDocuments),
           );
           break;
       }
@@ -82,32 +88,48 @@ export class RuleSet {
   private createAllowedCharacterChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
+    validateAllDocuments: boolean,
   ): DiagnosticProvider<TEdit> {
-    return new AllowedCharacterChecker(localizer, documentAccessor, this.allowedCharacterSet);
+    return new AllowedCharacterChecker(localizer, documentAccessor, this.allowedCharacterSet, validateAllDocuments);
   }
 
   private createQuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
+    validateAllDocuments: boolean,
   ): DiagnosticProvider<TEdit> {
-    return new QuotationChecker(localizer, documentAccessor, editFactory, this.quotationConfig);
+    return new QuotationChecker(localizer, documentAccessor, editFactory, this.quotationConfig, validateAllDocuments);
   }
 
   private createPairedPunctuationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
+    validateAllDocuments: boolean,
   ): DiagnosticProvider<TEdit> {
-    return new PairedPunctuationChecker(localizer, documentAccessor, editFactory, this.pairedPunctuationConfig);
+    return new PairedPunctuationChecker(
+      localizer,
+      documentAccessor,
+      editFactory,
+      this.pairedPunctuationConfig,
+      validateAllDocuments,
+    );
   }
 
   private createPunctuationContextChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
     localizer: Localizer,
     documentAccessor: DocumentAccessor<TDoc>,
     editFactory: EditFactory<TDoc, TEdit>,
+    validateAllDocuments: boolean,
   ): DiagnosticProvider<TEdit> {
-    return new PunctuationContextChecker(localizer, documentAccessor, editFactory, this.punctuationContextConfig);
+    return new PunctuationContextChecker(
+      localizer,
+      documentAccessor,
+      editFactory,
+      this.punctuationContextConfig,
+      validateAllDocuments,
+    );
   }
 
   public createOnTypeFormattingProviders<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>(
