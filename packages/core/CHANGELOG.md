@@ -1,5 +1,11 @@
 # @sillsdev/lynx
 
+## 0.3.4
+
+### Patch Changes
+
+- 015028e: Fix race condition in DocumentManager.all()
+
 ## 0.3.3
 
 ### Patch Changes
