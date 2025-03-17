@@ -11,6 +11,7 @@ describe('DocumentManager', () => {
   it('all', async () => {
     const env = new TestEnvironment();
 
+    await env.docManager.get('file1');
     const docs = await env.docManager.all();
     expect(docs).toHaveLength(2);
     expect(docs[0].content).toEqual('This is file1.');
