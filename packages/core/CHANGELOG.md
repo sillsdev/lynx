@@ -1,5 +1,12 @@
 # @sillsdev/lynx
 
+## 0.3.3
+
+### Patch Changes
+
+- 74326e7: Disable localizer interpolation escaping
+- d577d08: Add support for receiving diagnostics changed events for all documents
+
 ## 0.3.2
 
 ### Patch Changes
