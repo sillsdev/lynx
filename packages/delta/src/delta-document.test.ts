@@ -89,6 +89,48 @@ describe('DeltaDocument', () => {
     expect(document.offsetAt({ line: 2, character: 0 })).toEqual(30);
   });
 
+  it('update style only', () => {
+    const document = new DeltaDocument(
+      'uri',
+      'rich-text',
+      1,
+      new Delta()
+        .insert('Line one.')
+        .insert('\n', { para: true })
+        .insert('Line two.')
+        .insert('\n', { para: true })
+        .insert('Line three.')
+        .insert('\n', { para: true }),
+    );
+    document.update(new Delta().retain(9, { style: true }), 2);
+
+    expect(document.version).toEqual(2);
+    expect(document.getText()).toEqual('Line one.\nLine two.\nLine three.\n');
+    expect(document.offsetAt({ line: 1, character: 0 })).toEqual(10);
+    expect(document.offsetAt({ line: 2, character: 0 })).toEqual(20);
+  });
+
+  it('delete only', () => {
+    const document = new DeltaDocument(
+      'uri',
+      'rich-text',
+      1,
+      new Delta()
+        .insert('Line one.')
+        .insert('\n', { para: true })
+        .insert('Line two.')
+        .insert('\n', { para: true })
+        .insert('Line three.')
+        .insert('\n', { para: true }),
+    );
+    document.update(new Delta().delete(5), 2);
+
+    expect(document.version).toEqual(2);
+    expect(document.getText()).toEqual('one.\nLine two.\nLine three.\n');
+    expect(document.offsetAt({ line: 1, character: 0 })).toEqual(5);
+    expect(document.offsetAt({ line: 2, character: 0 })).toEqual(15);
+  });
+
   it('offsetAt', () => {
     const document = new DeltaDocument(
       'uri',

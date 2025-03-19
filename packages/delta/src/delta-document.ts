@@ -23,7 +23,7 @@ export class DeltaDocument implements Document {
     if (Array.isArray(changes)) {
       changes = new Delta(changes);
     }
-    const [changeStartOffset, changeEndOffset, insertLength] = getChangeOffsetRange(changes);
+    const [changeStartOffset, changeEndOffset, insertLength, deleteLength] = getChangeOffsetRange(changes);
     const changeStart = this.positionAt(changeStartOffset);
     const changeEnd = this.positionAt(changeEndOffset);
     let changeStartLine = changeStart.line;
@@ -53,7 +53,7 @@ export class DeltaDocument implements Document {
     let lineOffsets = this.lineOffsets!;
     const addedLineLength = addedLineOffsets.length;
     const deletedLineLength = changeEndLine - changeStartLine;
-    const charDiff = insertLength - (changeEndOffset - changeStartOffset);
+    const charDiff = insertLength - deleteLength;
     const lineDiff = addedLineLength - deletedLineLength;
     if (lineDiff === 0) {
       for (let i = 0; i < deletedLineLength; i++) {
@@ -186,7 +186,7 @@ function computeLineOffsets(delta: Delta, lineOffsets: number[], lineOps: number
   }
 }
 
-export function getChangeOffsetRange(change: Delta): [number, number, number] {
+export function getChangeOffsetRange(change: Delta): [number, number, number, number] {
   let startOffset = 0;
   let i = 0;
   while (change.ops[i].retain != null && change.ops[i].attributes == null) {
@@ -196,12 +196,14 @@ export function getChangeOffsetRange(change: Delta): [number, number, number] {
 
   let endOffset = startOffset;
   let insertLength = 0;
+  let deleteLength = 0;
   for (; i < change.ops.length; i++) {
     const op = change.ops[i];
     if (op.retain != null) {
       endOffset += op.retain as number;
     } else if (op.delete != null) {
       endOffset += op.delete;
+      deleteLength += op.delete;
     } else if (op.insert != null) {
       if (typeof op.insert === 'string') {
         insertLength += op.insert.length;
@@ -210,5 +212,5 @@ export function getChangeOffsetRange(change: Delta): [number, number, number] {
       }
     }
   }
-  return [startOffset, endOffset, insertLength];
+  return [startOffset, endOffset, insertLength, deleteLength];
 }

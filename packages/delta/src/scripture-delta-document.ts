@@ -38,7 +38,7 @@ export class ScriptureDeltaDocument extends ScriptureDocumentMixin(DeltaDocument
     if (Array.isArray(changes)) {
       changes = new Delta(changes);
     }
-    const [changeStartOffset, changeEndOffset, insertLength] = getChangeOffsetRange(changes);
+    const [changeStartOffset, changeEndOffset, insertLength, deleteLength] = getChangeOffsetRange(changes);
     const changeStart = this.positionAt(changeStartOffset);
     const changeEnd = this.positionAt(changeEndOffset);
     const changeStartLine = changeStart.line;
@@ -81,7 +81,7 @@ export class ScriptureDeltaDocument extends ScriptureDocumentMixin(DeltaDocument
     let lineOffsets = this.lineOffsets!;
     const addedLineLength = addedLineOffsets.length;
     const deletedLineLength = childEndLine - childStartLine;
-    const charDiff = insertLength - (changeEndOffset - changeStartOffset);
+    const charDiff = insertLength - deleteLength;
     const lineDiff = addedLineLength - deletedLineLength;
     const childDiff = children.length - 1;
     if (lineDiff === 0) {
