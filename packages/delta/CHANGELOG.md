@@ -1,5 +1,11 @@
 # @sillsdev/lynx-delta
 
+## 0.2.1
+
+### Patch Changes
+
+- 25a95c3: Fix handling of style updates in Delta document
+
 ## 0.2.0
 
 ### Minor Changes
