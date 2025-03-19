@@ -291,4 +291,54 @@ describe('ScriptureDeltaDocument', () => {
     expect(paragraph1.getText()).toEqual(`\ufffcThis is verse one.\ufffc\ufffc\ufffcThis is verse 3.\n`);
     expect(paragraph1.range).toEqual({ start: { line: 1, character: 0 }, end: { line: 2, character: 0 } });
   });
+
+  it('update style only', () => {
+    const document = new ScriptureDeltaDocument(
+      'uri',
+      'scr-delta',
+      1,
+      new Delta()
+        .insert({ chapter: { number: '1', style: 'c' } })
+        .insert({ verse: { number: '1', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_1' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '2', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_2' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '3', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_3' })
+        .insert('\n', { para: { style: 'p' } }),
+    );
+
+    document.update(new Delta().retain(2).retain(4, { char: { cid: '123', style: 'it' } }), 2);
+
+    expect(document.offsetAt({ line: 1, character: 0 })).toEqual(1);
+    expect(document.offsetAt({ line: 2, character: 0 })).toEqual(18);
+    expect(document.offsetAt({ line: 3, character: 0 })).toEqual(35);
+  });
+
+  it('delete only', () => {
+    const document = new ScriptureDeltaDocument(
+      'uri',
+      'scr-delta',
+      1,
+      new Delta()
+        .insert({ chapter: { number: '1', style: 'c' } })
+        .insert({ verse: { number: '1', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_1' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '2', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_2' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '3', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_3' })
+        .insert('\n', { para: { style: 'p' } }),
+    );
+
+    document.update(new Delta().retain(2).delete(4), 2);
+
+    expect(document.offsetAt({ line: 1, character: 0 })).toEqual(1);
+    expect(document.offsetAt({ line: 2, character: 0 })).toEqual(14);
+    expect(document.offsetAt({ line: 3, character: 0 })).toEqual(31);
+  });
 });
