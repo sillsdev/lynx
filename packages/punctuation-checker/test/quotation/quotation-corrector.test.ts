@@ -43,160 +43,155 @@ describe('Text quote correction tests', () => {
 
   it('corrects ambiguous quotation marks', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', { line: 0, character: 1 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time..."', arbitraryPosition, arbitraryCharacter),
-    ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1), testEnv.createExpectedEdit('\u201D', 20, 21)]);
+      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time..."', { line: 0, character: 1 }, '"'),
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
-        '\u201COnce upon a time..."',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
+      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time..."', { line: 0, character: 21 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 20, 21)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
-        '"Once upon a time...\u201D',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
+      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time..."', { line: 0, character: 21 }, '"'),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 20, 21)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...\u201D', { line: 0, character: 1 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         "\u201CIt was the best of times, 'it was the worst of times\u2019\u201D",
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 28 },
+        "'",
       ),
     ).toEqual([testEnv.createExpectedEdit('\u2018', 27, 28)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         "\u201CIt was the best of times, \u2018it was the worst of times'\u201D",
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 54 },
+        "'",
       ),
     ).toEqual([testEnv.createExpectedEdit('\u2019', 53, 54)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\u201CIt was the best of times, \u2018it was the worst of times\u2019"',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 55 },
+        '"',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 54, 55)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '"It was the best of times, \'it was the worst of times\'"',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 1 },
+        '"',
       ),
-    ).toEqual([
-      testEnv.createExpectedEdit('\u201C', 0, 1),
-      testEnv.createExpectedEdit('\u2018', 27, 28),
-      testEnv.createExpectedEdit('\u2019', 53, 54),
-      testEnv.createExpectedEdit('\u201D', 54, 55),
-    ]);
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits(
+        '"It was the best of times, \'it was the worst of times\'"',
+        { line: 0, character: 28 },
+        "'",
+      ),
+    ).toEqual([testEnv.createExpectedEdit('\u2018', 27, 28)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits(
+        '"It was the best of times, \'it was the worst of times\'"',
+        { line: 0, character: 54 },
+        "'",
+      ),
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 53, 54)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits(
+        '"It was the best of times, \'it was the worst of times\'"',
+        { line: 0, character: 55 },
+        '"',
+      ),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 54, 55)]);
   });
 
   it('does not depend on whitespace', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', { line: 0, character: 1 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(' "Once upon a time...', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits(' "Once upon a time...', { line: 0, character: 2 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 1, 2)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('" Once upon a time...', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('" Once upon a time...', { line: 0, character: 1 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 1)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('Once upon a time..."', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('Once upon a time..."', { line: 0, character: 20 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 19, 20)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
-        '\u201COnce upon a time..."',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
+      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time..."', { line: 0, character: 21 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 20, 21)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time"', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time"', { line: 0, character: 18 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 17, 18)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
-        '\u201COnce upon a time" ',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
+      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time" ', { line: 0, character: 18 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 17, 18)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
-        '\u201COnce upon a time "',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
+      await testEnv.quotationCorrector.getOnTypeEdits('\u201COnce upon a time "', { line: 0, character: 19 }, '"'),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 18, 19)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('Once" upon a time "there was', { line: 0, character: 5 }, '"'),
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 4, 5)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('Once" upon a time "there was', { line: 0, character: 19 }, '"'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 18, 19)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
-        'Once" upon a time "there was',
-        arbitraryPosition,
-        arbitraryCharacter,
-      ),
-    ).toEqual([testEnv.createExpectedEdit('\u201C', 4, 5), testEnv.createExpectedEdit('\u201D', 18, 19)]);
-
-    expect(
-      await testEnv.quotationCorrector.getOnTypeEdits(
         "\u201COnce upon' a time there \u2019was\u201D",
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 11 },
+        "'",
       ),
     ).toEqual([testEnv.createExpectedEdit('\u2018', 10, 11)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         "\u201COnce upon 'a time there \u2019was\u201D",
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 12 },
+        "'",
       ),
     ).toEqual([testEnv.createExpectedEdit('\u2018', 11, 12)]);
   });
 
-  it('does not depend on the position or character passed', async () => {
+  it('does not depend on the character passed', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('It was the "best of times', { line: 0, character: 10 }, 'c'),
-    ).toEqual([testEnv.createExpectedEdit('\u201C', 11, 12)]);
-
-    expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('It was the "best of times', { line: 10, character: 0 }, '"'),
+      await testEnv.quotationCorrector.getOnTypeEdits('It was the "best of times', { line: 0, character: 12 }, 'c'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 11, 12)]);
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         'It was the "best of times',
-        { line: 25, character: 35 },
+        { line: 0, character: 12 },
         '\u201D',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 11, 12)]);
@@ -204,7 +199,7 @@ describe('Text quote correction tests', () => {
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         'It was the "best of times',
-        { line: 250, character: 350 },
+        { line: 0, character: 12 },
         '\u201C',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 11, 12)]);
@@ -212,86 +207,93 @@ describe('Text quote correction tests', () => {
 
   it('adheres to the QuotationConfig', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithAlternativeAmbiguousQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon a time', arbitraryPosition, arbitraryCharacter),
+      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon a time', { line: 0, character: 6 }, '+'),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 5, 6)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', arbitraryPosition, arbitraryCharacter),
-    ).toEqual([
-      testEnv.createExpectedEdit('\u201C', 5, 6),
-      testEnv.createExpectedEdit('\u2018', 10, 11),
-      testEnv.createExpectedEdit('\u2019', 18, 19),
-      testEnv.createExpectedEdit('\u201D', 19, 20),
-    ]);
+      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 6 }, '+'),
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 5, 6)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 11 }, '-'),
+    ).toEqual([testEnv.createExpectedEdit('\u2018', 10, 11)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 19 }, '-'),
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 18, 19)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 20 }, '+'),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 19, 20)]);
   });
 });
 
 describe('Scripture quote correction tests', () => {
   it('corrects ambiguous quotation marks in single ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\\c 1 \\v 1 verse with \u201Cambiguous quote"',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 38 },
+        '"',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 0, 37, 0, 38)]);
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\\c 1 \\v 1 verse with \u201Cunambiguous quote \\v 2 and verse" with',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 55 },
+        '"',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 0, 54, 0, 55)]);
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         `\\c 1
          \\v 1 verse with \u201Cambiguous quote"`,
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 1, character: 42 },
+        '"',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 1, 41, 1, 42)]);
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\\toc "book name \\c 1 \\v 1 verse text',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 6 },
+        '"',
       ),
     ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 5, 0, 6)]);
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\\toc \u201Cbook name \\c 1 \\v 1 verse\u201D text',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 6 },
+        '"',
       ),
     ).toEqual([]);
   });
 
   it('corrects multiple ambiguous quotation marks in a single ScriptureNode', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
         '\\c 1 \\v 1 verse with "ambiguous quotes"',
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 0, character: 22 },
+        '"',
       ),
-    ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 21, 0, 22), testEnv.createExpectedEdit('\u201D', 0, 38, 0, 39)]);
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 0, 21, 0, 22)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits(
+        '\\c 1 \\v 1 verse with "ambiguous quotes"',
+        { line: 0, character: 39 },
+        '"',
+      ),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 0, 38, 0, 39)]);
   });
 
   it('corrects ambiguous quotation marks in quotes stretching across multiple ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
-    const arbitraryPosition: Position = { line: 0, character: 0 };
-    const arbitraryCharacter = 'a';
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
@@ -299,10 +301,21 @@ describe('Scripture quote correction tests', () => {
          \\v 1 verses with "ambiguous
          \\v 2 quotes" and
          \\v 3 another verse at the end`,
-        arbitraryPosition,
-        arbitraryCharacter,
+        { line: 1, character: 27 },
+        '"',
       ),
-    ).toEqual([testEnv.createExpectedEdit('\u201C', 1, 26, 1, 27), testEnv.createExpectedEdit('\u201D', 2, 20, 2, 21)]);
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 1, 26, 1, 27)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits(
+        `\\c 1
+         \\v 1 verses with "ambiguous
+         \\v 2 quotes" and
+         \\v 3 another verse at the end`,
+        { line: 2, character: 21 },
+        '"',
+      ),
+    ).toEqual([testEnv.createExpectedEdit('\u201D', 2, 20, 2, 21)]);
   });
 });
 

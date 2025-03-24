@@ -861,8 +861,8 @@ describe('Standard English rule set tests', () => {
       expect(
         await quoteCorrector.getOnTypeEdits(
           `The LORD who rules over all says this: “These people have said, 'The time for rebuilding the LORD's temple has not yet come.’”`,
-          { line: 0, character: 0 },
-          't',
+          { line: 0, character: 65 },
+          "'",
         ),
       ).toEqual([
         {
@@ -877,8 +877,8 @@ describe('Standard English rule set tests', () => {
       expect(
         await quoteCorrector.getOnTypeEdits(
           `The LORD who rules over all says this: “These people have said, ‘The time for rebuilding the LORD's temple has not yet come.’"`,
-          { line: 0, character: 0 },
-          't',
+          { line: 0, character: 126 },
+          '"',
         ),
       ).toEqual([
         {
