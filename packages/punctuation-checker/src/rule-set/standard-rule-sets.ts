@@ -18,9 +18,14 @@ export class StandardRuleSets {
         .addRange('a', 'z')
         .addRange('0', '9')
         .addCharacters(['.', ',', '?', '/', '\\', ':', ';', '(', ')', '[', ']', '-', '–', '—', '!'])
-        .addCharacters(['"', "'", '\u2018', '\u2019', '\u201C', '\u201D'])
+        .addCharacters(['"', "'", '\u2018', '\u2019', '\u201C', '\u201D', '\u02BC'])
         .addCharacters([' ', '\r', '\n', '\t'])
         .addCharacters(['…'])
+        .addCharacters(['\uA78C']) // Temporary additions to handle non-English Latin scripts
+        .addRange('\u00C0', '\u00F6')
+        .addRange('\u00F8', '\u02AF')
+        .addRange('\u1E00', '\u1EFF')
+
         .build(),
     ),
     new QuotationConfig.Builder()

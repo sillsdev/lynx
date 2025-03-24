@@ -13,6 +13,7 @@ import { ScriptureTextNodeGrouper } from '../scripture-grouper';
 import { isScriptureDocument } from '../utils';
 import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import { QuotationConfig } from './quotation-config';
+import { QuoteCorrection } from './quotation-utils';
 
 export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit>
   implements OnTypeFormattingProvider<TEdit>
@@ -32,31 +33,32 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
     return Promise.resolve();
   }
 
-  public async getOnTypeEdits(uri: string, _position: Position, _ch: string): Promise<TEdit[] | undefined> {
+  public async getOnTypeEdits(uri: string, position: Position, _ch: string): Promise<TEdit[] | undefined> {
     const doc = await this.documentManager.get(uri);
     if (doc == null) {
       return undefined;
     }
 
-    return this.correctDocument(doc);
+    return this.correctDocument(doc, position);
   }
 
-  private correctDocument(doc: TDoc): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
+  private correctDocument(doc: TDoc, position: Position): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     if (isScriptureDocument(doc)) {
-      return this.correctScriptureDocument(doc);
+      return this.correctScriptureDocument(doc, position);
     }
-    return this.correctTextDocument(doc);
+    return this.correctTextDocument(doc, position);
   }
 
   private correctScriptureDocument(
     scriptureDocument: ScriptureDocument,
+    position: Position,
   ): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
 
     let edits: TEdit[] = [];
     for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
-      edits = edits.concat(this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, checkableGroup));
+      edits = edits.concat(this.correctScriptureNodes(scriptureDocument, quotationAnalyzer, checkableGroup, position));
     }
 
     return edits;
@@ -66,33 +68,56 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
     scriptureDocument: ScriptureDocument,
     quotationAnalyzer: QuotationAnalyzer,
     checkableGroup: CheckableGroup,
+    position: Position | undefined = undefined,
   ): TEdit[] {
     const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(checkableGroup);
     const edits: TEdit[] = [];
 
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
-      edits.push(
-        ...this.editFactory.createTextEdit(
-          scriptureDocument as TDoc,
-          {
-            start: scriptureDocument.positionAt(
-              quoteCorrection.existingQuotationMark.startIndex,
-              quoteCorrection.existingQuotationMark.enclosingRange,
-            ),
-            end: scriptureDocument.positionAt(
-              quoteCorrection.existingQuotationMark.endIndex,
-              quoteCorrection.existingQuotationMark.enclosingRange,
-            ),
-          },
-          quoteCorrection.correctedQuotationMark.text,
-        ),
-      );
+      if (this.doesCorrectionMatchPosition(scriptureDocument, quoteCorrection, position)) {
+        edits.push(
+          ...this.editFactory.createTextEdit(
+            scriptureDocument as TDoc,
+            {
+              start: scriptureDocument.positionAt(
+                quoteCorrection.existingQuotationMark.startIndex,
+                quoteCorrection.existingQuotationMark.enclosingRange,
+              ),
+              end: scriptureDocument.positionAt(
+                quoteCorrection.existingQuotationMark.endIndex,
+                quoteCorrection.existingQuotationMark.enclosingRange,
+              ),
+            },
+            quoteCorrection.correctedQuotationMark.text,
+          ),
+        );
+      }
     }
 
     return edits;
   }
 
-  private correctTextDocument(textDocument: TextDocument): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
+  private doesCorrectionMatchPosition(
+    document: ScriptureDocument | TextDocument,
+    quoteCorrection: QuoteCorrection,
+    position: Position | undefined,
+  ): boolean {
+    if (position === undefined) {
+      return true;
+    }
+
+    const correctionPosition: Position = document.positionAt(
+      quoteCorrection.existingQuotationMark.startIndex,
+      quoteCorrection.existingQuotationMark.enclosingRange,
+    );
+    return correctionPosition.line === position.line && correctionPosition.character + 1 === position.character;
+    // VSCode consistently sends the character position as one greater than the position returned by querying the document
+  }
+
+  private correctTextDocument(
+    textDocument: TextDocument,
+    position: Position | undefined = undefined,
+  ): TEdit[] | PromiseLike<TEdit[] | undefined> | undefined {
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
     const quotationAnalysis: QuotationAnalysis = quotationAnalyzer.analyze(
       new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]),
@@ -100,16 +125,18 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
 
     const edits: TEdit[] = [];
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
-      edits.push(
-        ...this.editFactory.createTextEdit(
-          textDocument as TDoc,
-          {
-            start: textDocument.positionAt(quoteCorrection.existingQuotationMark.startIndex),
-            end: textDocument.positionAt(quoteCorrection.existingQuotationMark.endIndex),
-          },
-          quoteCorrection.correctedQuotationMark.text,
-        ),
-      );
+      if (this.doesCorrectionMatchPosition(textDocument, quoteCorrection, position)) {
+        edits.push(
+          ...this.editFactory.createTextEdit(
+            textDocument as TDoc,
+            {
+              start: textDocument.positionAt(quoteCorrection.existingQuotationMark.startIndex),
+              end: textDocument.positionAt(quoteCorrection.existingQuotationMark.endIndex),
+            },
+            quoteCorrection.correctedQuotationMark.text,
+          ),
+        );
+      }
     }
 
     if (edits.length === 0) {

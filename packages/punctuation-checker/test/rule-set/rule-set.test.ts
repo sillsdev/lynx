@@ -227,9 +227,10 @@ describe('DiagnosticProviderFactory tests', () => {
 
     expect(onTypeFormatters[0].id).toEqual('quote-corrector');
 
-    expect(await onTypeFormatters[0].getOnTypeEdits('A', { line: 0, character: 0 }, '')).toBe(undefined);
-    expect(await onTypeFormatters[0].getOnTypeEdits('+A', { line: 0, character: 0 }, '')).toHaveLength(1);
-    expect(await onTypeFormatters[0].getOnTypeEdits('+A+', { line: 0, character: 0 }, '')).toHaveLength(2);
+    expect(await onTypeFormatters[0].getOnTypeEdits('A', { line: 0, character: 1 }, '')).toBe(undefined);
+    expect(await onTypeFormatters[0].getOnTypeEdits('+A', { line: 0, character: 1 }, '')).toHaveLength(1);
+    expect(await onTypeFormatters[0].getOnTypeEdits('+A+', { line: 0, character: 1 }, '')).toHaveLength(1);
+    expect(await onTypeFormatters[0].getOnTypeEdits('+A+', { line: 0, character: 3 }, '')).toHaveLength(1);
   });
 
   it('also accepts a ScriptureDocument factory', async () => {
@@ -261,6 +262,8 @@ describe('DiagnosticProviderFactory tests', () => {
       stubScriptureDocumentManager,
       new UsfmEditFactory(stylesheet),
     );
-    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 0 }, '')).toHaveLength(2);
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 11 }, '')).toHaveLength(1);
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 12 }, '')).toHaveLength(0);
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 13 }, '')).toHaveLength(1);
   });
 });
