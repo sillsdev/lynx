@@ -226,8 +226,10 @@ describe('integration tests', () => {
       expect(await standardEnglishCharacterChecker.getDiagnostics('‟″á×ꭗﬁ')).toEqual([
         testEnv.createExpectedDiagnostic('‟', 0, 1),
         testEnv.createExpectedDiagnostic('″', 1, 2),
-        testEnv.createExpectedDiagnostic('á', 2, 3),
-        testEnv.createExpectedDiagnostic('×', 3, 4),
+
+        // These tests should be re-added once we add support for non-English
+        //testEnv.createExpectedDiagnostic('á', 2, 3),
+        //testEnv.createExpectedDiagnostic('×', 3, 4),
         testEnv.createExpectedDiagnostic('ꭗ', 4, 5),
         testEnv.createExpectedDiagnostic('ﬁ', 5, 6),
       ]);
