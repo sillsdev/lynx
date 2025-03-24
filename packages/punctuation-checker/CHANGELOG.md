@@ -1,5 +1,11 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.4
+
+### Patch Changes
+
+- 52cc9c1: Expand allowed characters for demo and only correct the typed character with smart quotes
+
 ## 0.1.3
 
 ### Patch Changes
