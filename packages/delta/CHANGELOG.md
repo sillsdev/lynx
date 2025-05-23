@@ -1,5 +1,12 @@
 # @sillsdev/lynx-delta
 
+## 0.2.2
+
+### Patch Changes
+
+- 0fea2e7: Fix updating of DeltaDocument with an empty Delta
+- 884f36f: Properly handle updating last paragraph in ScriptureDeltaDocument
+
 ## 0.2.1
 
 ### Patch Changes
