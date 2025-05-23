@@ -187,6 +187,9 @@ function computeLineOffsets(delta: Delta, lineOffsets: number[], lineOps: number
 }
 
 export function getChangeOffsetRange(change: Delta): [number, number, number, number] {
+  if (change.ops.length === 0) {
+    return [0, 0, 0, 0];
+  }
   let startOffset = 0;
   let i = 0;
   while (change.ops[i].retain != null && change.ops[i].attributes == null) {

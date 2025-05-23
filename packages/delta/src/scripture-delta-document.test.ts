@@ -341,4 +341,28 @@ describe('ScriptureDeltaDocument', () => {
     expect(document.offsetAt({ line: 2, character: 0 })).toEqual(14);
     expect(document.offsetAt({ line: 3, character: 0 })).toEqual(31);
   });
+
+  it('empty change', () => {
+    const document = new ScriptureDeltaDocument(
+      'uri',
+      'scr-delta',
+      1,
+      new Delta()
+        .insert({ chapter: { number: '1', style: 'c' } })
+        .insert({ verse: { number: '1', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_1' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '2', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_2' })
+        .insert('\n', { para: { style: 'p' } }),
+    );
+
+    document.update(new Delta(), 2);
+
+    expect(document.children.length).toEqual(3);
+
+    expect(document.children[0].getText()).toEqual(`\ufffc`);
+    expect(document.children[1].getText()).toEqual(`\ufffcThis is a test.\n`);
+    expect(document.children[2].getText()).toEqual(`\ufffcThis is a test.\n`);
+  });
 });

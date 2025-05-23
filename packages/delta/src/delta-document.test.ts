@@ -174,4 +174,23 @@ describe('DeltaDocument', () => {
     expect(document.positionAt(13)).toEqual({ line: 2, character: 6 });
     expect(document.positionAt(14)).toEqual({ line: 3, character: 0 });
   });
+
+  it('empty change', () => {
+    const document = new DeltaDocument(
+      'uri',
+      'rich-text',
+      1,
+      new Delta()
+        .insert('Hello\n\n')
+        .insert('World')
+        .insert({ image: 'octocat.png' })
+        .insert('\n', { align: 'right' })
+        .insert('!')
+        .insert('\n'),
+    );
+
+    document.update(new Delta(), 2);
+
+    expect(document.getText()).toEqual('Hello\n\nWorld\uFFFC\n!\n');
+  });
 });
