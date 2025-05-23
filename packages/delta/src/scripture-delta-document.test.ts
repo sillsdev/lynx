@@ -365,4 +365,39 @@ describe('ScriptureDeltaDocument', () => {
     expect(document.children[1].getText()).toEqual(`\ufffcThis is a test.\n`);
     expect(document.children[2].getText()).toEqual(`\ufffcThis is a test.\n`);
   });
+
+  it('update last paragraph attributes', () => {
+    const document = new ScriptureDeltaDocument(
+      'uri',
+      'scr-delta',
+      1,
+      new Delta()
+        .insert({ chapter: { number: '1', style: 'c' } })
+        .insert({ verse: { number: '1', style: 'v' } })
+        .insert({ blank: true }, { segment: 'verse_1_1' })
+        .insert({ verse: { number: '2', style: 'v' } })
+        .insert({ blank: true }, { segment: 'verse_1_2' })
+        .insert('\n'),
+    );
+
+    document.update(
+      new Delta()
+        .retain(2)
+        .insert('Verse one.')
+        .delete(1)
+        .retain(1)
+        .insert('Verse two.')
+        .delete(1)
+        .retain(1, { para: { style: 'p' } }),
+      2,
+    );
+
+    expect(document.children.length).toEqual(2);
+
+    expect(document.children[1]).toBeInstanceOf(ScriptureParagraph);
+    const paragraph1 = document.children[1] as ScriptureParagraph;
+    expect(paragraph1.style).toEqual('p');
+    expect(paragraph1.getText()).toEqual(`\ufffcVerse one.\ufffcVerse two.\n`);
+    expect(paragraph1.range).toEqual({ start: { line: 1, character: 0 }, end: { line: 2, character: 0 } });
+  });
 });
