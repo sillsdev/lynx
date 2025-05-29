@@ -37,7 +37,7 @@ export class QuotationAnalyzer {
     const resolvedQuotationMark: QuoteMetadata = this.resolveQuotationMark(unresolvedQuotationMark);
 
     this.processQuotationMarkByDirection(resolvedQuotationMark);
-    this.addAutocorrectionIfNecessary(resolvedQuotationMark);
+    this.addQuoteCorrectionIfNecessary(resolvedQuotationMark);
     this.warnForDepthIfNecessary(resolvedQuotationMark);
   }
 
@@ -91,10 +91,11 @@ export class QuotationAnalyzer {
     }
   }
 
-  private addAutocorrectionIfNecessary(quotationMark: QuoteMetadata): void {
-    if (!quotationMark.isAutocorrectable) {
+  private addQuoteCorrectionIfNecessary(quotationMark: QuoteMetadata): void {
+    if (!quotationMark.isAmbiguous) {
       return;
     }
+
     const correctedCharacter: string | undefined = this.quotationConfig.getUnambiguousQuotationMarkByType(
       quotationMark.depth,
       quotationMark.direction,
@@ -229,7 +230,7 @@ interface DepthAndDirectionPreference {
 export class QuotationAnalysis {
   private unmatchedQuotes: QuoteMetadata[] = [];
   private incorrectlyNestedQuotes: QuoteMetadata[] = [];
-  private ambiguousQuotes: QuoteCorrection[] = [];
+  private ambiguousQuoteCorrections: QuoteCorrection[] = [];
   private tooDeeplyNestedQuotes: QuoteMetadata[] = [];
 
   addUnmatchedQuote(quote: QuoteMetadata): void {
@@ -241,7 +242,7 @@ export class QuotationAnalysis {
   }
 
   addAmbiguousQuoteCorrection(quoteCorrection: QuoteCorrection): void {
-    this.ambiguousQuotes.push(quoteCorrection);
+    this.ambiguousQuoteCorrections.push(quoteCorrection);
   }
 
   addTooDeeplyNestedQuote(quote: QuoteMetadata): void {
@@ -257,7 +258,7 @@ export class QuotationAnalysis {
   }
 
   public getAmbiguousQuoteCorrections(): QuoteCorrection[] {
-    return this.ambiguousQuotes;
+    return this.ambiguousQuoteCorrections;
   }
 
   public getTooDeeplyNestedQuotes(): QuoteMetadata[] {

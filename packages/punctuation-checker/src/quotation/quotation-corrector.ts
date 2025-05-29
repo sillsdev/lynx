@@ -74,6 +74,10 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
     const edits: TEdit[] = [];
 
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
+      if (!quoteCorrection.existingQuotationMark.isAutocorrectable) {
+        continue;
+      }
+
       if (this.doesCorrectionMatchPosition(scriptureDocument, quoteCorrection, position)) {
         edits.push(
           ...this.editFactory.createTextEdit(
@@ -125,6 +129,10 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
 
     const edits: TEdit[] = [];
     for (const quoteCorrection of quotationAnalysis.getAmbiguousQuoteCorrections()) {
+      if (!quoteCorrection.existingQuotationMark.isAutocorrectable) {
+        continue;
+      }
+
       if (this.doesCorrectionMatchPosition(textDocument, quoteCorrection, position)) {
         edits.push(
           ...this.editFactory.createTextEdit(

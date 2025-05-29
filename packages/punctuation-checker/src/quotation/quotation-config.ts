@@ -102,8 +102,23 @@ export class QuotationConfig {
     return Array.from(depths).map((depth) => QuotationDepth.fromNumber(depth));
   }
 
-  public isQuoteAutocorrectable(quotationMark: string): boolean {
+  public isQuoteAmbiguous(quotationMark: string): boolean {
     return this.ambiguousQuoteRegex.test(quotationMark);
+  }
+
+  public isQuoteAutocorrectable(quotationMark: string, leftContext = ''): boolean {
+    if (!this.ambiguousQuoteRegex.test(quotationMark)) {
+      return false;
+    }
+
+    // When patterns to ignore are provided (e.g. apostrophes), only the left context
+    // is checked, because the user hasn't typed the right context yet.
+    for (const quotationToIgnore of this.quotationsToIgnore) {
+      if (quotationToIgnore.doesStringAndLeftContextMatch(quotationMark, leftContext)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public getUnambiguousQuotationMarkByType(

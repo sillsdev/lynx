@@ -72,8 +72,8 @@ export class QuotationIssueFinder implements IssueFinder {
   }
 
   private createAmbiguousQuoteDiagnostics(analysis: QuotationAnalysis): void {
-    for (const quoteCorrection of analysis.getAmbiguousQuoteCorrections()) {
-      this.addAmbiguousQuoteWarning(quoteCorrection);
+    for (const ambiguousQuote of analysis.getAmbiguousQuoteCorrections()) {
+      this.addAmbiguousQuoteWarning(ambiguousQuote);
     }
   }
 
@@ -136,21 +136,21 @@ export class QuotationIssueFinder implements IssueFinder {
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addAmbiguousQuoteWarning(quoteCorrection: QuoteCorrection): void {
+  private addAmbiguousQuoteWarning(ambiguousQuote: QuoteCorrection): void {
     const code: string = AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE;
     const diagnostic: Diagnostic = this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(
-        quoteCorrection.existingQuotationMark.startIndex,
-        quoteCorrection.existingQuotationMark.endIndex,
-        quoteCorrection.existingQuotationMark.enclosingRange,
+        ambiguousQuote.existingQuotationMark.startIndex,
+        ambiguousQuote.existingQuotationMark.endIndex,
+        ambiguousQuote.existingQuotationMark.enclosingRange,
       )
       .setMessage(this.getErrorMessageByCode(code))
       .setData({
-        existingQuotationMark: quoteCorrection.existingQuotationMark.text,
-        correctedQuotationMark: quoteCorrection.correctedQuotationMark.text,
+        existingQuotationMark: ambiguousQuote.existingQuotationMark.text,
+        correctedQuotationMark: ambiguousQuote.correctedQuotationMark.text,
       })
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);

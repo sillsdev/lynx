@@ -423,6 +423,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(6)
               .setEndIndex(7)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -440,6 +441,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -452,13 +454,14 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(13)
               .setEndIndex(14)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
         });
 
-        it('identifies ambiguous quotes in text containing unambiugous quotes', () => {
+        it('identifies ambiguous quotes in text containing unambiguous quotes', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotes();
 
           const mixedQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
@@ -483,6 +486,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(20)
               .setEndIndex(21)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -495,6 +499,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(29)
               .setEndIndex(30)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -509,6 +514,57 @@ describe('QuotationIterator tests', () => {
               .build(),
           });
           expect(mixedQuotationIterator.next()).toEqual({ done: true, value: undefined });
+        });
+
+        it('labels ambiguous quotes that match the left side of the ignoring pattern as non-autocorrectable', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+          const quotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput("This \"text contains 'some' ambiguous quotes that should be ignored."),
+          );
+
+          expect(quotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Primary)
+              .addDepth(QuotationDepth.Tertiary)
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(5)
+              .setEndIndex(6)
+              .setText('"')
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .build(),
+          });
+          expect(quotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Secondary)
+              .addDepth(QuotationDepth.fromNumber(4))
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(20)
+              .setEndIndex(21)
+              .setText("'")
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .build(),
+          });
+          expect(quotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Secondary)
+              .addDepth(QuotationDepth.fromNumber(4))
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(25)
+              .setEndIndex(26)
+              .setText("'")
+              .markAsAmbiguous()
+              .build(),
+          });
+          expect(quotationIterator.next()).toEqual({ done: true, value: undefined });
         });
       });
 
@@ -1055,6 +1111,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(10)
               .setEndIndex(11)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1066,6 +1123,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText("'")
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1077,6 +1135,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(35)
               .setEndIndex(36)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1088,6 +1147,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(45)
               .setEndIndex(46)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1099,7 +1159,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(57)
               .setEndIndex(58)
               .setText("'")
-              .markAsAutocorrectable()
+              .markAsAmbiguous()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1110,6 +1170,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(58)
               .setEndIndex(59)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1130,6 +1191,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(10)
               .setEndIndex(11)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1161,6 +1223,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(45)
               .setEndIndex(46)
               .setText('"')
+              .markAsAmbiguous()
               .markAsAutocorrectable()
               .build(),
           });
@@ -1172,7 +1235,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(57)
               .setEndIndex(58)
               .setText("'")
-              .markAsAutocorrectable()
+              .markAsAmbiguous()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1600,6 +1663,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
           startIndex: 3,
           endIndex: 6,
           text: '\u201C',
+          isAmbiguous: false,
           isAutocorrectable: false,
         },
       );
@@ -1614,6 +1678,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(3)
         .setEndIndex(6)
         .setText('"')
+        .markAsAmbiguous()
         .markAsAutocorrectable()
         .build();
 
@@ -1633,6 +1698,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
           startIndex: 3,
           endIndex: 6,
           text: '"',
+          isAmbiguous: true,
           isAutocorrectable: true,
         },
       );
@@ -1644,7 +1710,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         .setStartIndex(3)
         .setEndIndex(6)
         .setText('"')
-        .markAsAutocorrectable()
+        .markAsAmbiguous()
         .build();
 
       expect(groupAddUnresolvedQuoteMetadata.isDirectionPossible(PairedPunctuationDirection.Opening)).toBe(true);
@@ -1664,7 +1730,8 @@ describe('UnresolvedQuoteMetadata tests', () => {
         startIndex: 3,
         endIndex: 6,
         text: '"',
-        isAutocorrectable: true,
+        isAmbiguous: true,
+        isAutocorrectable: false,
       });
     });
   });
@@ -1678,6 +1745,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
@@ -1708,6 +1776,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
@@ -1729,6 +1798,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
@@ -1738,6 +1808,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       startIndex: 3,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening)).toEqual({
@@ -1746,6 +1817,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       startIndex: 3,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), PairedPunctuationDirection.Closing)).toEqual({
@@ -1754,6 +1826,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       startIndex: 3,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Closing)).toEqual({
@@ -1762,6 +1835,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       startIndex: 3,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
   });
@@ -1775,6 +1849,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
@@ -1797,6 +1872,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
@@ -1825,6 +1901,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       .setStartIndex(3)
       .setEndIndex(6)
       .setText('"')
+      .markAsAmbiguous()
       .markAsAutocorrectable()
       .build();
 
