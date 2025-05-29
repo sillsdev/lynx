@@ -10,7 +10,7 @@ import {
   QuoteMetadata,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
-import { PairedPunctuationDirection } from '../../src/utils';
+import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationAnalyzer tests', () => {
   describe('Miscellaneous tests', () => {
@@ -27,6 +27,7 @@ describe('QuotationAnalyzer tests', () => {
           startIndex: 0,
           endIndex: 1,
           text: '\u201C',
+          isAmbiguous: false,
           isAutocorrectable: false,
         },
       ]);
@@ -114,6 +115,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -128,6 +130,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 17,
               endIndex: 18,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -142,6 +145,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 19,
               endIndex: 20,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -156,6 +160,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -174,6 +179,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -188,6 +194,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 16,
               endIndex: 17,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -202,6 +209,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 16,
               endIndex: 17,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -216,6 +224,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 35,
               endIndex: 36,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -237,6 +246,7 @@ describe('QuotationAnalyzer tests', () => {
               endIndex: 18,
               text: '\u201C',
               isAutocorrectable: false,
+              isAmbiguous: false,
               parentDepth: QuotationDepth.Primary,
             },
           ]);
@@ -300,7 +310,7 @@ describe('QuotationAnalyzer tests', () => {
           expect(firstLevelAmbiguousNestedQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
 
           const secondLevelAmbiguousNestedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            testEnv.createTextInput("\u201CThe second level 'of quotes' is ambiguous.\u201D"),
+            testEnv.createTextInput("\u201CThe second level 'of quote' is ambiguous.\u201D"),
           );
           expect(secondLevelAmbiguousNestedQuoteAnalysis.getUnmatchedQuotes()).toEqual([]);
           expect(secondLevelAmbiguousNestedQuoteAnalysis.getIncorrectlyNestedQuotes()).toEqual([]);
@@ -327,6 +337,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -341,6 +352,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 13,
               endIndex: 14,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -355,6 +367,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 14,
               endIndex: 15,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -369,6 +382,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -377,6 +391,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 14,
               endIndex: 15,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -391,6 +406,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -399,12 +415,13 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 14,
               endIndex: 15,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
 
           const ambiguousUnclosedQuoteAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-            testEnv.createTextInput('"This has an \u2018ambiguous\u2019 unclosed quote'),
+            testEnv.createTextInput('"This has an \u2018ambiguous unclosed\u2019 quote'),
           );
           expect(ambiguousUnclosedQuoteAnalysis.getUnmatchedQuotes()).toEqual([
             {
@@ -413,6 +430,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -427,6 +445,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 13,
               endIndex: 14,
               text: "'",
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -447,6 +466,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 26,
               endIndex: 27,
               text: '\u201E',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -455,6 +475,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 17,
               endIndex: 18,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -471,6 +492,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 26,
               endIndex: 27,
               text: '\u201E',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -489,6 +511,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 37,
               endIndex: 38,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -503,6 +526,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 22,
               endIndex: 23,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -517,6 +541,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 22,
               endIndex: 23,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -525,6 +550,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 39,
               endIndex: 40,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -539,6 +565,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 33,
               endIndex: 34,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -547,6 +574,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 41,
               endIndex: 42,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -561,6 +589,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 37,
               endIndex: 38,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -575,7 +604,8 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 37,
               endIndex: 38,
               text: "'",
-              isAutocorrectable: true,
+              isAmbiguous: true,
+              isAutocorrectable: false,
               parentDepth: new QuotationRootLevel(),
             },
           ]);
@@ -594,6 +624,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 23,
               endIndex: 24,
               text: '\u201F',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -608,6 +639,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 16,
               endIndex: 17,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -624,6 +656,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 32,
               endIndex: 33,
               text: '\u201F',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -638,6 +671,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 31,
               endIndex: 32,
               text: '\u201F',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -662,6 +696,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
               parentDepth: QuotationDepth.Secondary,
             },
@@ -679,6 +714,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
               parentDepth: QuotationDepth.Secondary,
             },
@@ -696,6 +732,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 42,
               endIndex: 43,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
               parentDepth: QuotationDepth.Tertiary,
             },
@@ -711,6 +748,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 34,
               endIndex: 35,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
               parentDepth: QuotationDepth.Secondary,
             },
@@ -730,6 +768,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 17,
               endIndex: 18,
               text: '\u201E',
+              isAmbiguous: false,
               isAutocorrectable: false,
               parentDepth: QuotationDepth.Primary,
             },
@@ -753,6 +792,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -761,6 +801,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 24,
               endIndex: 25,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -778,6 +819,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 0,
               endIndex: 1,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -786,6 +828,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 11,
               endIndex: 12,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -794,6 +837,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 24,
               endIndex: 25,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -802,6 +846,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 32,
               endIndex: 33,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -828,6 +873,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 11,
               endIndex: 12,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -836,6 +882,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 24,
               endIndex: 25,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -855,6 +902,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 8,
               endIndex: 9,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -863,6 +911,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 21,
               endIndex: 22,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -871,6 +920,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 27,
               endIndex: 28,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -879,6 +929,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 34,
               endIndex: 35,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -915,6 +966,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 21,
               endIndex: 22,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -923,6 +975,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 27,
               endIndex: 28,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -942,6 +995,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 17,
               endIndex: 18,
               text: '\u201C',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -950,6 +1004,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 29,
               endIndex: 30,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -958,6 +1013,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 36,
               endIndex: 37,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -966,6 +1022,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 37,
               endIndex: 38,
               text: '\u201D',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -1012,6 +1069,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 29,
               endIndex: 30,
               text: '\u2018',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
             {
@@ -1020,6 +1078,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 36,
               endIndex: 37,
               text: '\u2019',
+              isAmbiguous: false,
               isAutocorrectable: false,
             },
           ]);
@@ -1052,6 +1111,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 21,
               endIndex: 22,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
             {
@@ -1060,6 +1120,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 27,
               endIndex: 28,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -1077,6 +1138,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 17,
               endIndex: 18,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
             {
@@ -1085,6 +1147,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 29,
               endIndex: 30,
               text: "'",
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
             {
@@ -1093,6 +1156,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 36,
               endIndex: 37,
               text: "'",
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
             {
@@ -1101,6 +1165,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 37,
               endIndex: 38,
               text: '"',
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -1141,6 +1206,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 29,
               endIndex: 30,
               text: "'",
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
             {
@@ -1149,6 +1215,7 @@ describe('QuotationAnalyzer tests', () => {
               startIndex: 36,
               endIndex: 37,
               text: "'",
+              isAmbiguous: true,
               isAutocorrectable: true,
             },
           ]);
@@ -1187,6 +1254,7 @@ describe('QuotationAnalyzer tests', () => {
           endIndex: 12,
           text: '\u2018',
           enclosingRange: scriptureNode1.range,
+          isAmbiguous: false,
           isAutocorrectable: false,
         },
       ]);
@@ -1215,6 +1283,7 @@ describe('QuotationAnalyzer tests', () => {
             startIndex: 0,
             endIndex: 1,
             text: '"',
+            isAmbiguous: true,
             isAutocorrectable: true,
           },
           correctedQuotationMark: {
@@ -1223,13 +1292,14 @@ describe('QuotationAnalyzer tests', () => {
             startIndex: 0,
             endIndex: 1,
             text: '\u201C',
+            isAmbiguous: true,
             isAutocorrectable: true,
           },
         },
       ]);
 
       const multipleNestedQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-        testEnv.createTextInput('"Sample text with \u2018ambiguous marks\''),
+        testEnv.createTextInput('"Sample text with \u2018ambiguous marks \''),
       );
 
       expect(multipleNestedQuotesAnalysis.getAmbiguousQuoteCorrections()).toEqual([
@@ -1240,6 +1310,7 @@ describe('QuotationAnalyzer tests', () => {
             startIndex: 0,
             endIndex: 1,
             text: '"',
+            isAmbiguous: true,
             isAutocorrectable: true,
           },
           correctedQuotationMark: {
@@ -1248,6 +1319,7 @@ describe('QuotationAnalyzer tests', () => {
             startIndex: 0,
             endIndex: 1,
             text: '\u201C',
+            isAmbiguous: true,
             isAutocorrectable: true,
           },
         },
@@ -1255,18 +1327,70 @@ describe('QuotationAnalyzer tests', () => {
           existingQuotationMark: {
             depth: QuotationDepth.Secondary,
             direction: PairedPunctuationDirection.Closing,
-            startIndex: 34,
-            endIndex: 35,
+            startIndex: 35,
+            endIndex: 36,
             text: "'",
+            isAmbiguous: true,
             isAutocorrectable: true,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
             direction: PairedPunctuationDirection.Closing,
-            startIndex: 34,
-            endIndex: 35,
+            startIndex: 35,
+            endIndex: 36,
             text: '\u2019',
+            isAmbiguous: true,
             isAutocorrectable: true,
+          },
+        },
+      ]);
+    });
+
+    it('labels ambiguous quotation marks matching the "ignore" pattern as non-autocorrectable', () => {
+      const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+      const nonAutocorrectableQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
+        testEnv.createTextInput("\u201C'Sample text with unautocorrectable' quote"),
+      );
+
+      expect(nonAutocorrectableQuotesAnalysis.getAmbiguousQuoteCorrections()).toEqual([
+        {
+          existingQuotationMark: {
+            depth: QuotationDepth.Secondary,
+            direction: PairedPunctuationDirection.Opening,
+            startIndex: 1,
+            endIndex: 2,
+            text: "'",
+            isAmbiguous: true,
+            isAutocorrectable: true,
+          },
+          correctedQuotationMark: {
+            depth: QuotationDepth.Secondary,
+            direction: PairedPunctuationDirection.Opening,
+            startIndex: 1,
+            endIndex: 2,
+            text: '\u2018',
+            isAmbiguous: true,
+            isAutocorrectable: true,
+          },
+        },
+        {
+          existingQuotationMark: {
+            depth: QuotationDepth.Secondary,
+            direction: PairedPunctuationDirection.Closing,
+            startIndex: 36,
+            endIndex: 37,
+            text: "'",
+            isAmbiguous: true,
+            isAutocorrectable: false,
+          },
+          correctedQuotationMark: {
+            depth: QuotationDepth.Secondary,
+            direction: PairedPunctuationDirection.Closing,
+            startIndex: 36,
+            endIndex: 37,
+            text: '\u2019',
+            isAmbiguous: true,
+            isAutocorrectable: false,
           },
         },
       ]);
@@ -1294,6 +1418,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
   });
@@ -1309,6 +1434,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(0)
           .setEndIndex(1)
           .setText('"')
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1318,6 +1444,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 0,
       endIndex: 1,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
   });
@@ -1330,6 +1457,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 1,
       enclosingRange: undefined,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     };
     let quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuotePrimaryOpening);
@@ -1342,6 +1470,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1351,6 +1480,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: "'",
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
 
@@ -1362,6 +1492,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('"')
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1371,6 +1502,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
 
@@ -1381,6 +1513,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 1,
       enclosingRange: undefined,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuoteSecondaryOpening);
@@ -1393,6 +1526,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1402,6 +1536,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: "'",
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
 
@@ -1413,6 +1548,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('"')
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1422,6 +1558,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: '"',
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
 
@@ -1432,6 +1569,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 4,
       enclosingRange: undefined,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1443,6 +1581,7 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText("'")
+          .markAsAmbiguous()
           .markAsAutocorrectable()
           .build(),
       ),
@@ -1452,6 +1591,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: "'",
+      isAmbiguous: true,
       isAutocorrectable: true,
     });
   });
@@ -1475,6 +1615,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 0,
       endIndex: 1,
       text: '\u201D',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1485,6 +1626,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 1,
       enclosingRange: undefined,
       text: '\u201D',
+      isAmbiguous: false,
       isAutocorrectable: false,
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuotePrimaryOpening);
@@ -1505,6 +1647,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: '\u201D',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1524,6 +1667,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 5,
       endIndex: 6,
       text: '\u2019',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1534,6 +1678,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 11,
       enclosingRange: undefined,
       text: '\u2019',
+      isAmbiguous: false,
       isAutocorrectable: false,
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuoteSecondaryOpening);
@@ -1556,6 +1701,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 15,
       endIndex: 16,
       text: '\u2019',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
   });
@@ -1569,6 +1715,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 6,
       enclosingRange: undefined,
       text: '\u2018',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
     expect(
@@ -1587,6 +1734,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 10,
       endIndex: 11,
       text: '\u201D',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1598,6 +1746,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 1,
       enclosingRange: undefined,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
     expect(
@@ -1616,6 +1765,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 10,
       endIndex: 11,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1637,6 +1787,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 10,
       endIndex: 11,
       text: '\u201D',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
 
@@ -1648,6 +1799,7 @@ describe('QuotationResolver tests', () => {
       endIndex: 11,
       enclosingRange: undefined,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
     expect(
@@ -1666,6 +1818,7 @@ describe('QuotationResolver tests', () => {
       startIndex: 15,
       endIndex: 16,
       text: '\u201C',
+      isAmbiguous: false,
       isAutocorrectable: false,
     });
   });
@@ -1710,6 +1863,22 @@ class TestEnvironment {
         .mapAmbiguousQuotationMark('"', '\u201D')
         .mapAmbiguousQuotationMark("'", '\u2018')
         .mapAmbiguousQuotationMark("'", '\u2019')
+        .ignoreMatchingQuotationMarks(
+          // possessives and contractions
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\w$/)
+            .setRightContext(/^\w/)
+            .build(),
+        )
+        .ignoreMatchingQuotationMarks(
+          // for possessives ending in "s", e.g. "Moses'"
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\ws$/)
+            .setRightContext(/(^[ \n,.:;]|^$)/)
+            .build(),
+        )
         .build(),
     );
   }

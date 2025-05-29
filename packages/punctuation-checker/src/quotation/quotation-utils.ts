@@ -6,6 +6,7 @@ import { QuotationConfig } from './quotation-config';
 
 export interface QuoteMetadata extends PairedPunctuationMetadata {
   depth: QuotationDepth;
+  isAmbiguous: boolean;
   isAutocorrectable: boolean;
   parentDepth?: QuotationDepth;
 }
@@ -17,6 +18,7 @@ export class UnresolvedQuoteMetadata {
   private endIndex = 0;
   private enclosingRange: Range | undefined = undefined;
   private text = '';
+  private isAmbiguous = false;
   private isAutocorrectable = false;
 
   // Private constructor so that the class can only be instantiated through the Builder
@@ -77,6 +79,7 @@ export class UnresolvedQuoteMetadata {
       endIndex: this.endIndex,
       enclosingRange: this.enclosingRange,
       text: this.text,
+      isAmbiguous: this.isAmbiguous,
       isAutocorrectable: this.isAutocorrectable,
     };
   }
@@ -140,6 +143,11 @@ export class UnresolvedQuoteMetadata {
 
     public setText(text: string): this {
       this.objectInstance.text = text;
+      return this;
+    }
+
+    public markAsAmbiguous(): this {
+      this.objectInstance.isAmbiguous = true;
       return this;
     }
 
@@ -297,8 +305,12 @@ export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetada
       .setText(matchingText);
 
     unresolvedQuoteMetadataBuilder.setEnclosingRange(this.currentCheckable.getEnclosingRange());
-    if (this.quotationConfig.isQuoteAutocorrectable(matchingText)) {
-      unresolvedQuoteMetadataBuilder.markAsAutocorrectable();
+    if (this.isQuoteAmbiguous(matchingText)) {
+      unresolvedQuoteMetadataBuilder.markAsAmbiguous();
+
+      if (this.isQuoteAutocorrectable(match)) {
+        unresolvedQuoteMetadataBuilder.markAsAutocorrectable();
+      }
     }
 
     this.nextQuote = unresolvedQuoteMetadataBuilder.build();
@@ -308,16 +320,34 @@ export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetada
     if (!this.quotationConfig.isQuotationMarkPotentiallyIgnoreable(quoteMatch[0])) {
       return false;
     }
-    const leftContext: string =
-      this.currentCheckable?.getText().substring(Math.max(0, quoteMatch.index - 5), quoteMatch.index) ?? '';
-    const rightContext: string =
+    const leftContext: string = this.getLeftContextForMatch(quoteMatch);
+    const rightContext: string = this.getRightContextForMatch(quoteMatch);
+
+    return this.quotationConfig.shouldIgnoreQuotationMark(quoteMatch[0], leftContext, rightContext);
+  }
+
+  private getLeftContextForMatch(quoteMatch: RegExpExecArray): string {
+    return this.currentCheckable?.getText().substring(Math.max(0, quoteMatch.index - 5), quoteMatch.index) ?? '';
+  }
+
+  private getRightContextForMatch(quoteMatch: RegExpExecArray): string {
+    return (
       this.currentCheckable
         ?.getText()
         .substring(
           quoteMatch.index + quoteMatch[0].length,
           Math.min(this.currentCheckable.getText().length, quoteMatch.index + quoteMatch[0].length + 5),
-        ) ?? '';
-    return this.quotationConfig.shouldIgnoreQuotationMark(quoteMatch[0], leftContext, rightContext);
+        ) ?? ''
+    );
+  }
+
+  private isQuoteAmbiguous(quotationMark: string): boolean {
+    return this.quotationConfig.isQuoteAmbiguous(quotationMark);
+  }
+
+  private isQuoteAutocorrectable(quoteMatch: RegExpExecArray): boolean {
+    const leftContext: string = this.getLeftContextForMatch(quoteMatch);
+    return this.quotationConfig.isQuoteAutocorrectable(quoteMatch[0], leftContext);
   }
 
   [Symbol.iterator](): this {

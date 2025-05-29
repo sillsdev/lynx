@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { QuotationCorrector } from '../../src/quotation/quotation-corrector';
+import { StringContextMatcher } from '../../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
 
 describe('Text quote correction tests', () => {
@@ -22,7 +23,7 @@ describe('Text quote correction tests', () => {
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits('Once upon a time...', arbitraryPosition, arbitraryCharacter),
-    ).toEqual(undefined);
+    ).toBeUndefined();
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
@@ -30,7 +31,7 @@ describe('Text quote correction tests', () => {
         arbitraryPosition,
         arbitraryCharacter,
       ),
-    ).toEqual(undefined);
+    ).toBeUndefined();
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits(
@@ -38,11 +39,11 @@ describe('Text quote correction tests', () => {
         arbitraryPosition,
         arbitraryCharacter,
       ),
-    ).toEqual(undefined);
+    ).toBeUndefined();
   });
 
   it('corrects ambiguous quotation marks', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithEnglishQuotesButNoIgnorePattern();
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', { line: 0, character: 1 }, '"'),
@@ -122,7 +123,7 @@ describe('Text quote correction tests', () => {
   });
 
   it('does not depend on whitespace', async () => {
-    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithEnglishQuotesButNoIgnorePattern();
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits('"Once upon a time...', { line: 0, character: 1 }, '"'),
@@ -228,6 +229,22 @@ describe('Text quote correction tests', () => {
       await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 20 }, '+'),
     ).toEqual([testEnv.createExpectedEdit('\u201D', 19, 20)]);
   });
+
+  it('does not produce corrections when the user might be typing an ignored pattern (i.e. an apostrophe)', async () => {
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits('It was the best" of times', { line: 0, character: 16 }, '"'),
+    ).toEqual([testEnv.createExpectedEdit('\u201C', 15, 16)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits("It was the best' of times", { line: 0, character: 16 }, "'"),
+    ).toBeUndefined();
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits("It was the best ' of times", { line: 0, character: 17 }, "'"),
+    ).toEqual([testEnv.createExpectedEdit('\u2018', 16, 17)]);
+  });
 });
 
 describe('Scripture quote correction tests', () => {
@@ -332,6 +349,45 @@ class TextTestEnvironment {
   }
 
   static createWithFullEnglishQuotes(): TextTestEnvironment {
+    return new TextTestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .mapAmbiguousQuotationMark('"', '\u201C')
+        .mapAmbiguousQuotationMark('"', '\u201D')
+        .mapAmbiguousQuotationMark("'", '\u2018')
+        .mapAmbiguousQuotationMark("'", '\u2019')
+        .ignoreMatchingQuotationMarks(
+          // possessives and contractions
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\w$/)
+            .setRightContext(/^\w/)
+            .build(),
+        )
+        .ignoreMatchingQuotationMarks(
+          // for possessives ending in "s", e.g. "Moses'"
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\ws$/)
+            .setRightContext(/(^[ \n,.:;]|^$)/)
+            .build(),
+        )
+        .build(),
+    );
+  }
+
+  static createWithEnglishQuotesButNoIgnorePattern(): TextTestEnvironment {
     return new TextTestEnvironment(
       new QuotationConfig.Builder()
         .setTopLevelQuotationMarks({

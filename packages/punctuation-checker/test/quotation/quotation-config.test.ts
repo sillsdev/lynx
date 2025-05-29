@@ -112,7 +112,7 @@ describe('QuotationConfig tests', () => {
     expect(fullEnglishQuotationConfig.getPossibleQuoteDepths('\u2019')).toEqual([QuotationDepth.Secondary]);
   });
 
-  it('identifies quotation marks that can be auto-corrected', () => {
+  it('identifies ambiguous quotation marks', () => {
     const englishQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
       .setTopLevelQuotationMarks({
         openingPunctuationMark: '\u201C',
@@ -132,12 +132,12 @@ describe('QuotationConfig tests', () => {
       .mapAmbiguousQuotationMark("'", '\u2019')
       .build();
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('"')).toBe(true);
-    expect(englishQuotationConfig.isQuoteAutocorrectable("'")).toBe(true);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAmbiguous('"')).toBe(true);
+    expect(englishQuotationConfig.isQuoteAmbiguous("'")).toBe(true);
+    expect(englishQuotationConfig.isQuoteAmbiguous('\u201C')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAmbiguous('\u201D')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAmbiguous('\u2018')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAmbiguous('\u2019')).toBe(false);
   });
 
   it('creates a regular expression to identify quotation marks in text', () => {
@@ -253,5 +253,53 @@ describe('QuotationConfig tests', () => {
     expect(possesiveAndContractionQuotationConfig.shouldIgnoreQuotationMark('\u2019', 'I', ' ve')).toBe(false);
     expect(possesiveAndContractionQuotationConfig.shouldIgnoreQuotationMark("'", 'Abram', 's')).toBe(true);
     expect(possesiveAndContractionQuotationConfig.shouldIgnoreQuotationMark("'", 'Abram', 's ser')).toBe(true);
+  });
+
+  it('identifies quotation marks that can be auto-corrected', () => {
+    const englishQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
+      .setTopLevelQuotationMarks({
+        openingPunctuationMark: '\u201C',
+        closingPunctuationMark: '\u201D',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u201C',
+        closingPunctuationMark: '\u201D',
+      })
+      .mapAmbiguousQuotationMark('"', '\u201C')
+      .mapAmbiguousQuotationMark('"', '\u201D')
+      .mapAmbiguousQuotationMark("'", '\u2018')
+      .mapAmbiguousQuotationMark("'", '\u2019')
+      .ignoreMatchingQuotationMarks(
+        new StringContextMatcher.Builder().setCenterContent(/'/).setLeftContext(/\w$/).setRightContext(/.*/).build(),
+      )
+      .build();
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', '')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', '')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', '')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', '')).toBe(false);
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('"', '')).toBe(true);
+    expect(englishQuotationConfig.isQuoteAutocorrectable("'", '')).toBe(true);
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', 'test')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', 'test')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', 'test')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', 'test')).toBe(false);
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('"', 'test')).toBe(true);
+    expect(englishQuotationConfig.isQuoteAutocorrectable("'", 'test')).toBe(false);
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', 'test ')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', 'test ')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', 'test ')).toBe(false);
+    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', 'test ')).toBe(false);
+
+    expect(englishQuotationConfig.isQuoteAutocorrectable('"', 'test ')).toBe(true);
+    expect(englishQuotationConfig.isQuoteAutocorrectable("'", 'test ')).toBe(true);
   });
 });

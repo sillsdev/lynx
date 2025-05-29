@@ -82,11 +82,23 @@ export class StringContextMatcher {
   }
 
   public doesContextMatch(leftContext: string, rightContext: string): boolean {
-    return this.leftContextMatcher.test(leftContext) && this.rightContextMatcher.test(rightContext);
+    return this.doesLeftContextMatch(leftContext) && this.doesRightContextMatch(rightContext);
+  }
+
+  private doesLeftContextMatch(leftContext: string): boolean {
+    return this.leftContextMatcher.test(leftContext);
+  }
+
+  private doesRightContextMatch(rightContext: string): boolean {
+    return this.rightContextMatcher.test(rightContext);
   }
 
   public doesStringAndContextMatch(str: string, leftContext: string, rightContext: string): boolean {
     return this.doesStringMatchIgnoringContext(str) && this.doesContextMatch(leftContext, rightContext);
+  }
+
+  public doesStringAndLeftContextMatch(str: string, leftContext: string): boolean {
+    return this.doesStringMatchIgnoringContext(str) && this.doesLeftContextMatch(leftContext);
   }
 
   public static Builder = class {
