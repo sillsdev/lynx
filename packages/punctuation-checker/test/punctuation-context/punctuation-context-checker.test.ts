@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { StandardRuleSets } from '../../src';
 import { PunctuationContextChecker } from '../../src/punctuation-context/punctuation-context-checker';
 import { PunctuationContextConfig } from '../../src/punctuation-context/punctuation-context-config';
-import { ContextDirection } from '../../src/utils';
 import { StubTextDocumentManager } from '../test-utils';
 
 describe('PunctuationContextChecker tests', () => {
@@ -137,9 +136,7 @@ describe('PunctuationContextChecker tests', () => {
 
   it('does not provide any DiagnosticFixes when the insertion of a space would not fix the problem', async () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithCustomConfig(
-      new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(ContextDirection.Right, ['+'], ['t'])
-        .build(),
+      new PunctuationContextConfig.Builder().addProhibitedLeadingPattern(['+'], /^[^t]/).build(),
     );
     await testEnv.init();
 
@@ -224,9 +221,7 @@ describe('PunctuationContextChecker tests', () => {
 
   it('uses the PairedPunctuationConfig that is passed to it', async () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithCustomConfig(
-      new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(ContextDirection.Right, ['+'], [' '])
-        .build(),
+      new PunctuationContextConfig.Builder().addProhibitedTrailingPattern(['+'], /^[^ ]/).build(),
     );
     await testEnv.init();
 

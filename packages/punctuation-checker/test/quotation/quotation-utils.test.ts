@@ -1250,6 +1250,18 @@ describe('QuotationIterator tests', () => {
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
         });
+
+        it('skips over apostrophes', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+
+          const quotationPairIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput("This text has apostrophe's that should be skipp'éd"),
+          );
+          expect(quotationPairIterator.next()).toEqual({
+            done: true,
+            value: undefined,
+          });
+        });
       });
 
       describe('Identification of ill-formed quotation marks', () => {
@@ -2023,16 +2035,16 @@ class TestEnvironment {
           // possessives and contractions
           new StringContextMatcher.Builder()
             .setCenterContent(/^['\u2019]$/)
-            .setLeftContext(/\w$/)
-            .setRightContext(/^\w/)
+            .setLeftContext(/[\p{L}\p{Nd}]$/u)
+            .setRightContext(/^[\p{L}\p{Nd}]/u)
             .build(),
         )
         .ignoreMatchingQuotationMarks(
           // for possessives ending in "s", e.g. "Moses'"
           new StringContextMatcher.Builder()
             .setCenterContent(/^['\u2019]$/)
-            .setLeftContext(/\ws$/)
-            .setRightContext(/^[ \n,.:;]/)
+            .setLeftContext(/[\p{L}\p{Nd}]s$/u)
+            .setRightContext(/^[ \n,.:;]/u)
             .build(),
         )
         .setNestingWarningDepth(QuotationDepth.fromNumber(4))

@@ -3,7 +3,7 @@ import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuatio
 import { PunctuationContextConfig } from '../punctuation-context/punctuation-context-config';
 import { QuotationConfig } from '../quotation/quotation-config';
 import { QuotationDepth } from '../quotation/quotation-utils';
-import { CharacterClassRegexBuilder, ContextDirection, StringContextMatcher } from '../utils';
+import { CharacterClassRegexBuilder, StringContextMatcher } from '../utils';
 import { RuleSet } from './rule-set';
 
 // I have included an "extraneous" class here, instead of exporting the
@@ -53,16 +53,16 @@ export class StandardRuleSets {
         // possessives and contractions
         new StringContextMatcher.Builder()
           .setCenterContent(/^['\u2019]$/)
-          .setLeftContext(/\w$/)
-          .setRightContext(/^\w/)
+          .setLeftContext(/[\p{L}\p{Nd}]$/u)
+          .setRightContext(/^[\p{L}\p{Nd}]/u)
           .build(),
       )
       .ignoreMatchingQuotationMarks(
         // for possessives ending in "s", e.g. "Moses'"
         new StringContextMatcher.Builder()
           .setCenterContent(/^['\u2019]$/)
-          .setLeftContext(/\ws$/)
-          .setRightContext(/(^[ \n,.:;]|^$)/)
+          .setLeftContext(/[\p{L}\p{Nd}]s$/u)
+          .setRightContext(/^[ \n,.:;]/u)
           .build(),
       )
       .setNestingWarningDepth(QuotationDepth.fromNumber(4))
@@ -91,66 +91,15 @@ export class StandardRuleSets {
       })
       .build(),
     new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        [';', '!', '?'],
-        [' ', '\n', '', '\u2019', '\u201D', ')', ']', '—'],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        [')', ']'],
-        [' ', '\n', '', '.', ',', '?', '!', ';', '\u2019', '\u201D', '—'],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        ['\u201D', '"'],
-        [' ', '\n', '', '.', ',', ';', ')', ']', '\u2019', '\u201D', '"', "'", '—'],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        ["'", '\u2019'],
-        [
-          ' ',
-          '\n',
-          '',
-          '.',
-          ',',
-          '?',
-          '!',
-          ';',
-          ')',
-          ']',
-          '\u2019',
-          '\u201D',
-          '"',
-          "'",
-          'd',
-          'l',
-          'm',
-          'r',
-          's',
-          't',
-          'v',
-          '—',
-        ],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        ['.', ','],
-        [' ', '\n', '', '\u2019', '\u201D', ')', ']', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '—'],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Right,
-        [':'],
-        [' ', '\n', '', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-      )
-      .addAcceptableContextCharacters(
-        ContextDirection.Left,
-        ['(', '[', '\u201C', '\u2018', '"'],
-        [' ', '\n', '', '\u201C', '\u2018', '"', "'", '—'],
-      )
-      .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-      .prohibitWhitespaceForCharacters(ContextDirection.Left, ['.', ',', '?', '!', ';', ':', ')', ']', '\u201D'])
+      .addProhibitedTrailingPattern([';', '!', '?'], /^[^ \n\u2019\u201D'")\]—]/)
+      .addProhibitedTrailingPattern([')', ']'], /^[^ \n.,?!;\u2019\u201D'"—]/)
+      .addProhibitedTrailingPattern(['\u201D'], /^[^ \n.,;)\]\u2019\u201D'"—]/)
+      .addProhibitedTrailingPattern(['\u2019'], /^[^ \n.,?!;)\]\u2019\u201D'"—]/)
+      .addProhibitedTrailingPattern(['.', ','], /^[^ \n\u2019\u201D'")0-9—]/)
+      .addProhibitedTrailingPattern([':'], /^[^ \n0-9—]/)
+      .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n\u201C\u2018"'—]/)
+      .addProhibitedTrailingPattern(['(', '[', '\u201C', '\u2018'], /^\s/)
+      .addProhibitedLeadingPattern(['.', ',', '?', '!', ';', ':', ')', ']', '\u201D'], /^[\s]/)
       .build(),
   );
 }
