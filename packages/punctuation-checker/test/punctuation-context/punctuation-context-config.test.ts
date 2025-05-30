@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PunctuationContextConfig } from '../../src/punctuation-context/punctuation-context-config';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
-import { CharacterClassRegexBuilder, ContextDirection } from '../../src/utils';
+import { CharacterClassRegexBuilder } from '../../src/utils';
 
 describe('Builder tests', () => {
   it('correctly builds empty WhitespaceConfig objects', () => {
@@ -13,7 +13,7 @@ describe('Builder tests', () => {
 
   it('correctly builds simple non-empty PunctuationContextConfig objects', () => {
     const leftPunctuationContextConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['!'], [' '])
+      .addProhibitedLeadingPattern(['!'], /^[^ ]/)
       .build();
 
     expect(leftPunctuationContextConfig.createPunctuationRegex()).toEqual(
@@ -23,7 +23,7 @@ describe('Builder tests', () => {
     expect(leftPunctuationContextConfig.isLeadingContextCorrect('!', 'g')).toBe(false);
 
     const rightPunctuationContextConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Right, ['*'], [' '])
+      .addProhibitedTrailingPattern(['*'], /^[^ ]/)
       .build();
 
     expect(rightPunctuationContextConfig.createPunctuationRegex()).toEqual(
@@ -33,14 +33,14 @@ describe('Builder tests', () => {
     expect(rightPunctuationContextConfig.isTrailingContextCorrect('*', '!')).toBe(false);
 
     const leftProhibitedWhitespaceConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .prohibitWhitespaceForCharacters(ContextDirection.Left, ['*'])
+      .addProhibitedLeadingPattern(['*'], /^\s/)
       .build();
 
     expect(leftProhibitedWhitespaceConfig.isLeadingContextCorrect('*', ' ')).toBe(false);
     expect(leftProhibitedWhitespaceConfig.isLeadingContextCorrect('*', 'a')).toBe(true);
 
     const rightProhibitedWhitespaceConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .prohibitWhitespaceForCharacters(ContextDirection.Right, ['$'])
+      .addProhibitedTrailingPattern(['$'], /\s/)
       .build();
 
     expect(rightProhibitedWhitespaceConfig.isTrailingContextCorrect('$', '\t')).toBe(false);
@@ -49,8 +49,8 @@ describe('Builder tests', () => {
 
   it('correctly builds complex PunctuationContextConfig with rules for leading and trailing context', () => {
     const punctuationContextConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['!', '%', '#'], [' ', '\t'])
-      .addAcceptableContextCharacters(ContextDirection.Right, ['!', '%', '@'], ['\n'])
+      .addProhibitedLeadingPattern(['!', '%', '#'], /^[^ \t]/)
+      .addProhibitedTrailingPattern(['!', '%', '@'], /^[^\n]/)
       .build();
 
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
@@ -77,54 +77,54 @@ describe('Builder tests', () => {
 describe('PuncuationContextConfig tests', () => {
   it('produces a regular expression for punctuation with context rules', () => {
     let punctuationContextConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['&'], [])
+      .addProhibitedBidirectionalPattern(['&'], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['&']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Right, ['*'], [])
+      .addProhibitedBidirectionalPattern(['*'], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['*']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['!', '@', '#'], [])
+      .addProhibitedBidirectionalPattern(['!', '@', '#'], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['!', '@', '#']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Right, ['(', '{', '['], [])
+      .addProhibitedBidirectionalPattern(['(', '{', '['], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['(', '{', '[']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['%', '#', '$'], [])
-      .addAcceptableContextCharacters(ContextDirection.Right, ['@', '<', '?'], [])
+      .addProhibitedBidirectionalPattern(['%', '#', '$'], /.?/, /.?/)
+      .addProhibitedBidirectionalPattern(['@', '<', '?'], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['%', '#', '$', '@', '<', '?']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['!', '!'], [])
-      .addAcceptableContextCharacters(ContextDirection.Right, ['!', '!'], [])
+      .addProhibitedBidirectionalPattern(['!', '!'], /.?/, /.?/)
+      .addProhibitedBidirectionalPattern(['!', '!'], /.?/, /.?/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder().addCharacters(['!']).makeGlobal().build(),
     );
 
     punctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['!', '@', '#'], [' '])
-      .addAcceptableContextCharacters(ContextDirection.Right, ['$', '^', '&'], [' '])
-      .prohibitWhitespaceForCharacters(ContextDirection.Left, ['#', '*'])
-      .prohibitWhitespaceForCharacters(ContextDirection.Right, ['$', '(', ')'])
+      .addProhibitedLeadingPattern(['!', '@', '#'], /^[^ ]/)
+      .addProhibitedTrailingPattern(['$', '^', '&'], /^[^ ]/)
+      .addProhibitedLeadingPattern(['*', '(', ')'], /\s/)
+      .addProhibitedTrailingPattern(['$', '(', ')'], /\s/)
       .build();
     expect(punctuationContextConfig.createPunctuationRegex()).toEqual(
       new CharacterClassRegexBuilder()
@@ -232,19 +232,5 @@ describe('PuncuationContextConfig tests', () => {
     expect(punctuationContextConfig.isTrailingContextCorrect('\u201C', '\t')).toBe(false);
     expect(punctuationContextConfig.isTrailingContextCorrect('(', '\u2003')).toBe(false);
     expect(punctuationContextConfig.isTrailingContextCorrect('\u201C', '\u2003')).toBe(false);
-  });
-
-  it('allows prohibited whitespace rules to take precedence over required context rules', () => {
-    const prohibitedWhitespaceConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-      .addAcceptableContextCharacters(ContextDirection.Left, ['$', '*'], [' '])
-      .addAcceptableContextCharacters(ContextDirection.Right, ['#', '@'], [' '])
-      .prohibitWhitespaceForCharacters(ContextDirection.Left, ['*'])
-      .prohibitWhitespaceForCharacters(ContextDirection.Right, ['@'])
-      .build();
-
-    expect(prohibitedWhitespaceConfig.isLeadingContextCorrect('$', ' ')).toBe(true);
-    expect(prohibitedWhitespaceConfig.isLeadingContextCorrect('*', ' ')).toBe(false);
-    expect(prohibitedWhitespaceConfig.isTrailingContextCorrect('#', ' ')).toBe(true);
-    expect(prohibitedWhitespaceConfig.isTrailingContextCorrect('@', ' ')).toBe(false);
   });
 });

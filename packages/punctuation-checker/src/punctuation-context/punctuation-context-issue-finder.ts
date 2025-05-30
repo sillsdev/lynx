@@ -161,7 +161,7 @@ class PunctuationContextIssueFinder implements IssueFinder {
         }),
       )
       .setData({
-        isSpaceAllowed: this.whitespaceConfig.getAllowableLeadingCharacters(character).isCharacterInSet(' '),
+        isSpaceAllowed: this.whitespaceConfig.isLeadingContextCorrect(character, ' '),
       } as WhitespaceDiagnosticData)
       .build();
 
@@ -189,7 +189,7 @@ class PunctuationContextIssueFinder implements IssueFinder {
         }),
       )
       .setData({
-        isSpaceAllowed: this.whitespaceConfig.getAllowableTrailingCharacters(character).isCharacterInSet(' '),
+        isSpaceAllowed: this.whitespaceConfig.isTrailingContextCorrect(character, ' '),
       } as WhitespaceDiagnosticData)
       .build();
 

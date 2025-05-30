@@ -17,7 +17,6 @@ import { PunctuationContextConfig } from '../../src/punctuation-context/punctuat
 import type { PunctuationContextIssueFinder } from '../../src/punctuation-context/punctuation-context-issue-finder';
 import { PunctuationContextIssueFinderFactory } from '../../src/punctuation-context/punctuation-context-issue-finder';
 import { ScriptureTextNodeGrouper } from '../../src/scripture-grouper';
-import { ContextDirection } from '../../src/utils';
 import {
   StubFixedLineWidthTextDocument,
   StubScriptureDocumentManager,
@@ -307,12 +306,8 @@ class TextTestEnvironment {
   static createWithStandardContextRules(): TextTestEnvironment {
     return new TextTestEnvironment(
       new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(
-          ContextDirection.Right,
-          ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-          [' ', '\n', ''],
-        )
-        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
+        .addProhibitedTrailingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^[^ \n]/)
+        .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n]/)
         .build(),
     );
   }
@@ -320,25 +315,10 @@ class TextTestEnvironment {
   static createWithStandardContextRulesAndCustomLocalizer(customLocalizer: Localizer): TextTestEnvironment {
     return new TextTestEnvironment(
       new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(
-          ContextDirection.Right,
-          ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-          [' ', '\n', ''],
-        )
-        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
-          '.',
-          ',',
-          ':',
-          ';',
-          '!',
-          '?',
-          ')',
-          ']',
-          '\u201D',
-          '\u2019',
-        ])
+        .addProhibitedTrailingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^[^ \n]/)
+        .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n]/)
+        .addProhibitedTrailingPattern(['(', '[', '\u201C', '\u2018'], /^\s/)
+        .addProhibitedLeadingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^\s/)
         .build(),
       customLocalizer,
     );
@@ -447,25 +427,10 @@ class ScriptureTestEnvironment {
   static createWithStandardContextRules(): ScriptureTestEnvironment {
     return new ScriptureTestEnvironment(
       new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(
-          ContextDirection.Right,
-          ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-          [' ', '\n', ''],
-        )
-        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
-          '.',
-          ',',
-          ':',
-          ';',
-          '!',
-          '?',
-          ')',
-          ']',
-          '\u201D',
-          '\u2019',
-        ])
+        .addProhibitedTrailingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^[^ \n]/)
+        .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n]/)
+        .addProhibitedTrailingPattern(['(', '[', '\u201C', '\u2018'], /^\s/)
+        .addProhibitedLeadingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^\s/)
         .build(),
     );
   }
@@ -473,26 +438,11 @@ class ScriptureTestEnvironment {
   static createWithNonStandardContextRules(): ScriptureTestEnvironment {
     return new ScriptureTestEnvironment(
       new PunctuationContextConfig.Builder()
-        .addAcceptableContextCharacters(
-          ContextDirection.Right,
-          ['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'],
-          [' ', '\n', ''],
-        )
-        .addAcceptableContextCharacters(ContextDirection.Left, ['(', '[', '\u201C', '\u2018'], [' ', '\n', ''])
-        .addAcceptableContextCharacters(ContextDirection.Right, ['{'], ['-', ''])
-        .prohibitWhitespaceForCharacters(ContextDirection.Right, ['(', '[', '\u201C', '\u2018'])
-        .prohibitWhitespaceForCharacters(ContextDirection.Left, [
-          '.',
-          ',',
-          ':',
-          ';',
-          '!',
-          '?',
-          ')',
-          ']',
-          '\u201D',
-          '\u2019',
-        ])
+        .addProhibitedTrailingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^[^ \n]/)
+        .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n]/)
+        .addProhibitedTrailingPattern(['{'], /^[^-]/)
+        .addProhibitedTrailingPattern(['(', '[', '\u201C', '\u2018'], /^\s/)
+        .addProhibitedLeadingPattern(['.', ',', ':', ';', '!', '?', ')', ']', '\u201D', '\u2019'], /^\s/)
         .build(),
     );
   }

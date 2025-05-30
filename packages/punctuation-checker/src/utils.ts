@@ -70,7 +70,11 @@ export class CharacterClassRegexBuilder {
 // A matcher for a string with context on both the left and the right
 export class StringContextMatcher {
   private centerContentMatcher = /./;
+
+  private hasLeftContext = false;
   private leftContextMatcher = /./;
+
+  private hasRightContext = false;
   private rightContextMatcher = /./;
 
   // Private constructor so that the class can only be instantiated through the Builder
@@ -81,15 +85,29 @@ export class StringContextMatcher {
     return this.centerContentMatcher.test(str);
   }
 
+  public isLeftContextDefined(): boolean {
+    return this.hasLeftContext;
+  }
+
+  public isRightContextDefined(): boolean {
+    return this.hasRightContext;
+  }
+
   public doesContextMatch(leftContext: string, rightContext: string): boolean {
     return this.doesLeftContextMatch(leftContext) && this.doesRightContextMatch(rightContext);
   }
 
   private doesLeftContextMatch(leftContext: string): boolean {
+    if (!this.hasLeftContext) {
+      return true; // If no left context is defined, it matches by default
+    }
     return this.leftContextMatcher.test(leftContext);
   }
 
   private doesRightContextMatch(rightContext: string): boolean {
+    if (!this.hasRightContext) {
+      return true; // If no right context is defined, it matches by default
+    }
     return this.rightContextMatcher.test(rightContext);
   }
 
@@ -101,6 +119,10 @@ export class StringContextMatcher {
     return this.doesStringMatchIgnoringContext(str) && this.doesLeftContextMatch(leftContext);
   }
 
+  public doesStringAndRightContextMatch(str: string, leftContext: string): boolean {
+    return this.doesStringMatchIgnoringContext(str) && this.doesRightContextMatch(leftContext);
+  }
+
   public static Builder = class {
     readonly stringContextMatcher: StringContextMatcher = new StringContextMatcher();
 
@@ -110,11 +132,13 @@ export class StringContextMatcher {
     }
 
     public setLeftContext(leftContext: RegExp): this {
+      this.stringContextMatcher.hasLeftContext = true;
       this.stringContextMatcher.leftContextMatcher = leftContext;
       return this;
     }
 
     public setRightContext(rightContext: RegExp): this {
+      this.stringContextMatcher.hasRightContext = true;
       this.stringContextMatcher.rightContextMatcher = rightContext;
       return this;
     }
