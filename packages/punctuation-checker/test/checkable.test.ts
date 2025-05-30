@@ -34,7 +34,7 @@ describe('ScriptureDocumentCheckable tests', () => {
     expect(new ScriptureNodeCheckable(scriptureNode).getEnclosingRange()).toEqual(scriptureNode.range);
   });
 
-  describe('it returns true/false for possible whitespace truncation based on the presence of a neighboring paragraph marker', () => {
+  describe('it returns true/false for possible whitespace truncation based on the presence of neighboring USFM markers', () => {
     const stylesheet: UsfmStylesheet = new UsfmStylesheet('usfm.sty');
     const scriptureDocumentFactory: DocumentFactory<ScriptureDocument> = new UsfmDocumentFactory(stylesheet);
 
@@ -49,7 +49,7 @@ describe('ScriptureDocumentCheckable tests', () => {
         .getCheckableGroups()
         .next()
         .value.next().value;
-      expect(onlyScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
+      expect(onlyScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
       expect(onlyScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
     });
 
@@ -73,7 +73,7 @@ describe('ScriptureDocumentCheckable tests', () => {
         format: 'usfm',
         version: 1,
         content: `\\c 1
-         \\p \\v 1 The Word Became Flesh \\v 2 \\p`,
+         \\p \\v 1 \\p \\k \\k* The Word Became Flesh \\k \\k* \\v 2 \\p`,
       });
       const onlyScriptureNode: ScriptureNodeCheckable = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
         .getCheckableGroups()
@@ -104,6 +104,35 @@ describe('ScriptureDocumentCheckable tests', () => {
       const thirdScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
       expect(thirdScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
       expect(thirdScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+    });
+
+    it('works for verse text nodes that are bordered by verse and chapter markers', () => {
+      const multipleParagraphsDoc: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
+       \\v 1 The Word Became Flesh \\v 2 and dwelt \\k among\\k* us \\c 2`,
+      });
+
+      const verseNodeGroup: CheckableGroup = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
+        .getCheckableGroups()
+        .next().value;
+
+      const firstScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
+      expect(firstScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
+      expect(firstScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+
+      const secondScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
+      expect(secondScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
+      expect(secondScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+
+      const thirdScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
+      expect(thirdScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
+      expect(thirdScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+
+      const fourthScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
+      expect(fourthScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
+      expect(fourthScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
     });
   });
 });

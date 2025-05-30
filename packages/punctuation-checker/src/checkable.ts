@@ -55,15 +55,19 @@ export class ScriptureNodeCheckable extends Checkable {
     return this.scriptureNode.range;
   }
   public isLeadingWhitespacePossiblyTruncated(): boolean {
-    return this.isNodePrecededByParagraphOrChapterMarker(this.scriptureNode);
+    return this.isNodePrecededByParagraphVerseOrChapterMarker(this.scriptureNode);
   }
   public isTrailingWhitespacePossiblyTruncated(): boolean {
-    return this.isNodeFollowedByParagraphMarker(this.scriptureNode);
+    return this.isNodeFollowedByParagraphVerseOrChapterMarker(this.scriptureNode);
   }
 
-  private isNodePrecededByParagraphOrChapterMarker(node: ScriptureNode): boolean {
+  private isNodePrecededByParagraphVerseOrChapterMarker(node: ScriptureNode): boolean {
     if (node.previous !== undefined) {
-      if (node.previous.type === ScriptureNodeType.Paragraph || node.previous.type === ScriptureNodeType.Chapter) {
+      if (
+        node.previous.type === ScriptureNodeType.Paragraph ||
+        node.previous.type === ScriptureNodeType.Verse ||
+        node.previous.type === ScriptureNodeType.Chapter
+      ) {
         return true;
       }
       return false;
@@ -72,20 +76,24 @@ export class ScriptureNodeCheckable extends Checkable {
       if (node.parent.type === ScriptureNodeType.Paragraph) {
         return true;
       }
-      return this.isNodePrecededByParagraphOrChapterMarker(node.parent);
+      return this.isNodePrecededByParagraphVerseOrChapterMarker(node.parent);
     }
     return false;
   }
 
-  private isNodeFollowedByParagraphMarker(node: ScriptureNode): boolean {
+  private isNodeFollowedByParagraphVerseOrChapterMarker(node: ScriptureNode): boolean {
     if (node.next !== undefined) {
-      if (node.next.type === ScriptureNodeType.Paragraph || node.next.type === ScriptureNodeType.Chapter) {
+      if (
+        node.next.type === ScriptureNodeType.Paragraph ||
+        node.next.type === ScriptureNodeType.Verse ||
+        node.next.type === ScriptureNodeType.Chapter
+      ) {
         return true;
       }
       return false;
     }
     if (node.parent !== undefined) {
-      return this.isNodeFollowedByParagraphMarker(node.parent);
+      return this.isNodeFollowedByParagraphVerseOrChapterMarker(node.parent);
     }
     return false;
   }
