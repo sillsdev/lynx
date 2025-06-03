@@ -18,7 +18,7 @@ import { PairedPunctuationConfig } from '../../src/paired-punctuation/paired-pun
 import { PunctuationContextConfig } from '../../src/punctuation-context/punctuation-context-config';
 import { QuotationConfig } from '../../src/quotation/quotation-config';
 import { RuleType } from '../../src/rule-set/rule-set';
-import { CharacterClassRegexBuilder, ContextDirection } from '../../src/utils';
+import { CharacterClassRegexBuilder } from '../../src/utils';
 import { StubScriptureDocumentManager, StubTextDocumentManager } from '../test-utils';
 
 const defaultLocalizer: Localizer = new Localizer();
@@ -44,8 +44,8 @@ describe('DiagnosticProviderFactory tests', () => {
     })
     .build();
   const puncutationContextConfig: PunctuationContextConfig = new PunctuationContextConfig.Builder()
-    .addAcceptableContextCharacters(ContextDirection.Left, ['{'], [' '])
-    .addAcceptableContextCharacters(ContextDirection.Right, ['}'], [' '])
+    .addProhibitedLeadingPattern(['{'], /[^ ]/)
+    .addProhibitedTrailingPattern(['}'], /[^ ]/)
     .build();
 
   it('creates all known checkers when createDiagnosticProviderFactories is called', async () => {
