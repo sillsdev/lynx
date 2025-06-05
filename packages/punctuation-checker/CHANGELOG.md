@@ -1,5 +1,11 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.5
+
+### Patch Changes
+
+- 7bf7d3b: various punctuation checker bug fixes
+
 ## 0.1.4
 
 ### Patch Changes
