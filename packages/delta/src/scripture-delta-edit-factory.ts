@@ -11,7 +11,7 @@ import {
   ScriptureRef,
   ScriptureVerse,
 } from '@sillsdev/lynx';
-import cloneDeep from 'lodash.clonedeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import Delta, { Op } from 'quill-delta';
 import { v4 as uuidv4 } from 'uuid';
 

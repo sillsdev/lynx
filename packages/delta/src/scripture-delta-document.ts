@@ -16,7 +16,7 @@ import {
   ScriptureText,
   ScriptureVerse,
 } from '@sillsdev/lynx';
-import isEqual from 'lodash.isequal';
+import isEqual from 'lodash-es/isEqual';
 import Delta, { Op } from 'quill-delta';
 
 import { DeltaDocument, getChangeOffsetRange } from './delta-document';
