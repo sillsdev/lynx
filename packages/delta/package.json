@@ -29,6 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "@sillsdev/lynx": "^0.3.0",
+    "lodash-es": "^4.17.21",
     "quill-delta": "^5.1.0",
     "uuid": "^11.0.3"
   },
@@ -36,8 +37,7 @@
     "@repo/eslint-config": "*",
     "@repo/tsup-config": "*",
     "@repo/typescript-config": "*",
-    "@types/lodash.clonedeep": "^4.5.9",
-    "@types/lodash.isequal": "^4.5.8",
+    "@types/lodash-es": "^4.17.12",
     "eslint": "^9.9.1",
     "tsup": "^8.3.0",
     "typescript": "^5.5.4"
