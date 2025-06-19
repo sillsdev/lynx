@@ -1,5 +1,11 @@
 # @sillsdev/lynx-delta
 
+## 0.2.3
+
+### Patch Changes
+
+- c565f52: Use esm lodash to fix angular build warning
+
 ## 0.2.2
 
 ### Patch Changes
