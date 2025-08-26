@@ -12,6 +12,7 @@ import {
 import { AbstractChecker } from '../abstract-checker';
 import type { StandardFixProvider } from '../fixes/standard-fixes';
 import { StandardFixProviderFactory } from '../fixes/standard-fixes';
+import { createLocaleLoader } from '../utils/locale-loader';
 import { PairedPunctuationConfig } from './paired-punctuation-config';
 import { PairedPunctuationIssueFinderFactory } from './paired-punctuation-issue-finder';
 
@@ -52,12 +53,9 @@ export class PairedPunctuationChecker<
   async init(): Promise<void> {
     await super.init();
 
-    // Ideally, we'd like to be able to inject an initialization function, so that
-    // tests can provide different messages, but due to the way variable dynamic imports
-    // work, the namespace loading function can only appear in this file at this location
     this.localizer.addNamespace(
       PAIRED_PUNCTUATION_CHECKER_LOCALIZER_NAMESPACE,
-      (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
+      createLocaleLoader('paired-punctuation'),
     );
 
     await this.standardFixProviderFactory.init();

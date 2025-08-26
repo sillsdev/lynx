@@ -9,6 +9,8 @@ import {
   TextEdit,
 } from '@sillsdev/lynx';
 
+import { createLocaleLoader } from '../utils/locale-loader';
+
 const LOCALIZER_NAMESPACE = 'standardPunctuationFixes';
 
 class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit> {
@@ -105,13 +107,7 @@ class StandardFixProviderFactory<TDoc extends TextDocument | ScriptureDocument, 
   ) {}
 
   public async init(): Promise<void> {
-    // Ideally, we'd like to be able to inject an initialization function, so that
-    // tests can provide different messages, but due to the way variable dynamic imports
-    // work, the namespace loading function can only appear in this file at this location
-    this.localizer.addNamespace(
-      LOCALIZER_NAMESPACE,
-      (language: string) => import(`./locales/${language}.json`, { with: { type: 'json' } }),
-    );
+    this.localizer.addNamespace(LOCALIZER_NAMESPACE, createLocaleLoader('fixes'));
 
     return Promise.resolve();
   }
