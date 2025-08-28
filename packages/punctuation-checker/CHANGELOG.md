@@ -1,5 +1,11 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.6
+
+### Patch Changes
+
+- 7f1cbf3: Add 'en' fallback to locale loader
+
 ## 0.1.5
 
 ### Patch Changes
