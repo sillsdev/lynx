@@ -1,6 +1,6 @@
 {
   "name": "@sillsdev/lynx-punctuation-checker",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "",
   "type": "module",
   "types": "./dist/index.d.ts",
