@@ -1,0 +1,5 @@
+{
+  "diagnosticMessagesByCode": {
+    "disallowed-character": "यो भाषामा वर्ण '{{character}}' प्रयोग गरिएको छैन"
+  }
+}
