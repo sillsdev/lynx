@@ -1,0 +1,13 @@
+{
+  "diagnosticMessagesByCode": {
+    "unmatched-opening-parenthesis": "बन्द कोष्ठक बिना सुरुको कोष्ठक।",
+    "unmatched-closing-parenthesis": "खोल्ने कोष्ठक बिना कोष्ठक बन्द गर्दै।",
+    "unmatched-opening-square-bracket": "बन्द कोष्ठक बिनाको खुल्ने वर्ग कोष्ठक।",
+    "unmatched-closing-square-bracket": "खोल्ने कोष्ठक बिनाको बन्द वर्ग कोष्ठक।",
+    "unmatched-opening-curly-bracket": "बन्द हुने कोष्ठक बिनाको खुल्ने कर्ली कोष्ठक।",
+    "unmatched-closing-curly-bracket": "कुनै पनि खुल्ने कोष्ठक बिनाको बन्द गर्ने कर्ली कोष्ठक।",
+    "unmatched-opening-punctuation-mark": "बन्द चिन्ह बिनाको सुरुवाती विराम चिन्ह।",
+    "unmatched-closing-punctuation-mark": "कुनै खुल्ने चिन्ह बिना बन्द विराम चिन्ह।",
+    "overlapping-punctuation-pairs": "यो विराम चिन्हको जोडी {{firstPair}} अर्को जोडी {{secondPair}} सँग ओभरल्याप हुन्छ।"
+  }
+}
