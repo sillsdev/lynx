@@ -1,6 +1,6 @@
 {
   "diagnosticMessagesByCode": {
     "incorrect-leading-context": "विराम चिन्ह \u201C{{punctuationMark}}\u201D को अगाडि \u201C{{precedingCharacter}}\u201D हुनु हुँदैन।",
-    "incorrect-trailing-context": "विराम चिन्ह \u201C{{punctuationMark}}\u201D लाई तुरुन्तै \u201C{{followingCharacter}}\u201D ले पछ्याउनु हुँदैन।"
+    "incorrect-trailing-context": "विराम चिन्ह \u201C{{punctuationMark}}\u201D को पछि \u201C{{followingCharacter}}\u201D पछ्याउनु हुँदैन।"
   }
 }
