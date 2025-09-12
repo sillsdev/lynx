@@ -1,6 +1,6 @@
 {
-  "leadingSpaceInsertionFix": "यो भन्दा अगाडि एउटा ठाउँ थप्नुहोस्",
-  "punctuationRemovalFix": "विराम चिन्ह मेटाउनुहोस्",
-  "punctuationReplacementFix": "यो वर्णलाई यससँग बदल्नुहोस् {{replacementCharacter}}",
-  "trailingSpaceInsertionFix": "यसपछि एउटा ठाउँ थप्नुहोस्"
+  "leadingSpaceInsertionFix": "यो भन्दा अगाडि एउटा स्पेस थप्नुहोस्",
+  "punctuationRemovalFix": "विराम चिन्ह डिलिट गर्दिनुस्",
+  "punctuationReplacementFix": "यो वर्णलाई यससँग बदल्नुहोस्: {{replacementCharacter}}",
+  "trailingSpaceInsertionFix": "यसपछि एउटा स्पेस थप्नुहोस्"
 }

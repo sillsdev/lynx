@@ -1,8 +1,8 @@
 {
   "diagnosticMessagesByCode": {
-    "unmatched-opening-quotation-mark": "समापन चिन्ह बिना खुल्ने उद्धरण चिन्ह।",
-    "unmatched-closing-quotation-mark": "उद्घाटन चिन्ह बिनाको बन्द उद्धरण चिन्ह।",
-    "incorrectly-nested-quotation-mark": "गलत तरिकाले नेस्ट गरिएको उद्धरण चिन्ह।",
+    "unmatched-opening-quotation-mark": "बन्द चिन्ह बिना सुरुको उद्धरण चिन्ह",
+    "unmatched-closing-quotation-mark": "सुरुको चिन्ह बिना बन्द उद्धरण चिन्ह",
+    "incorrectly-nested-quotation-mark": "उद्धरण भित्र उद्धरण गलत तरिकाले मिलाइएको छ।",
     "ambiguous-quotation-mark": "यो उद्धरण चिह्न अस्पष्ट छ।",
     "deeply-nested-quotation-mark": "उद्धरण चिन्हहरूको स्तर धेरै छ। यसबाट बच्न पुन: वाक्यांश बनाउने विचार गर्नुहोस्।"
   }
