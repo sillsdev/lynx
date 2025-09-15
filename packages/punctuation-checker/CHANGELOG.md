@@ -1,5 +1,11 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.7
+
+### Patch Changes
+
+- 5e7b46a: Add Nepali (npi) translations
+
 ## 0.1.6
 
 ### Patch Changes
