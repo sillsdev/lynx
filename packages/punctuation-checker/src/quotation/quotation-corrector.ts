@@ -114,8 +114,18 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
       quoteCorrection.existingQuotationMark.startIndex,
       quoteCorrection.existingQuotationMark.enclosingRange,
     );
-    return correctionPosition.line === position.line && correctionPosition.character + 1 === position.character;
-    // VSCode consistently sends the character position as one greater than the position returned by querying the document
+    if (correctionPosition.line === position.line) {
+      // VSCode consistently sends the character position as one greater than the position returned by querying the document
+      if (correctionPosition.character + 1 === position.character) {
+        return true;
+      }
+
+      // Also allow corrections after typing the succeeding character, to resolve some ambiguous cases
+      if (correctionPosition.character + 2 === position.character) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private correctTextDocument(

@@ -158,7 +158,9 @@ describe('Tests with ScriptureNodes', () => {
     const correctDoc: ScriptureDocument = await testEnv.createScriptureDocument(
       '\\c 1 \\v 1 First sentence{- Second sentence',
     );
-    const correctVerseNodeGroup = new ScriptureTextNodeGrouper(correctDoc).getCheckableGroups().next().value;
+    const checkableGroups = new ScriptureTextNodeGrouper(correctDoc).getCheckableGroups();
+    const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
+    const correctVerseNodeGroup = checkableGroups.next().value;
     await expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctVerseNodeGroup)).resolves.toEqual([]);
 
     const incorrectDoc: ScriptureDocument = await testEnv.createScriptureDocument(

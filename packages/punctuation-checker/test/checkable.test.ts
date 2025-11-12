@@ -117,9 +117,10 @@ describe('ScriptureDocumentCheckable tests', () => {
         content: `\\c 1
        \\v 1 \\q1 The Word \\qs Became Flesh\\qs* \\p`,
       });
-      const verseNodeGroup: CheckableGroup = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
-        .getCheckableGroups()
-        .next().value;
+      const checkableGroups = new ScriptureTextNodeGrouper(multipleParagraphsDoc).getCheckableGroups();
+      const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
+      const verseNodeGroup: CheckableGroup = checkableGroups.next().value;
+
       const firstScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
       expect(firstScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
       expect(firstScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
@@ -141,9 +142,11 @@ describe('ScriptureDocumentCheckable tests', () => {
        \\v 1 The Word Became Flesh \\v 2 and dwelt \\k among\\k* us \\c 2`,
       });
 
-      const verseNodeGroup: CheckableGroup = new ScriptureTextNodeGrouper(multipleParagraphsDoc)
-        .getCheckableGroups()
-        .next().value;
+      const checkableGroups = new ScriptureTextNodeGrouper(multipleParagraphsDoc).getCheckableGroups();
+
+      const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
+
+      const verseNodeGroup: CheckableGroup = checkableGroups.next().value;
 
       const firstScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
       expect(firstScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);

@@ -771,7 +771,7 @@ describe('QuotationIterator tests', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
 
           const quotationIterator: QuotationIterator = testEnv.newQuotationIterator(
-            testEnv.createTextInput("This \"text contains 'some' ambiguous quotes that should be ignored."),
+            testEnv.createTextInput("This \"text contains 'some' ambiguous quotes that should be ignored'"),
           );
 
           expect(quotationIterator.next()).toEqual({
@@ -817,8 +817,24 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(26)
               .setText("'")
               .markAsAmbiguous()
+              .markAsAutocorrectable()
               .setLeftContext("'some")
               .setRightContext(' ambi')
+              .build(),
+          });
+          expect(quotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepth(QuotationDepth.Secondary)
+              .addDepth(QuotationDepth.fromNumber(4))
+              .addDirection(PairedPunctuationDirection.Opening)
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(66)
+              .setEndIndex(67)
+              .setText("'")
+              .markAsAmbiguous()
+              .setLeftContext('nored')
+              .setRightContext('')
               .build(),
           });
           expect(quotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1719,6 +1735,7 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(58)
               .setText("'")
               .markAsAmbiguous()
+              .markAsAutocorrectable()
               .setLeftContext('tions')
               .setRightContext('"')
               .build(),
@@ -1807,6 +1824,7 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(58)
               .setText("'")
               .markAsAmbiguous()
+              .markAsAutocorrectable()
               .setLeftContext('tions')
               .setRightContext('\u201D')
               .build(),

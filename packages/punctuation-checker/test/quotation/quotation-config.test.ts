@@ -327,10 +327,15 @@ describe('QuotationConfig tests', () => {
       .mapAmbiguousQuotationMark("'", '\u2018')
       .mapAmbiguousQuotationMark("'", '\u2019')
       .ignoreMatchingQuotationMarks(
-        new StringContextMatcher.Builder().setCenterContent(/'/).setLeftContext(/\w$/).setRightContext(/.*/).build(),
+        new StringContextMatcher.Builder()
+          .setCenterContent(/'/)
+          .setLeftContext(/\w$/)
+          .setRightContext(/^(s|t|d|ll)/)
+          .build(),
       )
       .build();
 
+    // No right context, simulating the user typing the quotation mark at the end of the text
     expect(
       englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201C'), 0, 1)),
     ).toBe(false);
@@ -405,6 +410,29 @@ describe('QuotationConfig tests', () => {
     ).toBe(true);
     expect(
       englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("test '"), 5, 1)),
+    ).toBe(true);
+
+    // Right context present, simulating the user going back to typing the quotation mark
+    // in the middle of the text
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("word's"), 4, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("word'a"), 4, 1)),
+    ).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("word't"), 4, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("word' "), 4, 1)),
+    ).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("word'll"), 4, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable("word'asdf"), 4, 1),
+      ),
     ).toBe(true);
   });
 

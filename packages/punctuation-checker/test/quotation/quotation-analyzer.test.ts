@@ -723,7 +723,7 @@ describe('QuotationAnalyzer tests', () => {
               endIndex: 38,
               text: "'",
               isAmbiguous: true,
-              isAutocorrectable: false,
+              isAutocorrectable: true,
               isContinuer: false,
               parentDepth: new QuotationRootLevel(),
               leftContext: 'aired',
@@ -1679,7 +1679,7 @@ describe('QuotationAnalyzer tests', () => {
     it('labels ambiguous quotation marks matching the "ignore" pattern as non-autocorrectable', () => {
       const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
       const nonAutocorrectableQuotesAnalysis: QuotationAnalysis = testEnv.quotationAnalyzer.analyze(
-        testEnv.createTextInput("\u201C'Sample text with unautocorrectable' quote"),
+        testEnv.createTextInput("\u201C'Sample text with unautocorrectable quote'"),
       );
 
       expect(nonAutocorrectableQuotesAnalysis.getAmbiguousQuoteCorrections()).toEqual([
@@ -1717,28 +1717,28 @@ describe('QuotationAnalyzer tests', () => {
           existingQuotationMark: {
             depth: QuotationDepth.Secondary,
             direction: PairedPunctuationDirection.Closing,
-            startIndex: 36,
-            endIndex: 37,
+            startIndex: 42,
+            endIndex: 43,
             text: "'",
             isAmbiguous: true,
             isAutocorrectable: false,
             isContinuer: false,
-            leftContext: 'table',
-            rightContext: ' quot',
+            leftContext: 'quote',
+            rightContext: '',
             enclosingRange: undefined,
             verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
             direction: PairedPunctuationDirection.Closing,
-            startIndex: 36,
-            endIndex: 37,
+            startIndex: 42,
+            endIndex: 43,
             text: '\u2019',
             isAmbiguous: true,
             isAutocorrectable: false,
             isContinuer: false,
-            leftContext: 'table',
-            rightContext: ' quot',
+            leftContext: 'quote',
+            rightContext: '',
             enclosingRange: undefined,
             verseRef: undefined,
           },

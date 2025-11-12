@@ -342,6 +342,19 @@ export class QuotationMarkMatch {
     return quotationConfig.shouldIgnoreQuotationMark(this.getQuotationMark(), this.leftContext, this.rightContext);
   }
 
+  public hasRightContext(): boolean {
+    return this.rightContext !== '';
+  }
+
+  public matchesAny(stringContextMatchers: StringContextMatcher[]): boolean {
+    for (const quotationToIgnore of stringContextMatchers) {
+      if (quotationToIgnore.doesStringAndContextMatch(this.getQuotationMark(), this.leftContext, this.rightContext)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public matchesAnyWithLeftContext(stringContextMatchers: StringContextMatcher[]): boolean {
     for (const quotationToIgnore of stringContextMatchers) {
       if (quotationToIgnore.doesStringAndLeftContextMatch(this.getQuotationMark(), this.leftContext)) {

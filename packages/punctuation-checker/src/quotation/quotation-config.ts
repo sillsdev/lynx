@@ -117,8 +117,10 @@ export class QuotationConfig {
       return false;
     }
 
-    // When patterns to ignore are provided (e.g. apostrophes), only the left context
-    // is checked, because the user hasn't typed the right context yet.
+    if (quotationMarkMatch.hasRightContext()) {
+      return !quotationMarkMatch.matchesAny(this.quotationsToIgnore);
+    }
+    // Only the left context is checked here, because the user hasn't typed the right context yet.
     return !quotationMarkMatch.matchesAnyWithLeftContext(this.quotationsToIgnore);
   }
 

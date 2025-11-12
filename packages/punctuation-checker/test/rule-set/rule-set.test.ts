@@ -27,7 +27,7 @@ describe('DiagnosticProviderFactory tests', () => {
   const stubDocumentManager: DocumentManager<TextDocument> = new StubTextDocumentManager(new TextDocumentFactory());
 
   const allowedCharacterSet: AllowedCharacterSet = new CharacterRegexWhitelist(
-    new CharacterClassRegexBuilder().addRange('B', 'Y').build(),
+    new CharacterClassRegexBuilder().addRange('B', 'Y').addCharacter(' ').build(),
   );
   const quotationConfig: QuotationConfig = new QuotationConfig.Builder()
     .setTopLevelQuotationMarks({
@@ -262,8 +262,17 @@ describe('DiagnosticProviderFactory tests', () => {
       stubScriptureDocumentManager,
       new UsfmEditFactory(stylesheet),
     );
-    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 11 }, '')).toHaveLength(1);
-    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 12 }, '')).toHaveLength(0);
-    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +A+', { line: 0, character: 13 }, '')).toHaveLength(1);
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +AA+', { line: 0, character: 11 }, '')).toHaveLength(
+      1,
+    );
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +AA+', { line: 0, character: 12 }, '')).toHaveLength(
+      1,
+    );
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +AA+', { line: 0, character: 13 }, '')).toHaveLength(
+      0,
+    );
+    expect(await onTypeFormatters[0].getOnTypeEdits('\\c 1 \\v 1 +AA+', { line: 0, character: 14 }, '')).toHaveLength(
+      1,
+    );
   });
 });

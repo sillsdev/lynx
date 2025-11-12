@@ -94,7 +94,6 @@ export class StandardRuleSets {
       .addProhibitedTrailingPattern([';', '!', '?'], /^[^ \n\u2019\u201D'")\]—]/)
       .addProhibitedTrailingPattern([')', ']'], /^[^ \n.,?!;\u2019\u201D'"—]/)
       .addProhibitedTrailingPattern(['\u201D'], /^[^ \n.,;)\]\u2019\u201D'"—]/)
-      .addProhibitedTrailingPattern(['\u2019'], /^[^ \n.,?!;)\]\u2019\u201D'"—]/)
       .addProhibitedTrailingPattern(['.', ','], /^[^ \n\u2019\u201D'")0-9—]/)
       .addProhibitedTrailingPattern([':'], /^[^ \n0-9—]/)
       .addProhibitedLeadingPattern(['(', '[', '\u201C', '\u2018'], /^[^ \n\u201C\u2018"'—]/)

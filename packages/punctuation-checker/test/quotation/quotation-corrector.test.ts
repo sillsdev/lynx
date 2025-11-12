@@ -119,7 +119,7 @@ describe('Text quote correction tests', () => {
         { line: 0, character: 55 },
         '"',
       ),
-    ).toEqual([testEnv.createExpectedEdit('\u201D', 54, 55)]);
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 53, 54), testEnv.createExpectedEdit('\u201D', 54, 55)]);
   });
 
   it('does not depend on whitespace', async () => {
@@ -227,7 +227,7 @@ describe('Text quote correction tests', () => {
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits('Once +upon- a time-+', { line: 0, character: 20 }, '+'),
-    ).toEqual([testEnv.createExpectedEdit('\u201D', 19, 20)]);
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 18, 19), testEnv.createExpectedEdit('\u201D', 19, 20)]);
   });
 
   it('does not produce corrections when the user might be typing an ignored pattern (i.e. an apostrophe)', async () => {
@@ -238,12 +238,24 @@ describe('Text quote correction tests', () => {
     ).toEqual([testEnv.createExpectedEdit('\u201C', 15, 16)]);
 
     expect(
-      await testEnv.quotationCorrector.getOnTypeEdits("It was the best' of times", { line: 0, character: 16 }, "'"),
+      await testEnv.quotationCorrector.getOnTypeEdits("It was the best'est of times", { line: 0, character: 16 }, "'"),
     ).toBeUndefined();
 
     expect(
       await testEnv.quotationCorrector.getOnTypeEdits("It was the best ' of times", { line: 0, character: 17 }, "'"),
     ).toEqual([testEnv.createExpectedEdit('\u2018', 16, 17)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits("It 'was the best'", { line: 0, character: 17 }, "'"),
+    ).toBeUndefined();
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits("It 'was the best' ", { line: 0, character: 17 }, "'"),
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 16, 17)]);
+
+    expect(
+      await testEnv.quotationCorrector.getOnTypeEdits("It 'was the best' ", { line: 0, character: 18 }, "'"),
+    ).toEqual([testEnv.createExpectedEdit('\u2019', 16, 17)]);
   });
 });
 
