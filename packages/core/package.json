@@ -3,14 +3,14 @@
   "version": "0.3.4",
   "description": "",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.mts",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
       },
       "require": {
         "types": "./dist/index.d.cts",
@@ -19,8 +19,8 @@
     }
   },
   "scripts": {
-    "build": "tsup-node",
-    "dev": "tsup-node --watch --sourcemap",
+    "build": "tsdown",
+    "dev": "tsdown --watch --sourcemap",
     "check-types": "tsc --noEmit",
     "lint": "eslint ."
   },
@@ -28,17 +28,17 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "i18next": "^23.16.5",
-    "rxjs": "^7.8.1"
+    "i18next": "^23.16.8",
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
-    "@repo/tsup-config": "*",
+    "@repo/tsdown-config": "*",
     "@repo/typescript-config": "*",
-    "eslint": "^9.9.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.5.4",
-    "vitest-mock-extended": "^2.0.2"
+    "eslint": "^9.39.1",
+    "tsdown": "^0.16.5",
+    "typescript": "^5.9.3",
+    "vitest-mock-extended": "^3.1.0"
   },
   "files": [
     "dist",

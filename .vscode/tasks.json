@@ -8,22 +8,6 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": [
-        {
-          "base": "$tsup",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
-          }
-        },
-        {
-          "base": "$tsup-dts",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
-          }
-        }
-      ],
       "label": "npm: build"
     },
     {
@@ -33,22 +17,6 @@
         "kind": "build",
         "isDefault": false
       },
-      "problemMatcher": [
-        {
-          "base": "$tsup-watch",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
-          }
-        },
-        {
-          "base": "$tsup-dts-watch",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
-          }
-        }
-      ],
       "isBackground": true,
       "label": "npm: dev"
     }

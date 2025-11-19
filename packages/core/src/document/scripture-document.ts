@@ -155,7 +155,8 @@ function* findScriptureNodes(
 type DocumentConstructor = new (...args: any[]) => Document;
 export function ScriptureDocumentMixin<TBase extends DocumentConstructor>(Base: TBase) {
   return class extends Base implements ScriptureDocument {
-    readonly _children = new ScriptureChildren(this);
+    readonly _children: ScriptureChildren = new ScriptureChildren(this);
+    readonly children = this._children.nodes;
     readonly type = ScriptureNodeType.Document;
     readonly document = this;
     readonly parent = undefined;
@@ -163,10 +164,6 @@ export function ScriptureDocumentMixin<TBase extends DocumentConstructor>(Base: 
     readonly previous = undefined;
     readonly isLeaf = false;
     range: Range = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
-
-    get children(): readonly ScriptureNode[] {
-      return this._children.nodes;
-    }
 
     findNodes(
       filter?: ScriptureNodeType | ((node: ScriptureNode) => boolean) | ScriptureNodeType[],

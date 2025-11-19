@@ -2,10 +2,10 @@
   "name": "@sillsdev/lynx-vscode",
   "version": "1.0.0",
   "private": true,
-  "main": "./dist/extension.js",
+  "main": "./dist/extension.cjs",
   "scripts": {
-    "build": "tsup-node src/extension.ts src/server.ts --format cjs --clean --sourcemap",
-    "dev": "tsup-node src/extension.ts src/server.ts --format cjs --watch --sourcemap",
+    "build": "tsdown",
+    "dev": "tsdown",
     "check-types": "tsc --noEmit",
     "lint": "eslint ."
   },
@@ -36,19 +36,19 @@
   },
   "dependencies": {
     "@sillsdev/lynx": "*",
-    "@sillsdev/lynx-usfm": "*",
     "@sillsdev/lynx-examples": "*",
     "@sillsdev/lynx-punctuation-checker": "*",
+    "@sillsdev/lynx-usfm": "*",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
     "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
     "@types/node": "^20.16.5",
     "@types/vscode": "^1.93.0",
-    "eslint": "^9.9.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.5.4"
+    "eslint": "^9.39.1",
+    "tsdown": "^0.16.5",
+    "typescript": "^5.9.3"
   }
 }
