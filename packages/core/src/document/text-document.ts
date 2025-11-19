@@ -50,9 +50,7 @@ export class TextDocument implements Document {
 
   positionAt(offset: number, range?: Range): Position {
     const lineOffsets = this.getLineOffsets();
-    if (range == null) {
-      range = { start: { line: 0, character: 0 }, end: { line: lineOffsets.length - 1, character: 0 } };
-    }
+    range ??= { start: { line: 0, character: 0 }, end: { line: lineOffsets.length - 1, character: 0 } };
 
     if (range.start.line === range.end.line) {
       return {
@@ -140,9 +138,7 @@ export class TextDocument implements Document {
   }
 
   private getLineOffsets(): number[] {
-    if (this._lineOffsets === undefined) {
-      this._lineOffsets = computeLineOffsets(this._content, true);
-    }
+    this._lineOffsets ??= computeLineOffsets(this._content, true);
     return this._lineOffsets;
   }
 

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/tsup-config",
+  "name": "@repo/tsdown-config",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,6 +8,6 @@
   ],
   "devDependencies": {
     "cpy-cli": "^5.0.0",
-    "tsup": "^8.3.5"
+    "tsdown": "^0.16.5"
   }
 }

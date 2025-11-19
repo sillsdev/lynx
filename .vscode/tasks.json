@@ -8,22 +8,6 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": [
-        {
-          "base": "$tsup",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
-          }
-        },
-        {
-          "base": "$tsup-dts",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
-          }
-        }
-      ],
       "label": "npm: build"
     },
     {
@@ -33,22 +17,36 @@
         "kind": "build",
         "isDefault": false
       },
-      "problemMatcher": [
-        {
-          "base": "$tsup-watch",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): (ESM|CJS) .* Build success|^lynx-(.+):(.*): (ESM|CJS) Build failed"
+      "problemMatcher": {
+        "owner": "tsdown",
+        "source": "tsdown",
+        "applyTo": "allDocuments",
+        "fileLocation": [
+          "search",
+          {
+            "include": ["${workspaceFolder}/packages"]
           }
-        },
-        {
-          "base": "$tsup-dts-watch",
-          "background": {
-            "beginsPattern": "^@sillsdev/lynx(.*):(.*): DTS Build start$",
-            "endsPattern": "^@sillsdev/lynx(.*):(.*): DTS .* Build success|^lynx-(.+):(.*): DTS Build failed"
+        ],
+        "pattern": [
+          {
+            "regexp": "^.*\\[([A-Z_]+)\\]\\s+(Error|Warning): (.+)$",
+            "code": 1,
+            "severity": 2,
+            "message": 3
+          },
+          {
+            "regexp": "^.*╭─\\[\\s+([^:]+):(\\d+):(\\d+)",
+            "file": 1,
+            "line": 2,
+            "column": 3
           }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.+:dev: ℹ Change detected: .+$",
+          "endsPattern": "^.+:dev: ✔ (Build|Rebuild) complete in \\d+ms$"
         }
-      ],
+      },
       "isBackground": true,
       "label": "npm: dev"
     }

@@ -62,9 +62,7 @@ export class DocumentManager<TDoc extends Document = Document, TChange = TextDoc
 
   async get(uri: string): Promise<TDoc | undefined> {
     let doc = this.documents.get(uri);
-    if (doc == null) {
-      doc = await this.reload(uri);
-    }
+    doc ??= await this.reload(uri);
     return doc;
   }
 
