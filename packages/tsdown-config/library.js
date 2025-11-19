@@ -1,6 +1,4 @@
-import { fixFolderImportsPlugin } from './fix-folder-imports-plugin.js';
-import { fixExtensionsPlugin } from './fix-extensions-plugin.js';
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 export default (config = { hasLocalizations: false }) => {
   let configOptions = {};
@@ -8,11 +6,6 @@ export default (config = { hasLocalizations: false }) => {
     configOptions = {
       ...configOptions,
       onSuccess: 'cpy "src/**/locales/**" dist',
-      esbuildOptions(options) {
-        options.supported = {
-          'import-attributes': true,
-        };
-      },
     };
   }
 
@@ -21,8 +14,7 @@ export default (config = { hasLocalizations: false }) => {
     dts: true,
     clean: true,
     format: ['esm', 'cjs'],
-    bundle: false,
-    esbuildPlugins: [fixFolderImportsPlugin(), fixExtensionsPlugin()],
+    unbundle: true,
     ...configOptions,
   });
 };

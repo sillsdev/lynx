@@ -8,7 +8,7 @@
       "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/vscode"],
-      "outFiles": ["${workspaceRoot}/packages/*/dist/**/*.c?js"],
+      "outFiles": ["${workspaceRoot}/packages/*/dist/**/*.[mc]js"],
       "autoAttachChildProcesses": true,
       "preLaunchTask": "npm: dev",
       "sourceMaps": true
