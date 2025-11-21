@@ -1,5 +1,13 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.1.8
+
+### Patch Changes
+
+- 97513ec: Update dependencies and use trusted publishing with OIDC
+- Updated dependencies [97513ec]
+  - @sillsdev/lynx@0.3.5
+
 ## 0.1.7
 
 ### Patch Changes
