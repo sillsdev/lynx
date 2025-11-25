@@ -1,15 +1,196 @@
-import { ScriptureNode, ScriptureText } from '@sillsdev/lynx';
+import { DocumentFactory, ScriptureDocument, ScriptureNode, ScriptureText } from '@sillsdev/lynx';
+import { UsfmDocumentFactory } from '@sillsdev/lynx-usfm';
+import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { describe, expect, it } from 'vitest';
 
 import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
-import { QuotationConfig } from '../../src/quotation/quotation-config';
+import { QuotationConfig, QuoteContinuerStyle } from '../../src/quotation/quotation-config';
 import {
   QuotationDepth,
   QuotationIterator,
+  QuotationMarkMatch,
   QuotationRootLevel,
   UnresolvedQuoteMetadata,
 } from '../../src/quotation/quotation-utils';
+import { ScriptureTextNodeGrouper } from '../../src/scripture-grouper';
 import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
+
+describe('QuotationMarkMatch tests', () => {
+  it('correctly returns the quotation mark', () => {
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable('this is a "test string'), 10, 1).getQuotationMark(),
+    ).toEqual('"');
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable('this is a "test string'), 9, 1).getQuotationMark(),
+    ).toEqual(' ');
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable('this is a <<test string'), 10, 2).getQuotationMark(),
+    ).toEqual('<<');
+  });
+
+  it('identifies apostrophes as being skippable', () => {
+    const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+    const basicPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput("Abraham's servant"),
+    );
+    expect(basicPossessiveIterator.next()).toEqual({ done: true, value: undefined });
+
+    const basicPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput('Abraham\u2019s servant'),
+    );
+    expect(basicPossessiveIterator2.next()).toEqual({ done: true, value: undefined });
+
+    const basicContractionIterator: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput("they're"),
+    );
+    expect(basicContractionIterator.next()).toEqual({ done: true, value: undefined });
+
+    const basicContractionIterator2: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput('they\u2019re'),
+    );
+    expect(basicContractionIterator2.next()).toEqual({ done: true, value: undefined });
+
+    const sPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput("your sons' wives"),
+    );
+    expect(sPossessiveIterator.next()).toEqual({ done: true, value: undefined });
+
+    const sPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput('your sons\u2019 wives'),
+    );
+    expect(sPossessiveIterator2.next()).toEqual({ done: true, value: undefined });
+
+    const quotedApostropheIterator: QuotationIterator = testEnv.newQuotationIterator(
+      testEnv.createTextInput('\u201CThis is one of the Hebrews\u2019 children.\u201D'),
+    );
+    expect(quotedApostropheIterator.next()).toEqual({
+      done: false,
+      value: new UnresolvedQuoteMetadata.Builder()
+        .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+        .addDirection(PairedPunctuationDirection.Opening)
+        .setStartIndex(0)
+        .setEndIndex(1)
+        .setText('\u201C')
+        .markAsPotentialContinuer()
+        .build(),
+    });
+    expect(quotedApostropheIterator.next()).toEqual({
+      done: false,
+      value: new UnresolvedQuoteMetadata.Builder()
+        .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+        .addDirection(PairedPunctuationDirection.Closing)
+        .setStartIndex(38)
+        .setEndIndex(39)
+        .setText('\u201D')
+        .build(),
+    });
+    expect(quotedApostropheIterator.next()).toEqual({ done: true, value: undefined });
+  });
+
+  describe('correctly identifies whether the quotation mark is at the start of a paragraph', () => {
+    it('does so for TextDocumentCheckables', () => {
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('some "text'), 5, 1).isAtStartOfParagraph()).toBe(false);
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('"some text'), 0, 1).isAtStartOfParagraph()).toBe(true);
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('\n"some text'), 1, 1).isAtStartOfParagraph()).toBe(true);
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('\n "some text'), 2, 1).isAtStartOfParagraph()).toBe(
+        true,
+      );
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('\n\t"some text'), 2, 1).isAtStartOfParagraph()).toBe(
+        true,
+      );
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('some\n"text'), 5, 1).isAtStartOfParagraph()).toBe(true);
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('some\n  "text'), 7, 1).isAtStartOfParagraph()).toBe(
+        true,
+      );
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('some\n  \t "text'), 9, 1).isAtStartOfParagraph()).toBe(
+        true,
+      );
+      expect(new QuotationMarkMatch(new TextDocumentCheckable('some\n  \t t"ext'), 10, 1).isAtStartOfParagraph()).toBe(
+        false,
+      );
+    });
+    it('does so for ScriptureNodeCheckables', () => {
+      const stylesheet: UsfmStylesheet = new UsfmStylesheet('usfm.sty');
+      const scriptureDocumentFactory: DocumentFactory<ScriptureDocument> = new UsfmDocumentFactory(stylesheet);
+
+      const scriptureDoc1: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
+       \\v 1 "In the beginning`,
+      });
+      const scriptureNodeGroup1: CheckableGroup = new ScriptureTextNodeGrouper(scriptureDoc1)
+        .getCheckableGroups()
+        .next().value;
+      const scriptureNode1 = scriptureNodeGroup1.next().value;
+
+      expect(new QuotationMarkMatch(scriptureNode1, 0, 1).isAtStartOfParagraph()).toBe(false);
+      expect(new QuotationMarkMatch(scriptureNode1, 1, 1).isAtStartOfParagraph()).toBe(false);
+
+      const scriptureDoc2: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
+       \\v 1 \\p "In the beginning`,
+      });
+      const scriptureNodeGroup2: CheckableGroup = new ScriptureTextNodeGrouper(scriptureDoc2)
+        .getCheckableGroups()
+        .next().value;
+      const scriptureNode2 = scriptureNodeGroup2.next().value;
+
+      expect(new QuotationMarkMatch(scriptureNode2, 0, 1).isAtStartOfParagraph()).toBe(true);
+      expect(new QuotationMarkMatch(scriptureNode2, 1, 1).isAtStartOfParagraph()).toBe(false);
+
+      const scriptureDoc3: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
+       \\v 1 \\p \\qs "In" the beginning \\qs*`,
+      });
+      const scriptureNodeGroup3: CheckableGroup = new ScriptureTextNodeGrouper(scriptureDoc3)
+        .getCheckableGroups()
+        .next().value;
+      const scriptureNode3 = scriptureNodeGroup3.next().value;
+
+      expect(new QuotationMarkMatch(scriptureNode3, 0, 1).isAtStartOfParagraph()).toBe(true);
+      expect(new QuotationMarkMatch(scriptureNode3, 3, 1).isAtStartOfParagraph()).toBe(false);
+
+      const scriptureDoc4: ScriptureDocument = scriptureDocumentFactory.create('test', {
+        format: 'usfm',
+        version: 1,
+        content: `\\c 1
+       \\v 1 \\p "other text \\qs "In the beginning \\qs*`,
+      });
+      const scriptureNodeGroup4: CheckableGroup = new ScriptureTextNodeGrouper(scriptureDoc4)
+        .getCheckableGroups()
+        .next().value;
+      const scriptureNode4 = scriptureNodeGroup4.next().value;
+
+      expect(new QuotationMarkMatch(scriptureNode4, 0, 1).isAtStartOfParagraph()).toBe(true);
+
+      const scriptureNode4b = scriptureNodeGroup4.next().value;
+      expect(new QuotationMarkMatch(scriptureNode4b, 0, 1).isAtStartOfParagraph()).toBe(false);
+    });
+  });
+
+  it('produces a QuotationMarkMatch for the previous character', () => {
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable('"test text'), 0, 1).getPreviousCharacterMatch(),
+    ).toBeUndefined();
+
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable(' "test text'), 1, 1)
+        .getPreviousCharacterMatch()
+        ?.getQuotationMark(),
+    ).toEqual(' ');
+
+    expect(
+      new QuotationMarkMatch(new TextDocumentCheckable('a"test text'), 1, 1)
+        .getPreviousCharacterMatch()
+        ?.getQuotationMark(),
+    ).toEqual('a');
+  });
+});
 
 describe('QuotationIterator tests', () => {
   describe('Plain text quotation mark identification', () => {
@@ -716,6 +897,243 @@ describe('QuotationIterator tests', () => {
         });
       });
 
+      describe('Identification of quote continuers', () => {
+        it('identifies potential top-level quote continuers', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+          const quoteContinuerQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput('\u201CThis contains one actual \n\u201C quote continuer.'),
+          );
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(27)
+              .setEndIndex(28)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+        });
+
+        it('identifies potential nested quote continuers', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+          const quoteContinuerQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput('\u201CThis contains \u2018two actual \n\u201C\u2018quote continuers.'),
+          );
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText('\u2018')
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(28)
+              .setEndIndex(29)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText('\u2018')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+        });
+
+        it('identifies quote continuers form ambiguous quotation marks', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+          const quoteContinuerQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput('"This contains \'two actual \n"\'quote continuers.'),
+          );
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('"')
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText("'")
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(28)
+              .setEndIndex(29)
+              .setText('"')
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirections([PairedPunctuationDirection.Opening, PairedPunctuationDirection.Closing])
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText("'")
+              .markAsAmbiguous()
+              .markAsAutocorrectable()
+              .markAsPotentialContinuer()
+              .build(),
+          });
+        });
+
+        it('requires quote continuers to be contiguous with each other', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
+          const quoteContinuerQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput('\u201CThis contains \u2018two actual \n\u201C \u2018quote continuers.'),
+          );
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText('\u2018')
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(28)
+              .setEndIndex(29)
+              .setText('\u201C')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(30)
+              .setEndIndex(31)
+              .setText('\u2018')
+              .build(),
+          });
+        });
+
+        it('identifies Spanish-style quote continuers', () => {
+          const testEnv: TestEnvironment = TestEnvironment.createWithFullSpanishQuotes();
+          const quoteContinuerQuotationIterator: QuotationIterator = testEnv.newQuotationIterator(
+            testEnv.createTextInput('\u201CThis contains \u2018two actual \n\u201D\u2019quote continuers.'),
+          );
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(0)
+              .setEndIndex(1)
+              .setText('\u201C')
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Opening)
+              .setStartIndex(15)
+              .setEndIndex(16)
+              .setText('\u2018')
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(28)
+              .setEndIndex(29)
+              .setText('\u201D')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+          expect(quoteContinuerQuotationIterator.next()).toEqual({
+            done: false,
+            value: new UnresolvedQuoteMetadata.Builder()
+              .addDepths([QuotationDepth.Secondary, QuotationDepth.fromNumber(4)])
+              .addDirection(PairedPunctuationDirection.Closing)
+              .setStartIndex(29)
+              .setEndIndex(30)
+              .setText('\u2019')
+              .markAsPotentialContinuer()
+              .build(),
+          });
+        });
+      });
+
       describe('Adherence to the QuotationConfig', () => {
         it('does not identify single quotes', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithTopLevelQuotesAndNoAmbiguity();
@@ -809,64 +1227,6 @@ describe('QuotationIterator tests', () => {
     });
 
     describe('Multi-level English quotation marks', () => {
-      it('skips over apostrophes', () => {
-        const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
-        const basicPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput("Abraham's servant"),
-        );
-        expect(basicPossessiveIterator.next()).toEqual({ done: true, value: undefined });
-
-        const basicPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput('Abraham\u2019s servant'),
-        );
-        expect(basicPossessiveIterator2.next()).toEqual({ done: true, value: undefined });
-
-        const basicContractionIterator: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput("they're"),
-        );
-        expect(basicContractionIterator.next()).toEqual({ done: true, value: undefined });
-
-        const basicContractionIterator2: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput('they\u2019re'),
-        );
-        expect(basicContractionIterator2.next()).toEqual({ done: true, value: undefined });
-
-        const sPossessiveIterator: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput("your sons' wives"),
-        );
-        expect(sPossessiveIterator.next()).toEqual({ done: true, value: undefined });
-
-        const sPossessiveIterator2: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput('your sons\u2019 wives'),
-        );
-        expect(sPossessiveIterator2.next()).toEqual({ done: true, value: undefined });
-
-        const quotedApostropheIterator: QuotationIterator = testEnv.newQuotationIterator(
-          testEnv.createTextInput('\u201CThis is one of the Hebrews\u2019 children.\u201D'),
-        );
-        expect(quotedApostropheIterator.next()).toEqual({
-          done: false,
-          value: new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Opening)
-            .setStartIndex(0)
-            .setEndIndex(1)
-            .setText('\u201C')
-            .build(),
-        });
-        expect(quotedApostropheIterator.next()).toEqual({
-          done: false,
-          value: new UnresolvedQuoteMetadata.Builder()
-            .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
-            .addDirection(PairedPunctuationDirection.Closing)
-            .setStartIndex(38)
-            .setEndIndex(39)
-            .setText('\u201D')
-            .build(),
-        });
-        expect(quotedApostropheIterator.next()).toEqual({ done: true, value: undefined });
-      });
-
       describe('Identification of multiple quotation marks', () => {
         it('identifies multiple levels of quotes in otherwise empty text', () => {
           const testEnv: TestEnvironment = TestEnvironment.createWithFullEnglishQuotes();
@@ -881,6 +1241,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -891,6 +1252,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(1)
               .setEndIndex(2)
               .setText('\u2018')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -926,6 +1288,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -936,6 +1299,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(1)
               .setEndIndex(2)
               .setText('\u2018')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -946,6 +1310,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(2)
               .setEndIndex(3)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -995,6 +1360,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1040,6 +1406,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1304,6 +1671,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual({
@@ -1343,6 +1711,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({
@@ -1419,6 +1788,7 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .markAsPotentialContinuer()
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1677,6 +2047,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
           text: '\u201C',
           isAmbiguous: false,
           isAutocorrectable: false,
+          isContinuer: false,
         },
       );
     });
@@ -1712,6 +2083,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
           text: '"',
           isAmbiguous: true,
           isAutocorrectable: true,
+          isContinuer: false,
         },
       );
 
@@ -1744,6 +2116,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
         text: '"',
         isAmbiguous: true,
         isAutocorrectable: false,
+        isContinuer: false,
       });
     });
   });
@@ -1822,6 +2195,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       text: '"',
       isAmbiguous: true,
       isAutocorrectable: true,
+      isContinuer: false,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Opening)).toEqual({
       depth: QuotationDepth.Tertiary,
@@ -1831,6 +2205,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       text: '"',
       isAmbiguous: true,
       isAutocorrectable: true,
+      isContinuer: false,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(1), PairedPunctuationDirection.Closing)).toEqual({
       depth: QuotationDepth.Primary,
@@ -1840,6 +2215,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       text: '"',
       isAmbiguous: true,
       isAutocorrectable: true,
+      isContinuer: false,
     });
     expect(unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Closing)).toEqual({
       depth: QuotationDepth.Tertiary,
@@ -1849,6 +2225,7 @@ describe('UnresolvedQuoteMetadata tests', () => {
       text: '"',
       isAmbiguous: true,
       isAutocorrectable: true,
+      isContinuer: false,
     });
   });
 
@@ -1923,6 +2300,36 @@ describe('UnresolvedQuoteMetadata tests', () => {
     expect(() =>
       unresolvedQuoteMetadata.resolve(QuotationDepth.fromNumber(3), PairedPunctuationDirection.Ambiguous),
     ).toThrow('Cannot resolve quote metadata with direction \u201CAmbiguous\u201D as this direction is not possible');
+  });
+
+  it('returns a PunctuationMetadata representation of itself', () => {
+    const enclosingRange = {
+      start: {
+        line: 3,
+        character: 12,
+      },
+      end: {
+        line: 5,
+        character: 3,
+      },
+    };
+    expect(
+      new UnresolvedQuoteMetadata.Builder()
+        .addDepths([QuotationDepth.Primary, QuotationDepth.Tertiary])
+        .addDirection(PairedPunctuationDirection.Opening)
+        .setStartIndex(10)
+        .setEndIndex(11)
+        .setEnclosingRange(enclosingRange)
+        .markAsPotentialContinuer()
+        .setText('*')
+        .build()
+        .asPunctuationMetadata(),
+    ).toEqual({
+      startIndex: 10,
+      endIndex: 11,
+      enclosingRange: enclosingRange,
+      text: '*',
+    });
   });
 });
 
@@ -2048,6 +2455,52 @@ class TestEnvironment {
             .build(),
         )
         .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+        .setQuoteContinuerStyle(QuoteContinuerStyle.English)
+        .build(),
+    );
+  }
+
+  static createWithFullSpanishQuotes(): TestEnvironment {
+    return new TestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .mapAmbiguousQuotationMark('"', '\u201C')
+        .mapAmbiguousQuotationMark('"', '\u201D')
+        .mapAmbiguousQuotationMark("'", '\u2018')
+        .mapAmbiguousQuotationMark("'", '\u2019')
+        .ignoreMatchingQuotationMarks(
+          // possessives and contractions
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\w$/)
+            .setRightContext(/^\w/)
+            .build(),
+        )
+        .ignoreMatchingQuotationMarks(
+          // for possessives ending in "s", e.g. "Moses'"
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\ws$/)
+            .setRightContext(/^[ \n,.:;]/)
+            .build(),
+        )
+        .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+        .setQuoteContinuerStyle(QuoteContinuerStyle.Spanish)
         .build(),
     );
   }

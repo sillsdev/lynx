@@ -1,16 +1,22 @@
 import { AmbiguousPunctuationMap, PairedPunctuationRule } from '../rule-set/rule-utils';
 import { CharacterClassRegexBuilder, PairedPunctuationDirection, StringContextMatcher } from '../utils';
-import { QuotationDepth } from './quotation-utils';
+import { QuotationDepth, QuotationMarkMatch } from './quotation-utils';
+
+export enum QuoteContinuerStyle {
+  English,
+  Spanish,
+  None,
+}
 
 export class QuotationConfig {
   private quotationLevels: PairedPunctuationRule[] = [];
   private ambiguousQuoteMap: AmbiguousPunctuationMap = new AmbiguousPunctuationMap();
   private quotationsToIgnore: StringContextMatcher[] = [];
   private nestingWarningDepth: QuotationDepth = QuotationDepth.fromNumber(4);
-  private areContinuersAllowed = false;
   private openingQuoteRegex = /\u201C/;
   private closingQuoteRegex = /\u201D/;
   private ambiguousQuoteRegex = /"/;
+  private quoteContinuerStyle: QuoteContinuerStyle = QuoteContinuerStyle.None;
 
   // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -106,19 +112,14 @@ export class QuotationConfig {
     return this.ambiguousQuoteRegex.test(quotationMark);
   }
 
-  public isQuoteAutocorrectable(quotationMark: string, leftContext = ''): boolean {
-    if (!this.ambiguousQuoteRegex.test(quotationMark)) {
+  public isQuoteAutocorrectable(quotationMarkMatch: QuotationMarkMatch): boolean {
+    if (!this.ambiguousQuoteRegex.test(quotationMarkMatch.getQuotationMark())) {
       return false;
     }
 
     // When patterns to ignore are provided (e.g. apostrophes), only the left context
     // is checked, because the user hasn't typed the right context yet.
-    for (const quotationToIgnore of this.quotationsToIgnore) {
-      if (quotationToIgnore.doesStringAndLeftContextMatch(quotationMark, leftContext)) {
-        return false;
-      }
-    }
-    return true;
+    return !quotationMarkMatch.matchesAnyWithLeftContext(this.quotationsToIgnore);
   }
 
   public getUnambiguousQuotationMarkByType(
@@ -134,6 +135,15 @@ export class QuotationConfig {
         ? this.quotationLevels[depth.asNumber() - 1].openingPunctuationMark
         : this.quotationLevels[depth.asNumber() - 1].closingPunctuationMark;
     return unambiguousMark;
+  }
+
+  public getQuoteContinuerByDepth(depth: QuotationDepth): string | undefined {
+    if (this.quoteContinuerStyle === QuoteContinuerStyle.English) {
+      return this.getUnambiguousQuotationMarkByType(depth, PairedPunctuationDirection.Opening);
+    } else if (this.quoteContinuerStyle === QuoteContinuerStyle.Spanish) {
+      return this.getUnambiguousQuotationMarkByType(depth, PairedPunctuationDirection.Closing);
+    }
+    return undefined;
   }
 
   public isQuotationMarkPotentiallyIgnoreable(quotationMark: string): boolean {
@@ -154,12 +164,45 @@ export class QuotationConfig {
     return false;
   }
 
-  public shouldWarnForDepth(depth: QuotationDepth): boolean {
-    return depth.isDeeperThan(this.nestingWarningDepth) || depth.equals(this.nestingWarningDepth);
+  private areDirectionsConsistentWithQuoteContinuer(
+    possibleQuotationMarkDirections: PairedPunctuationDirection[],
+  ): boolean {
+    return (
+      (this.quoteContinuerStyle === QuoteContinuerStyle.English &&
+        possibleQuotationMarkDirections.includes(PairedPunctuationDirection.Opening)) ||
+      (this.quoteContinuerStyle === QuoteContinuerStyle.Spanish &&
+        possibleQuotationMarkDirections.includes(PairedPunctuationDirection.Closing))
+    );
   }
 
-  public shouldAllowContinuers(): boolean {
-    return this.areContinuersAllowed;
+  public couldQuotationMarkBeContinuer(quotationMarkMatch: QuotationMarkMatch): boolean {
+    if (this.quoteContinuerStyle === QuoteContinuerStyle.None) {
+      return false;
+    }
+
+    if (
+      !this.areDirectionsConsistentWithQuoteContinuer(
+        this.getPossibleQuoteDirections(quotationMarkMatch.getQuotationMark()),
+      )
+    ) {
+      return false;
+    }
+
+    if (!quotationMarkMatch.isAtStartOfParagraph()) {
+      // When quotation marks are nested, it's possible to have multiple consecutive quote continuers.
+      // So whether this character is quote continuer depends on the previous characters
+      const previousCharacterMatch = quotationMarkMatch.getPreviousCharacterMatch();
+      if (previousCharacterMatch === undefined) {
+        return false;
+      }
+      return this.couldQuotationMarkBeContinuer(previousCharacterMatch);
+    }
+
+    return true;
+  }
+
+  public shouldWarnForDepth(depth: QuotationDepth): boolean {
+    return depth.isDeeperThan(this.nestingWarningDepth) || depth.equals(this.nestingWarningDepth);
   }
 
   public static Builder = class {
@@ -193,13 +236,8 @@ export class QuotationConfig {
       return this;
     }
 
-    public allowContinuers(): this {
-      this.quotationConfig.areContinuersAllowed = true;
-      throw new Error('Quote continuers are not supported at this time.');
-    }
-
-    public disallowContinuers(): this {
-      this.quotationConfig.areContinuersAllowed = false;
+    public setQuoteContinuerStyle(quoteContinuerStyle: QuoteContinuerStyle): this {
+      this.quotationConfig.quoteContinuerStyle = quoteContinuerStyle;
       return this;
     }
 

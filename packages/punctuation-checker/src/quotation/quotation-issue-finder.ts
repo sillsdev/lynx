@@ -5,10 +5,11 @@ import { DiagnosticFactory } from '../diagnostic-factory';
 import { DiagnosticList } from '../diagnostic-list';
 import { IssueFinder, IssueFinderFactory } from '../issue-finder';
 import { PairedPunctuationDirection } from '../utils';
-import { QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
+import { MissingQuoteContinuerMetadata, QuotationAnalysis, QuotationAnalyzer } from './quotation-analyzer';
 import {
   AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE,
   INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE,
+  MISSING_QUOTE_CONTINUER_CODE,
   QUOTATION_CHECKER_LOCALIZER_NAMESPACE,
   TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE,
   UNMATCHED_CLOSING_QUOTE_DIAGNOSTIC_CODE,
@@ -57,6 +58,7 @@ export class QuotationIssueFinder implements IssueFinder {
     this.createIncorrectlyNestedQuoteDiagnostics(analysis);
     this.createAmbiguousQuoteDiagnostics(analysis);
     this.createTooDeeplyNestedQuoteDiagnostics(analysis);
+    this.createMissingQuoteContinuerDiagnostics(analysis);
   }
 
   private createUnmatchedQuoteDiagnostics(analysis: QuotationAnalysis): void {
@@ -80,6 +82,12 @@ export class QuotationIssueFinder implements IssueFinder {
   private createTooDeeplyNestedQuoteDiagnostics(analysis: QuotationAnalysis): void {
     for (const tooDeeplyNestedQuote of analysis.getTooDeeplyNestedQuotes()) {
       this.addTooDeeplyNestedQuoteWarning(tooDeeplyNestedQuote);
+    }
+  }
+
+  private createMissingQuoteContinuerDiagnostics(analysis: QuotationAnalysis): void {
+    for (const missingQuoteContinuer of analysis.getMissingQuoteContinuers()) {
+      this.addMissingQuoteContinuerWarning(missingQuoteContinuer);
     }
   }
 
@@ -164,6 +172,19 @@ export class QuotationIssueFinder implements IssueFinder {
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(quotationMark.startIndex, quotationMark.endIndex, quotationMark.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
+      .build();
+    this.diagnosticList.addDiagnostic(diagnostic);
+  }
+
+  private addMissingQuoteContinuerWarning(missingQuoteContinuer: MissingQuoteContinuerMetadata): void {
+    const code: string = MISSING_QUOTE_CONTINUER_CODE;
+    const diagnostic: Diagnostic = this.diagnosticFactory
+      .newBuilder()
+      .setCode(code)
+      .setSeverity(DiagnosticSeverity.Warning)
+      .setRange(missingQuoteContinuer.startIndex, missingQuoteContinuer.endIndex, missingQuoteContinuer.enclosingRange)
+      .setMessage(this.getErrorMessageByCode(code))
+      .setData(missingQuoteContinuer.missingQuoteContinuers)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { QuotationConfig } from '../../src/quotation/quotation-config';
-import { QuotationDepth } from '../../src/quotation/quotation-utils';
+import { Checkable, TextDocumentCheckable } from '../../src/checkable';
+import { QuotationConfig, QuoteContinuerStyle } from '../../src/quotation/quotation-config';
+import { QuotationDepth, QuotationMarkMatch } from '../../src/quotation/quotation-utils';
 import { PairedPunctuationDirection, StringContextMatcher } from '../../src/utils';
 
 describe('QuotationConfig tests', () => {
@@ -203,6 +204,58 @@ describe('QuotationConfig tests', () => {
     ).toEqual('\u201D');
   });
 
+  it('returns the correct quote continuers for various depths', () => {
+    const englishQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
+      .setTopLevelQuotationMarks({
+        openingPunctuationMark: '\u201c',
+        closingPunctuationMark: '\u201d',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u201c',
+        closingPunctuationMark: '\u201d',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .setQuoteContinuerStyle(QuoteContinuerStyle.English)
+      .build();
+
+    expect(englishQuotationConfig.getQuoteContinuerByDepth(QuotationDepth.Primary)).toEqual('\u201c');
+    expect(englishQuotationConfig.getQuoteContinuerByDepth(QuotationDepth.Secondary)).toEqual('\u2018');
+    expect(englishQuotationConfig.getQuoteContinuerByDepth(QuotationDepth.Tertiary)).toEqual('\u201c');
+    expect(englishQuotationConfig.getQuoteContinuerByDepth(QuotationDepth.fromNumber(4))).toEqual('\u2018');
+
+    const spanishQuoteContinuerConfig: QuotationConfig = new QuotationConfig.Builder()
+      .setTopLevelQuotationMarks({
+        openingPunctuationMark: '\u201c',
+        closingPunctuationMark: '\u201d',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u201c',
+        closingPunctuationMark: '\u201d',
+      })
+      .addNestedQuotationMarks({
+        openingPunctuationMark: '\u2018',
+        closingPunctuationMark: '\u2019',
+      })
+      .setQuoteContinuerStyle(QuoteContinuerStyle.Spanish)
+      .build();
+
+    expect(spanishQuoteContinuerConfig.getQuoteContinuerByDepth(QuotationDepth.Primary)).toEqual('\u201d');
+    expect(spanishQuoteContinuerConfig.getQuoteContinuerByDepth(QuotationDepth.Secondary)).toEqual('\u2019');
+    expect(spanishQuoteContinuerConfig.getQuoteContinuerByDepth(QuotationDepth.Tertiary)).toEqual('\u201d');
+    expect(spanishQuoteContinuerConfig.getQuoteContinuerByDepth(QuotationDepth.fromNumber(4))).toEqual('\u2019');
+  });
+
   it('ignores quotation marks that match a pattern', () => {
     const contrivedQuotationConfig: QuotationConfig = new QuotationConfig.Builder()
       .setTopLevelQuotationMarks({
@@ -278,28 +331,242 @@ describe('QuotationConfig tests', () => {
       )
       .build();
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', '')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', '')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', '')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', '')).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201C'), 0, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201D'), 0, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u2018'), 0, 1)),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u2019'), 0, 1)),
+    ).toBe(false);
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('"', '')).toBe(true);
-    expect(englishQuotationConfig.isQuoteAutocorrectable("'", '')).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('"'), 0, 1)),
+    ).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("'"), 0, 1)),
+    ).toBe(true);
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', 'test')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', 'test')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', 'test')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', 'test')).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test\u201C'), 4, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test\u201D'), 4, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test\u2018'), 4, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test\u2019'), 4, 1),
+      ),
+    ).toBe(false);
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('"', 'test')).toBe(true);
-    expect(englishQuotationConfig.isQuoteAutocorrectable("'", 'test')).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('test"'), 4, 1)),
+    ).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("test'"), 4, 1)),
+    ).toBe(false);
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201C', 'test ')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u201D', 'test ')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2018', 'test ')).toBe(false);
-    expect(englishQuotationConfig.isQuoteAutocorrectable('\u2019', 'test ')).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test \u201C'), 5, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test \u201D'), 5, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test \u2018'), 5, 1),
+      ),
+    ).toBe(false);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(
+        new QuotationMarkMatch(new TextDocumentCheckable('test \u2019'), 5, 1),
+      ),
+    ).toBe(false);
 
-    expect(englishQuotationConfig.isQuoteAutocorrectable('"', 'test ')).toBe(true);
-    expect(englishQuotationConfig.isQuoteAutocorrectable("'", 'test ')).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('test "'), 5, 1)),
+    ).toBe(true);
+    expect(
+      englishQuotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("test '"), 5, 1)),
+    ).toBe(true);
+  });
+
+  describe('identifies quotation marks that could be quote continuers', () => {
+    const checkable1: Checkable = new TextDocumentCheckable('First line\n\u201csecond line \n\u201cthird line');
+    const checkable2: Checkable = new TextDocumentCheckable(
+      'First line\n\u201csecond \u2018line \n\u201c\u2018third line',
+    );
+    const checkable3: Checkable = new TextDocumentCheckable(
+      'First line\n\u201csecond \u2018line \n\u201d\u2019third line\u2019',
+    );
+
+    it('does not identify any quote continuers if the QuoteContinuerStyle is "None"', () => {
+      const noContinuersConfig: QuotationConfig = new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .setQuoteContinuerStyle(QuoteContinuerStyle.None)
+        .build();
+
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 11, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 25, 1))).toBe(false);
+
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 11, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 19, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 26, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 27, 1))).toBe(false);
+
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 11, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 19, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 26, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 27, 1))).toBe(false);
+      expect(noContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 37, 1))).toBe(false);
+    });
+
+    it('correctly identifies possible English-style quote continuers', () => {
+      const englishContinuersConfig: QuotationConfig = new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .setQuoteContinuerStyle(QuoteContinuerStyle.English)
+        .build();
+
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 11, 1))).toBe(
+        true,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 25, 1))).toBe(
+        true,
+      );
+
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 11, 1))).toBe(
+        true,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 19, 1))).toBe(
+        false,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 26, 1))).toBe(
+        true,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 27, 1))).toBe(
+        true,
+      );
+
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 11, 1))).toBe(
+        true,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 19, 1))).toBe(
+        false,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 26, 1))).toBe(
+        false,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 27, 1))).toBe(
+        false,
+      );
+      expect(englishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 37, 1))).toBe(
+        false,
+      );
+    });
+
+    it('correctly identifies possible Spanish-style quote continuers', () => {
+      const spanishContinuersConfig: QuotationConfig = new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201c',
+          closingPunctuationMark: '\u201d',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .setQuoteContinuerStyle(QuoteContinuerStyle.Spanish)
+        .build();
+
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 11, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable1, 25, 1))).toBe(
+        false,
+      );
+
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 11, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 19, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 26, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable2, 27, 1))).toBe(
+        false,
+      );
+
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 11, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 19, 1))).toBe(
+        false,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 26, 1))).toBe(
+        true,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 27, 1))).toBe(
+        true,
+      );
+      expect(spanishContinuersConfig.couldQuotationMarkBeContinuer(new QuotationMarkMatch(checkable3, 37, 1))).toBe(
+        false,
+      );
+    });
   });
 });

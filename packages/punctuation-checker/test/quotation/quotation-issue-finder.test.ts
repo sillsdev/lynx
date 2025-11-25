@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CheckableGroup, ScriptureNodeCheckable, TextDocumentCheckable } from '../../src/checkable';
 import { DiagnosticFactory } from '../../src/diagnostic-factory';
-import { QuotationConfig } from '../../src/quotation/quotation-config';
+import { QuotationConfig, QuoteContinuerStyle } from '../../src/quotation/quotation-config';
 import { QuotationIssueFinder } from '../../src/quotation/quotation-issue-finder';
 import { QuotationDepth, QuotationRootLevel } from '../../src/quotation/quotation-utils';
 import { StringContextMatcher } from '../../src/utils';
@@ -317,6 +317,25 @@ describe('QuotationErrorFinder tests', () => {
         testEnv.createTooDeeplyNestedDiagnostic(23, 24),
       ]);
     });
+
+    it('creates Diagnostics for missing quote continuers', async () => {
+      const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
+      await testEnv.init();
+
+      expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(
+          testEnv.createInput('\u201CThis text \u2018contains\n\u201Ca missing quote continuer\u2019\u201D'),
+        ),
+      ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2018')]);
+
+      expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(
+          testEnv.createInput(
+            '\u201CThis \u2018text \u201ccontains\n\u201Ctwo missing quote continuers\u201D\u2019\u201D',
+          ),
+        ),
+      ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2018\u201C')]);
+    });
   });
 
   describe('For a system with different 1st- and 3rd-level quotes', () => {
@@ -415,6 +434,25 @@ describe('QuotationErrorFinder tests', () => {
         ),
       ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(35, 36, QuotationDepth.fromNumber(2))]);
     });
+  });
+
+  it('creates Diagnostics for missing Spanish-style quote continuers', async () => {
+    const testEnv: TextTestEnvironment = TextTestEnvironment.createWithSpanishQuoteContinuers();
+    await testEnv.init();
+
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnostics(
+        testEnv.createInput('\u201CThis text \u2018contains\n\u201Da missing quote continuer\u2019\u201D'),
+      ),
+    ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2019')]);
+
+    expect(
+      testEnv.quotationErrorFinder.produceDiagnostics(
+        testEnv.createInput(
+          '\u201CThis \u2018text \u201ccontains\n\u201Dtwo missing quote continuers\u201D\u2019\u201D',
+        ),
+      ),
+    ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2019\u201D')]);
   });
 });
 
@@ -567,6 +605,7 @@ class TextTestEnvironment {
           'incorrectly-nested-quotation-mark': 'Incorrectly nested quotation mark.',
           'ambiguous-quotation-mark': 'This quotation mark is ambiguous.',
           'deeply-nested-quotation-mark': 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
+          'missing-quote-continuer': 'Missing quotation mark when continuing a quote across multiple paragraphs.',
         },
       };
     });
@@ -633,6 +672,7 @@ class TextTestEnvironment {
             .build(),
         )
         .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+        .setQuoteContinuerStyle(QuoteContinuerStyle.English)
         .build(),
     );
   }
@@ -652,6 +692,51 @@ class TextTestEnvironment {
           openingPunctuationMark: '\u201E',
           closingPunctuationMark: '\u201F',
         })
+        .build(),
+    );
+  }
+
+  static createWithSpanishQuoteContinuers() {
+    return new TextTestEnvironment(
+      new QuotationConfig.Builder()
+        .setTopLevelQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u201C',
+          closingPunctuationMark: '\u201D',
+        })
+        .addNestedQuotationMarks({
+          openingPunctuationMark: '\u2018',
+          closingPunctuationMark: '\u2019',
+        })
+        .mapAmbiguousQuotationMark('"', '\u201C')
+        .mapAmbiguousQuotationMark('"', '\u201D')
+        .mapAmbiguousQuotationMark("'", '\u2018')
+        .mapAmbiguousQuotationMark("'", '\u2019')
+        .ignoreMatchingQuotationMarks(
+          // possessives and contractions
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\w$/)
+            .setRightContext(/^\w/)
+            .build(),
+        )
+        .ignoreMatchingQuotationMarks(
+          // for possessives ending in "s", e.g. "Moses'"
+          new StringContextMatcher.Builder()
+            .setCenterContent(/^['\u2019]$/)
+            .setLeftContext(/\ws$/)
+            .setRightContext(/^[ \n,.:;]/)
+            .build(),
+        )
+        .setNestingWarningDepth(QuotationDepth.fromNumber(4))
+        .setQuoteContinuerStyle(QuoteContinuerStyle.Spanish)
         .build(),
     );
   }
@@ -763,6 +848,30 @@ class TextTestEnvironment {
       source: 'quotation-mark-checker',
       message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
       data: '',
+    };
+  }
+
+  createMissingQuoteContinuerDiagnostic(
+    startOffset: number,
+    endOffset: number,
+    missingQuoteContinuer: string,
+  ): Diagnostic {
+    return {
+      code: 'missing-quote-continuer',
+      severity: DiagnosticSeverity.Warning,
+      range: {
+        start: {
+          line: 0,
+          character: startOffset,
+        },
+        end: {
+          line: 0,
+          character: endOffset,
+        },
+      },
+      source: 'quotation-mark-checker',
+      message: 'Missing quotation mark when continuing a quote across multiple paragraphs.',
+      data: missingQuoteContinuer,
     };
   }
 

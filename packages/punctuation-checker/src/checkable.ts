@@ -8,6 +8,8 @@ export abstract class Checkable {
   public abstract getEnclosingRange(): Range | undefined;
   public abstract isLeadingWhitespacePossiblyTruncated(): boolean;
   public abstract isTrailingWhitespacePossiblyTruncated(): boolean;
+  public abstract hasParagraphStart(): boolean;
+  public abstract getTextSinceLastParagraphStart(endingIndex: number): string | undefined;
 
   public previous(): Checkable | undefined {
     return this.previousNeighbor;
@@ -41,6 +43,16 @@ export class TextDocumentCheckable extends Checkable {
   public isTrailingWhitespacePossiblyTruncated(): boolean {
     return false;
   }
+
+  public hasParagraphStart(): boolean {
+    return true;
+  }
+
+  public getTextSinceLastParagraphStart(endingIndex: number): string | undefined {
+    const textUpToEndingIndex = this.text.slice(0, Math.min(Math.max(endingIndex, 0), this.text.length));
+    const lastParagraphBreakIndex = textUpToEndingIndex.lastIndexOf('\n');
+    return textUpToEndingIndex.slice(lastParagraphBreakIndex + 1);
+  }
 }
 
 export class ScriptureNodeCheckable extends Checkable {
@@ -59,6 +71,50 @@ export class ScriptureNodeCheckable extends Checkable {
   }
   public isTrailingWhitespacePossiblyTruncated(): boolean {
     return this.isNodeFollowedByParagraphVerseOrChapterMarker(this.scriptureNode);
+  }
+
+  public hasParagraphStart(): boolean {
+    return this.doesNodeHaveParagraphMarkerAncestorWithNoInterveningText(this.scriptureNode);
+  }
+
+  public getTextSinceLastParagraphStart(endingIndex: number): string | undefined {
+    if (!this.hasParagraphStart()) {
+      return undefined;
+    }
+    return this.scriptureNode.getText().slice(0, Math.min(endingIndex, this.scriptureNode.getText().length));
+  }
+
+  private doesNodeHaveParagraphMarkerAncestorWithNoInterveningText(node: ScriptureNode): boolean {
+    if (node.parent !== undefined) {
+      if (node.parent.type === ScriptureNodeType.Paragraph) {
+        return !this.doesNodeHaveAnyLeftSiblingTextNodes(node);
+      }
+      return this.doesNodeHaveParagraphMarkerAncestorWithNoInterveningText(node.parent);
+    }
+    return false;
+  }
+
+  private doesNodeHaveAnyLeftSiblingTextNodes(node: ScriptureNode): boolean {
+    if (node.previous !== undefined) {
+      if (node.previous.type === ScriptureNodeType.Text || this.doesNodeHaveAnyDescendantTextNodes(node.previous)) {
+        return true;
+      }
+      return this.doesNodeHaveAnyLeftSiblingTextNodes(node.previous);
+    }
+    return false;
+  }
+
+  private doesNodeHaveAnyDescendantTextNodes(node: ScriptureNode): boolean {
+    if (node.type === ScriptureNodeType.Note || node.type === ScriptureNodeType.Ref) {
+      return false;
+    }
+    for (const child of node.children) {
+      if (child.type === ScriptureNodeType.Text) {
+        return true;
+      }
+      return this.doesNodeHaveAnyDescendantTextNodes(child);
+    }
+    return false;
   }
 
   private isNodePrecededByParagraphVerseOrChapterMarker(node: ScriptureNode): boolean {
