@@ -52,13 +52,13 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
       diagnostic: diagnostic,
       edits: this.editFactory.createTextEdit(
         this.document,
-        this.getRangeForLeadingCharacterInsertion(diagnostic.range),
+        this.getRangeForLeadingStringInsertion(diagnostic.range),
         ' ',
       ),
     };
   }
 
-  private getRangeForLeadingCharacterInsertion(range: Range): Range {
+  private getRangeForLeadingStringInsertion(range: Range): Range {
     return {
       start: {
         line: range.start.line,
@@ -80,13 +80,13 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
       diagnostic: diagnostic,
       edits: this.editFactory.createTextEdit(
         this.document,
-        this.getRangeForTrailingCharacterInsertion(diagnostic.range),
+        this.getRangeForTrailingStringInsertion(diagnostic.range),
         ' ',
       ),
     };
   }
 
-  private getRangeForTrailingCharacterInsertion(range: Range): Range {
+  private getRangeForTrailingStringInsertion(range: Range): Range {
     return {
       start: {
         line: range.end.line,
@@ -96,6 +96,22 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
         line: range.end.line,
         character: range.end.character,
       },
+    };
+  }
+
+  public trailingStringInsertionFix(diagnostic: Diagnostic, stringToInsert: string): DiagnosticFix<TEdit> {
+    return {
+      title: this.localizer.t(`trailingStringInsertionFix`, {
+        ns: LOCALIZER_NAMESPACE,
+        insertedString: stringToInsert,
+      }),
+      isPreferred: true,
+      diagnostic: diagnostic,
+      edits: this.editFactory.createTextEdit(
+        this.document,
+        this.getRangeForTrailingStringInsertion(diagnostic.range),
+        stringToInsert,
+      ),
     };
   }
 }

@@ -10,7 +10,8 @@ import {
 } from '@sillsdev/lynx';
 import { describe, expect, it } from 'vitest';
 
-import { QuotationDepth } from '../../src/quotation/quotation-utils';
+import { TextDocumentCheckable } from '../../src/checkable';
+import { QuotationDepth, QuotationMarkMatch } from '../../src/quotation/quotation-utils';
 import { RuleType } from '../../src/rule-set/rule-set';
 import { StandardRuleSets } from '../../src/rule-set/standard-rule-sets';
 import { PairedPunctuationDirection } from '../../src/utils';
@@ -157,13 +158,27 @@ describe('Standard English rule set tests', () => {
       ]);
       expect(quotationConfig.getPossibleQuoteDirections('\u201E')).toEqual([]);
 
-      expect(quotationConfig.isQuoteAutocorrectable("'")).toBe(true);
-      expect(quotationConfig.isQuoteAutocorrectable('"')).toBe(true);
-      expect(quotationConfig.isQuoteAutocorrectable('\u201C')).toBe(false);
-      expect(quotationConfig.isQuoteAutocorrectable('\u201D')).toBe(false);
-      expect(quotationConfig.isQuoteAutocorrectable('\u2018')).toBe(false);
-      expect(quotationConfig.isQuoteAutocorrectable('\u2019')).toBe(false);
-      expect(quotationConfig.isQuoteAutocorrectable('\u201E')).toBe(false);
+      expect(quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable("'"), 0, 1))).toBe(
+        true,
+      );
+      expect(quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('"'), 0, 1))).toBe(
+        true,
+      );
+      expect(
+        quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201C'), 0, 1)),
+      ).toBe(false);
+      expect(
+        quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201D'), 0, 1)),
+      ).toBe(false);
+      expect(
+        quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u2018'), 0, 1)),
+      ).toBe(false);
+      expect(
+        quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u2019'), 0, 1)),
+      ).toBe(false);
+      expect(
+        quotationConfig.isQuoteAutocorrectable(new QuotationMarkMatch(new TextDocumentCheckable('\u201E'), 0, 1)),
+      ).toBe(false);
     });
 
     it('skips over apostrophes', () => {
@@ -195,7 +210,6 @@ describe('Standard English rule set tests', () => {
     });
 
     it('has other various properties configured correctly', () => {
-      expect(quotationConfig.shouldAllowContinuers()).toBe(false);
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(3))).toBe(false);
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(4))).toBe(true);
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(5))).toBe(true);

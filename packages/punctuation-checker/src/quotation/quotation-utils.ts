@@ -1,7 +1,12 @@
 import { Range } from '@sillsdev/lynx';
 
 import { Checkable, CheckableGroup } from '../checkable';
-import { PairedPunctuationDirection, PairedPunctuationMetadata } from '../utils';
+import {
+  PairedPunctuationDirection,
+  PairedPunctuationMetadata,
+  PunctuationMetadata,
+  StringContextMatcher,
+} from '../utils';
 import { QuotationConfig } from './quotation-config';
 
 export interface QuoteMetadata extends PairedPunctuationMetadata {
@@ -9,6 +14,7 @@ export interface QuoteMetadata extends PairedPunctuationMetadata {
   isAmbiguous: boolean;
   isAutocorrectable: boolean;
   parentDepth?: QuotationDepth;
+  isContinuer: boolean;
 }
 
 export class UnresolvedQuoteMetadata {
@@ -20,6 +26,7 @@ export class UnresolvedQuoteMetadata {
   private text = '';
   private isAmbiguous = false;
   private isAutocorrectable = false;
+  private isPotentialQuoteContinuer = false;
 
   // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -39,6 +46,10 @@ export class UnresolvedQuoteMetadata {
 
   public numPossibleDirections(): number {
     return this.directions.size;
+  }
+
+  public canBeQuoteContinuer(): boolean {
+    return this.isPotentialQuoteContinuer;
   }
 
   public findBestDepth(depthScoringFunction: (depth: QuotationDepth) => number): QuotationDepth {
@@ -70,7 +81,11 @@ export class UnresolvedQuoteMetadata {
     return bestDirection;
   }
 
-  public resolve(chosenDepth: QuotationDepth, chosenDirection: PairedPunctuationDirection): QuoteMetadata {
+  public resolve(
+    chosenDepth: QuotationDepth,
+    chosenDirection: PairedPunctuationDirection,
+    isContinuer = false,
+  ): QuoteMetadata {
     this.checkForValidResolution(chosenDepth, chosenDirection);
     return {
       depth: chosenDepth,
@@ -81,6 +96,7 @@ export class UnresolvedQuoteMetadata {
       text: this.text,
       isAmbiguous: this.isAmbiguous,
       isAutocorrectable: this.isAutocorrectable,
+      isContinuer: isContinuer,
     };
   }
 
@@ -95,6 +111,15 @@ export class UnresolvedQuoteMetadata {
         `Cannot resolve quote metadata with direction \u201C${chosenDirection}\u201D as this direction is not possible`,
       );
     }
+  }
+
+  public asPunctuationMetadata(): PunctuationMetadata {
+    return {
+      startIndex: this.startIndex,
+      endIndex: this.endIndex,
+      enclosingRange: this.enclosingRange,
+      text: this.text,
+    };
   }
 
   public static Builder = class {
@@ -153,6 +178,11 @@ export class UnresolvedQuoteMetadata {
 
     public markAsAutocorrectable(): this {
       this.objectInstance.isAutocorrectable = true;
+      return this;
+    }
+
+    public markAsPotentialContinuer(): this {
+      this.objectInstance.isPotentialQuoteContinuer = true;
       return this;
     }
 
@@ -257,6 +287,64 @@ export interface QuoteCorrection {
   correctedQuotationMark: QuoteMetadata;
 }
 
+export class QuotationMarkMatch {
+  private static whitespaceRegex = new RegExp('^\\s*$', 'u');
+
+  private readonly leftContext: string;
+  private readonly rightContext: string;
+
+  constructor(
+    private readonly checkable: Checkable,
+    private readonly startOffset: number,
+    private readonly length: number,
+  ) {
+    this.leftContext = checkable.getText().substring(Math.max(0, this.startOffset - 5), this.startOffset);
+    this.rightContext = checkable
+      .getText()
+      .substring(
+        this.startOffset + this.length,
+        Math.min(checkable.getText().length, this.startOffset + this.length + 5),
+      );
+  }
+
+  public getQuotationMark(): string {
+    return this.checkable.getText().substring(this.startOffset, this.startOffset + this.length);
+  }
+
+  public shouldBeSkipped(quotationConfig: QuotationConfig): boolean {
+    if (!quotationConfig.isQuotationMarkPotentiallyIgnoreable(this.getQuotationMark())) {
+      return false;
+    }
+    return quotationConfig.shouldIgnoreQuotationMark(this.getQuotationMark(), this.leftContext, this.rightContext);
+  }
+
+  public matchesAnyWithLeftContext(stringContextMatchers: StringContextMatcher[]): boolean {
+    for (const quotationToIgnore of stringContextMatchers) {
+      if (quotationToIgnore.doesStringAndLeftContextMatch(this.getQuotationMark(), this.leftContext)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public isAtStartOfParagraph(): boolean {
+    if (!this.checkable.hasParagraphStart()) {
+      return false;
+    }
+    return QuotationMarkMatch.whitespaceRegex.test(
+      this.checkable.getTextSinceLastParagraphStart(this.startOffset) ?? '',
+    );
+  }
+
+  public getPreviousCharacterMatch(): QuotationMarkMatch | undefined {
+    if (this.startOffset === 0) {
+      return undefined;
+    }
+
+    return new QuotationMarkMatch(this.checkable, this.startOffset - 1, 1);
+  }
+}
+
 export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetadata> {
   private readonly openingOrClosingQuotePattern: RegExp = /[\u201C\u201D]/g;
   private nextQuote: UnresolvedQuoteMetadata | null = null;
@@ -286,68 +374,39 @@ export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetada
       return;
     }
 
-    let match: RegExpExecArray | null;
+    let regexMatch: RegExpExecArray | null;
+    let quotationMarkMatch: QuotationMarkMatch;
     do {
-      match = this.openingOrClosingQuotePattern.exec(this.currentCheckable.getText());
-      if (match === null) {
+      regexMatch = this.openingOrClosingQuotePattern.exec(this.currentCheckable.getText());
+      if (regexMatch === null) {
         this.currentCheckable = this.advanceToNextCheckable();
         this.findNext();
         return;
       }
-    } while (this.shouldSkipQuote(match));
+      quotationMarkMatch = new QuotationMarkMatch(this.currentCheckable, regexMatch.index, regexMatch[0].length);
+    } while (quotationMarkMatch.shouldBeSkipped(this.quotationConfig));
 
-    const matchingText = match[0];
+    const matchingText = regexMatch[0];
     const unresolvedQuoteMetadataBuilder = new UnresolvedQuoteMetadata.Builder()
-      .setStartIndex(match.index)
-      .setEndIndex(match.index + match[0].length)
+      .setStartIndex(regexMatch.index)
+      .setEndIndex(regexMatch.index + regexMatch[0].length)
       .addDepths(this.quotationConfig.getPossibleQuoteDepths(matchingText))
       .addDirections(this.quotationConfig.getPossibleQuoteDirections(matchingText))
       .setText(matchingText);
 
     unresolvedQuoteMetadataBuilder.setEnclosingRange(this.currentCheckable.getEnclosingRange());
-    if (this.isQuoteAmbiguous(matchingText)) {
+    if (this.quotationConfig.isQuoteAmbiguous(matchingText)) {
       unresolvedQuoteMetadataBuilder.markAsAmbiguous();
 
-      if (this.isQuoteAutocorrectable(match)) {
+      if (this.quotationConfig.isQuoteAutocorrectable(quotationMarkMatch)) {
         unresolvedQuoteMetadataBuilder.markAsAutocorrectable();
       }
     }
+    if (this.quotationConfig.couldQuotationMarkBeContinuer(quotationMarkMatch)) {
+      unresolvedQuoteMetadataBuilder.markAsPotentialContinuer();
+    }
 
     this.nextQuote = unresolvedQuoteMetadataBuilder.build();
-  }
-
-  private shouldSkipQuote(quoteMatch: RegExpExecArray): boolean {
-    if (!this.quotationConfig.isQuotationMarkPotentiallyIgnoreable(quoteMatch[0])) {
-      return false;
-    }
-    const leftContext: string = this.getLeftContextForMatch(quoteMatch);
-    const rightContext: string = this.getRightContextForMatch(quoteMatch);
-
-    return this.quotationConfig.shouldIgnoreQuotationMark(quoteMatch[0], leftContext, rightContext);
-  }
-
-  private getLeftContextForMatch(quoteMatch: RegExpExecArray): string {
-    return this.currentCheckable?.getText().substring(Math.max(0, quoteMatch.index - 5), quoteMatch.index) ?? '';
-  }
-
-  private getRightContextForMatch(quoteMatch: RegExpExecArray): string {
-    return (
-      this.currentCheckable
-        ?.getText()
-        .substring(
-          quoteMatch.index + quoteMatch[0].length,
-          Math.min(this.currentCheckable.getText().length, quoteMatch.index + quoteMatch[0].length + 5),
-        ) ?? ''
-    );
-  }
-
-  private isQuoteAmbiguous(quotationMark: string): boolean {
-    return this.quotationConfig.isQuoteAmbiguous(quotationMark);
-  }
-
-  private isQuoteAutocorrectable(quoteMatch: RegExpExecArray): boolean {
-    const leftContext: string = this.getLeftContextForMatch(quoteMatch);
-    return this.quotationConfig.isQuoteAutocorrectable(quoteMatch[0], leftContext);
   }
 
   [Symbol.iterator](): this {

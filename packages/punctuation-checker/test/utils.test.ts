@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CharacterClassRegexBuilder, StringContextMatcher } from '../src/utils';
+import { arePunctuationMarksConsecutive, CharacterClassRegexBuilder, StringContextMatcher } from '../src/utils';
 
 describe('CharacterClassRegexBuilder tests', () => {
   it('creates basic character classes correctly', () => {
@@ -119,5 +119,80 @@ describe('StringContextMatcher tests', () => {
     expect(basicMatcher.doesStringAndContextMatch('red', 'cat', 'igloo')).toBe(false);
     expect(basicMatcher.doesStringAndContextMatch('golf', 'dog', 'igloo')).toBe(false);
     expect(basicMatcher.doesStringAndContextMatch('golf', 'dog', 'half')).toBe(false);
+  });
+});
+
+describe('arePunctuationMarksConsecutive tests', () => {
+  it('identifies when the second punctuation mark immediately follows the first', () => {
+    const enclosingRange = {
+      start: {
+        line: 1,
+        character: 1,
+      },
+      end: {
+        line: 1,
+        character: 10,
+      },
+    };
+    expect(
+      arePunctuationMarksConsecutive(
+        {
+          startIndex: 4,
+          endIndex: 5,
+          enclosingRange: enclosingRange,
+          text: '\u201c',
+        },
+        {
+          startIndex: 5,
+          endIndex: 6,
+          text: '\u201c',
+          enclosingRange: enclosingRange,
+        },
+      ),
+    ).toBe(true);
+
+    expect(
+      arePunctuationMarksConsecutive(
+        {
+          startIndex: 5,
+          endIndex: 6,
+          enclosingRange: enclosingRange,
+          text: '\u201c',
+        },
+        {
+          startIndex: 4,
+          endIndex: 5,
+          text: '\u201c',
+          enclosingRange: enclosingRange,
+        },
+      ),
+    ).toBe(false);
+
+    const differentEnclosingRange = {
+      start: {
+        line: 2,
+        character: 1,
+      },
+      end: {
+        line: 5,
+        character: 10,
+      },
+    };
+    expect(
+      arePunctuationMarksConsecutive(
+        {
+          startIndex: 4,
+          endIndex: 5,
+          enclosingRange: enclosingRange,
+          text: '\u201c',
+        },
+        {
+          startIndex: 4,
+          endIndex: 5,
+          text: '\u201c',
+          enclosingRange: differentEnclosingRange,
+        },
+      ),
+    ).toBe(false);
   });
 });

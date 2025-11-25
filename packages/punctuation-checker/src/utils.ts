@@ -22,6 +22,16 @@ export enum ContextDirection {
   Right,
 }
 
+export function arePunctuationMarksConsecutive(
+  punctuationMetadata1: PunctuationMetadata,
+  punctuationMetadata2: PunctuationMetadata,
+): boolean {
+  return (
+    punctuationMetadata2.startIndex === punctuationMetadata1.endIndex &&
+    punctuationMetadata1.enclosingRange === punctuationMetadata2.enclosingRange
+  );
+}
+
 export class CharacterClassRegexBuilder {
   private characterClass = '';
   private isGlobal = false;

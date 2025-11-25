@@ -25,6 +25,7 @@ export const UNMATCHED_CLOSING_QUOTE_DIAGNOSTIC_CODE = 'unmatched-closing-quotat
 export const INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'incorrectly-nested-quotation-mark';
 export const AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE = 'ambiguous-quotation-mark';
 export const TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE = 'deeply-nested-quotation-mark';
+export const MISSING_QUOTE_CONTINUER_CODE = 'missing-quote-continuer';
 
 export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEdit = TextEdit> extends AbstractChecker<
   TDoc,
@@ -74,6 +75,10 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
     if (diagnostic.code === AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE) {
       return this.getAmbiguousQuoteFixes(diagnostic, standardFixProvider);
     }
+
+    if (diagnostic.code === MISSING_QUOTE_CONTINUER_CODE) {
+      return this.getMissingQuoteContinuerFixes(diagnostic, standardFixProvider);
+    }
     return [];
   }
 
@@ -113,5 +118,13 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
     }
     const expectedQuotationMark: string = (diagnostic.data as QuotationMarkCorrection).correctedQuotationMark;
     return [standardFixProvider.punctuationReplacementFix(diagnostic, expectedQuotationMark)];
+  }
+
+  private getMissingQuoteContinuerFixes(
+    diagnostic: Diagnostic,
+    standardFixProvider: StandardFixProvider<TDoc, TEdit>,
+  ): DiagnosticFix<TEdit>[] {
+    const quoteContinuersToInsert: string = diagnostic.data as string;
+    return [standardFixProvider.trailingStringInsertionFix(diagnostic, quoteContinuersToInsert)];
   }
 }

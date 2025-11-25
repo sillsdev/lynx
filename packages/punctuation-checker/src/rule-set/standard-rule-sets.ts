@@ -1,7 +1,7 @@
 import { CharacterRegexWhitelist } from '../allowed-character/allowed-character-set';
 import { PairedPunctuationConfig } from '../paired-punctuation/paired-punctuation-config';
 import { PunctuationContextConfig } from '../punctuation-context/punctuation-context-config';
-import { QuotationConfig } from '../quotation/quotation-config';
+import { QuotationConfig, QuoteContinuerStyle } from '../quotation/quotation-config';
 import { QuotationDepth } from '../quotation/quotation-utils';
 import { CharacterClassRegexBuilder, StringContextMatcher } from '../utils';
 import { RuleSet } from './rule-set';
@@ -66,7 +66,7 @@ export class StandardRuleSets {
           .build(),
       )
       .setNestingWarningDepth(QuotationDepth.fromNumber(4))
-      .disallowContinuers()
+      .setQuoteContinuerStyle(QuoteContinuerStyle.English)
       .build(),
     new PairedPunctuationConfig.Builder()
       .addQuotationRule({

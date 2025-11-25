@@ -1,6 +1,6 @@
 import { CheckableGroup } from '../checkable';
-import { PairedPunctuationDirection } from '../utils';
-import { QuotationConfig } from './quotation-config';
+import { arePunctuationMarksConsecutive, PairedPunctuationDirection } from '../utils';
+import { QuotationConfig, QuoteContinuerStyle } from './quotation-config';
 import {
   QuotationDepth,
   QuotationIterator,
@@ -12,6 +12,7 @@ import {
 
 export class QuotationAnalyzer {
   private quoteStack: QuoteMetadata[] = [];
+  private quoteContinuerStack: QuoteMetadata[] = [];
   private quotationAnalysis: QuotationAnalysis = new QuotationAnalysis();
 
   constructor(private readonly quotationConfig: QuotationConfig) {}
@@ -30,22 +31,72 @@ export class QuotationAnalyzer {
 
   private reset(): void {
     this.quoteStack = [];
+    this.quoteContinuerStack = [];
     this.quotationAnalysis = new QuotationAnalysis();
   }
 
   private processQuotationMark(unresolvedQuotationMark: UnresolvedQuoteMetadata): void {
     const resolvedQuotationMark: QuoteMetadata = this.resolveQuotationMark(unresolvedQuotationMark);
+    this.clearQuoteContinuerStackIfNecessary(resolvedQuotationMark);
 
-    this.processQuotationMarkByDirection(resolvedQuotationMark);
-    this.addQuoteCorrectionIfNecessary(resolvedQuotationMark);
-    this.warnForDepthIfNecessary(resolvedQuotationMark);
+    if (resolvedQuotationMark.isContinuer) {
+      this.processQuoteContinuer(resolvedQuotationMark);
+    } else {
+      this.processOrdinaryQuotationMark(resolvedQuotationMark);
+    }
+  }
+
+  private clearQuoteContinuerStackIfNecessary(resolvedQuotationMetadata: QuoteMetadata): void {
+    if (
+      !resolvedQuotationMetadata.isContinuer ||
+      (this.quoteContinuerStack.length > 0 &&
+        // Quote continuers for multiple levels must be consecutive
+        !arePunctuationMarksConsecutive(
+          this.quoteContinuerStack[this.quoteContinuerStack.length - 1],
+          resolvedQuotationMetadata,
+        ))
+    ) {
+      if (this.quoteContinuerStack.length > 0 && this.quoteContinuerStack.length < this.quoteStack.length) {
+        this.addMissingQuoteContinuerToAnalysis();
+      }
+
+      this.quoteContinuerStack = [];
+    }
+  }
+
+  private addMissingQuoteContinuerToAnalysis(): void {
+    const quotationMarksToInsert = this.getMissingQuotationMarksToInsert();
+    const missingQuoteContinuer = {
+      ...this.quoteContinuerStack[this.quoteContinuerStack.length - 1],
+    } as MissingQuoteContinuerMetadata;
+    missingQuoteContinuer.missingQuoteContinuers = quotationMarksToInsert;
+    this.quotationAnalysis.addMissingQuoteContinuer(missingQuoteContinuer);
+  }
+
+  private getMissingQuotationMarksToInsert(): string {
+    let missingQuotationMarks = '';
+    for (let quoteIndex = this.quoteContinuerStack.length; quoteIndex < this.quoteStack.length; ++quoteIndex) {
+      missingQuotationMarks += this.quotationConfig.getQuoteContinuerByDepth(this.quoteStack[quoteIndex].depth) ?? '';
+    }
+    return missingQuotationMarks;
   }
 
   private resolveQuotationMark(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
     const quotationResolver: QuotationResolver = new QuotationResolver(
       this.quoteStack.length > 0 ? this.quoteStack[this.quoteStack.length - 1] : null,
+      this.quoteContinuerStack.length > 0 ? this.quoteContinuerStack[this.quoteContinuerStack.length - 1] : null,
     );
     return quotationResolver.resolve(unresolvedQuotationMark);
+  }
+
+  private processQuoteContinuer(quoteContinuer: QuoteMetadata): void {
+    this.quoteContinuerStack.push(quoteContinuer);
+  }
+
+  private processOrdinaryQuotationMark(resolvedQuotationMark: QuoteMetadata): void {
+    this.processQuotationMarkByDirection(resolvedQuotationMark);
+    this.addQuoteCorrectionIfNecessary(resolvedQuotationMark);
+    this.warnForDepthIfNecessary(resolvedQuotationMark);
   }
 
   private processQuotationMarkByDirection(quotationMark: QuoteMetadata): void {
@@ -128,9 +179,17 @@ export class QuotationAnalyzer {
 }
 
 class QuotationResolver {
-  constructor(private readonly deepestOpenQuote: QuoteMetadata | null) {}
+  constructor(
+    private readonly deepestOpenQuote: QuoteMetadata | null,
+    private readonly deepestOpenQuoteContinuer: QuoteMetadata | null,
+    private readonly quoteContinuerStyle: QuoteContinuerStyle = QuoteContinuerStyle.English,
+  ) {}
 
   resolve(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
+    if (this.canBeResolvedAsQuoteContinuer(unresolvedQuotationMark)) {
+      return this.resolveAsQuoteContinuer(unresolvedQuotationMark);
+    }
+
     if (this.canBeTriviallyResolved(unresolvedQuotationMark)) {
       return this.triviallyResolve(unresolvedQuotationMark);
     }
@@ -220,6 +279,83 @@ class QuotationResolver {
       { direction: PairedPunctuationDirection.Opening, depth: this.deepestOpenQuote!.depth.deeper() },
     ]);
   }
+
+  private canBeResolvedAsQuoteContinuer(unresolvedQuotationMark: UnresolvedQuoteMetadata): boolean {
+    if (!unresolvedQuotationMark.canBeQuoteContinuer() || this.deepestOpenQuote === null) {
+      return false;
+    }
+
+    // A quote continuer should never appear immediately after an ordinary quotation mark
+    if (arePunctuationMarksConsecutive(this.deepestOpenQuote, unresolvedQuotationMark.asPunctuationMetadata())) {
+      return false;
+    }
+
+    if (
+      (this.deepestOpenQuoteContinuer === null ||
+        // Quote continuers for multiple levels must be consecutive
+        !arePunctuationMarksConsecutive(
+          this.deepestOpenQuoteContinuer,
+          unresolvedQuotationMark.asPunctuationMetadata(),
+        )) &&
+      unresolvedQuotationMark.isDepthPossible(QuotationDepth.Primary)
+    ) {
+      return true;
+    }
+
+    if (this.deepestOpenQuoteContinuer === null) {
+      return false;
+    }
+
+    if (
+      this.deepestOpenQuote.depth.isDeeperThan(this.deepestOpenQuoteContinuer.depth) &&
+      unresolvedQuotationMark.isDepthPossible(this.deepestOpenQuoteContinuer.depth.deeper())
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private resolveAsQuoteContinuer(unresolvedQuotationMark: UnresolvedQuoteMetadata): QuoteMetadata {
+    let quotationMarkDepth = QuotationDepth.Primary;
+    if (
+      (this.deepestOpenQuoteContinuer === null ||
+        // Quote continuers for multiple levels must be consecutive
+        !arePunctuationMarksConsecutive(
+          this.deepestOpenQuoteContinuer,
+          unresolvedQuotationMark.asPunctuationMetadata(),
+        )) &&
+      unresolvedQuotationMark.isDepthPossible(QuotationDepth.Primary)
+    ) {
+      quotationMarkDepth = QuotationDepth.Primary;
+    }
+
+    if (
+      this.deepestOpenQuote !== null &&
+      this.deepestOpenQuoteContinuer !== null &&
+      this.deepestOpenQuote.depth.isDeeperThan(this.deepestOpenQuoteContinuer.depth) &&
+      unresolvedQuotationMark.isDepthPossible(this.deepestOpenQuoteContinuer.depth.deeper())
+    ) {
+      quotationMarkDepth = this.deepestOpenQuoteContinuer.depth.deeper();
+    }
+
+    // English-style quote continuers should be marked as "Opening" and
+    // Spanish-style quote continuers should be marked as "Closing"
+    let quotationMarkDirection;
+    if (this.quoteContinuerStyle === QuoteContinuerStyle.Spanish) {
+      quotationMarkDirection = PairedPunctuationDirection.Closing;
+      if (!unresolvedQuotationMark.isDirectionPossible(PairedPunctuationDirection.Closing)) {
+        quotationMarkDirection = PairedPunctuationDirection.Opening;
+      }
+    } else {
+      quotationMarkDirection = PairedPunctuationDirection.Opening;
+      if (!unresolvedQuotationMark.isDirectionPossible(PairedPunctuationDirection.Opening)) {
+        quotationMarkDirection = PairedPunctuationDirection.Closing;
+      }
+    }
+
+    return unresolvedQuotationMark.resolve(quotationMarkDepth, quotationMarkDirection, true);
+  }
 }
 
 interface DepthAndDirectionPreference {
@@ -227,11 +363,16 @@ interface DepthAndDirectionPreference {
   direction: PairedPunctuationDirection;
 }
 
+export interface MissingQuoteContinuerMetadata extends QuoteMetadata {
+  missingQuoteContinuers: string;
+}
+
 export class QuotationAnalysis {
   private unmatchedQuotes: QuoteMetadata[] = [];
   private incorrectlyNestedQuotes: QuoteMetadata[] = [];
   private ambiguousQuoteCorrections: QuoteCorrection[] = [];
   private tooDeeplyNestedQuotes: QuoteMetadata[] = [];
+  private missingQuoteContinuers: MissingQuoteContinuerMetadata[] = [];
 
   addUnmatchedQuote(quote: QuoteMetadata): void {
     this.unmatchedQuotes.push(quote);
@@ -249,6 +390,10 @@ export class QuotationAnalysis {
     this.tooDeeplyNestedQuotes.push(quote);
   }
 
+  addMissingQuoteContinuer(missingQuoteContinuer: MissingQuoteContinuerMetadata): void {
+    this.missingQuoteContinuers.push(missingQuoteContinuer);
+  }
+
   public getUnmatchedQuotes(): QuoteMetadata[] {
     return this.unmatchedQuotes;
   }
@@ -263,6 +408,10 @@ export class QuotationAnalysis {
 
   public getTooDeeplyNestedQuotes(): QuoteMetadata[] {
     return this.tooDeeplyNestedQuotes;
+  }
+
+  public getMissingQuoteContinuers(): MissingQuoteContinuerMetadata[] {
+    return this.missingQuoteContinuers;
   }
 }
 

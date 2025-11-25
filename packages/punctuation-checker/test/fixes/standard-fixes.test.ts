@@ -412,3 +412,103 @@ describe('TrailingSpaceInsertionFix tests', () => {
     });
   });
 });
+
+describe('TrailingStringInsertionFix tests', () => {
+  it('inserts the provided string just after the range identified in the Diagnostic', async () => {
+    const localizer: Localizer = new Localizer();
+    const standardFixProviderFactory: StandardFixProviderFactory<TextDocument> =
+      new StandardFixProviderFactory<TextDocument>(new TextEditFactory(), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'missing-quote-continuer',
+      severity: DiagnosticSeverity.Error,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'quotation',
+      message: `Missing quotation mark when continuing a quote across multiple paragraphs.`,
+    };
+    const standardFixProvider: StandardFixProvider<TextDocument> = standardFixProviderFactory.createStandardFixProvider(
+      new TextDocument('test', 'no-format', 1, ''),
+    );
+
+    expect(standardFixProvider.trailingStringInsertionFix(diagnostic, '\u2018\u201c')).toEqual({
+      title: `Insert the missing characters: \u2018\u201c`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 20,
+            },
+            end: {
+              line: 3,
+              character: 20,
+            },
+          },
+          newText: '\u2018\u201c',
+        },
+      ],
+    });
+  });
+
+  it('also works with ScriptureDocuments', async () => {
+    const localizer: Localizer = new Localizer();
+    const stylesheet = new UsfmStylesheet('usfm.sty');
+    const standardFixProviderFactory: StandardFixProviderFactory<ScriptureDocument> =
+      new StandardFixProviderFactory<ScriptureDocument>(new UsfmEditFactory(stylesheet), localizer);
+    await standardFixProviderFactory.init();
+    await localizer.init();
+
+    const diagnostic: Diagnostic = {
+      code: 'missing-quote-continuer',
+      severity: DiagnosticSeverity.Error,
+      range: {
+        start: {
+          line: 3,
+          character: 19,
+        },
+        end: {
+          line: 3,
+          character: 20,
+        },
+      },
+      source: 'quotation',
+      message: `Missing quotation mark when continuing a quote across multiple paragraphs.`,
+    };
+    const standardFixProvider: StandardFixProvider<ScriptureDocument> =
+      standardFixProviderFactory.createStandardFixProvider(new ScriptureTextDocument('test', 'usfm', 1, ''));
+
+    expect(standardFixProvider.trailingStringInsertionFix(diagnostic, '\u2018\u201c')).toEqual({
+      title: `Insert the missing characters: \u2018\u201c`,
+      isPreferred: true,
+      diagnostic,
+      edits: [
+        {
+          range: {
+            start: {
+              line: 3,
+              character: 20,
+            },
+            end: {
+              line: 3,
+              character: 20,
+            },
+          },
+          newText: '\u2018\u201c',
+        },
+      ],
+    });
+  });
+});
