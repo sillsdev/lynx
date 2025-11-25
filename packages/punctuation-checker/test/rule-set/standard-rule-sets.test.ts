@@ -213,6 +213,11 @@ describe('Standard English rule set tests', () => {
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(3))).toBe(false);
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(4))).toBe(true);
       expect(quotationConfig.shouldWarnForDepth(QuotationDepth.fromNumber(5))).toBe(true);
+
+      expect(quotationConfig.getQuoteContinuerByDepth(QuotationDepth.Primary)).toEqual('\u201c');
+      expect(quotationConfig.getQuoteContinuerByDepth(QuotationDepth.Secondary)).toEqual('\u2018');
+      expect(quotationConfig.getQuoteContinuerByDepth(QuotationDepth.Tertiary)).toEqual('\u201c');
+      expect(quotationConfig.getQuoteContinuerByDepth(QuotationDepth.fromNumber(4))).toEqual('\u2018');
     });
 
     it('identifies no issues with well-formed English Biblical text', async () => {
@@ -267,6 +272,20 @@ describe('Standard English rule set tests', () => {
         Then I bowed my head and worshiped the Lord and blessed the Lord, the God of my master Abraham, who had led me by the right way to take the daughter of my master’s kinsman for his son.
         Now then, if you are going to show steadfast love and faithfulness to my master, tell me; and if not, tell me, that I may turn to the right hand or to the left.”`,
         ),
+      ).toEqual([]);
+
+      // Text with quote continuers
+      expect(
+        await quotationChecker.getDiagnostics(`“To the angel of the church in Ephesus write: ‘The words of him who holds the seven stars in his right hand, who walks among the seven golden lampstands.
+        “‘I know your works, your toil and your patient endurance, and how you cannot bear with those who are evil, but have tested those who call themselves apostles and are not, and found them to be false.’”`),
+      ).toEqual([]);
+
+      // Another variant of quote continuers
+      expect(
+        await quotationChecker.getDiagnostics(`Then Amaziah the priest of Bethel sent to Jeroboam king of Israel, saying, “Amos has conspired against you in the midst of the house of Israel. The land is not able to bear all his words. For thus Amos has said,
+          “‘Jeroboam shall die by the sword,
+          and Israel must go into exile
+          away from his land.’”`),
       ).toEqual([]);
     });
 
@@ -535,6 +554,30 @@ describe('Standard English rule set tests', () => {
           message: 'Too many levels of quotation marks. Consider rephrasing to avoid this.',
           source: 'quotation-mark-checker',
           data: '',
+        },
+      ]);
+
+      // A quote continuer is missing
+      expect(
+        await quotationChecker.getDiagnostics(`“To the angel of the church in Ephesus write: ‘The words of him who holds the seven stars in his right hand, who walks among the seven golden lampstands.
+          “I know your works, your toil and your patient endurance, and how you cannot bear with those who are evil, but have tested those who call themselves apostles and are not, and found them to be false.’”`),
+      ).toEqual([
+        {
+          code: 'missing-quote-continuer',
+          severity: DiagnosticSeverity.Warning,
+          range: {
+            start: {
+              line: 0,
+              character: 164,
+            },
+            end: {
+              line: 0,
+              character: 165,
+            },
+          },
+          message: 'Missing quotation mark when continuing a quote across multiple paragraphs.',
+          source: 'quotation-mark-checker',
+          data: '\u2018',
         },
       ]);
     });
