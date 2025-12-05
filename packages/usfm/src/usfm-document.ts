@@ -24,6 +24,7 @@ import {
   UsfmParser,
   UsfmParserHandlerBase,
   UsfmParserState,
+  UsfmPreserveWhitespaceMode,
   UsfmStylesheet,
   UsfmTokenizer,
   UsfmTokenType,
@@ -128,7 +129,12 @@ export class UsfmDocument extends ScriptureTextDocument {
     this.clearChildren();
     const handler = new UsfmDocumentBuilder(this);
     const tokenizer = new UsfmTokenizer(this.stylesheet);
-    const tokens = tokenizer.tokenize(content, false, start.line + 1, start.character + 1);
+    const tokens = tokenizer.tokenize(
+      content,
+      UsfmPreserveWhitespaceMode.TextOnly,
+      start.line + 1,
+      start.character + 1,
+    );
     const parser = new UsfmParser(tokens, handler, this.stylesheet);
     let prevLine = start.line;
     while (parser.processToken()) {

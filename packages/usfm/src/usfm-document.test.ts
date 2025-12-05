@@ -11,7 +11,7 @@ describe('UsfmDocument', () => {
 \\c 1
 
 \\p
-\\v 1 This is a test.
+\\v 1  This is  a test. 
 \\p
 \\v 2 This is a test.
 `;
@@ -27,7 +27,11 @@ describe('UsfmDocument', () => {
     expect(document.children[2]).toBeInstanceOf(ScriptureParagraph);
     const paragraph1 = document.children[2] as ScriptureParagraph;
     expect(paragraph1.style).toEqual('p');
-    expect(paragraph1.range).toEqual({ start: { line: 3, character: 0 }, end: { line: 4, character: 20 } });
+    expect(paragraph1.range).toEqual({ start: { line: 3, character: 0 }, end: { line: 4, character: 23 } });
+    expect(paragraph1.children[1]).toBeInstanceOf(ScriptureText);
+    const text1 = paragraph1.children[1] as ScriptureText;
+    expect(text1.text).toEqual('This is  a test. ');
+    expect(text1.range).toEqual({ start: { line: 4, character: 6 }, end: { line: 4, character: 23 } });
 
     expect(document.children[3]).toBeInstanceOf(ScriptureParagraph);
     const paragraph2 = document.children[3] as ScriptureParagraph;
