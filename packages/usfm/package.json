@@ -29,7 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "@sillsdev/lynx": "^0.3.0",
-    "@sillsdev/machine": "^3.0.2"
+    "@sillsdev/machine": "^3.0.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
