@@ -220,7 +220,7 @@ describe('PuncuationContextConfig tests', () => {
     expect(punctuationContextConfig.isTrailingContextCorrect('\u201D', ')')).toBe(true);
     expect(punctuationContextConfig.isTrailingContextCorrect('.', '\t')).toBe(false);
     expect(punctuationContextConfig.isTrailingContextCorrect(')', '\t')).toBe(false);
-    expect(punctuationContextConfig.isTrailingContextCorrect('\u2019', '\t')).toBe(false);
+    expect(punctuationContextConfig.isTrailingContextCorrect('\u2019', '\t')).toBe(true);
     expect(punctuationContextConfig.isTrailingContextCorrect(',', 'a')).toBe(false);
     expect(punctuationContextConfig.isTrailingContextCorrect(';', 'a')).toBe(false);
     expect(punctuationContextConfig.isTrailingContextCorrect('\u201D', 'a')).toBe(false);

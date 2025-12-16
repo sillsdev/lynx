@@ -61,23 +61,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with a
           },
         },
         severity: DiagnosticSeverity.Error,
-        message: ' ',
-      },
-      {
-        code: 'single-scripture-node-passed',
-        source: 'mock-issue-finder',
-        range: {
-          start: {
-            line: 0,
-            character: 0,
-          },
-          end: {
-            line: 0,
-            character: 1,
-          },
-        },
-        severity: DiagnosticSeverity.Error,
-        message: ' this is test scripture text',
+        message: 'this is test scripture text',
       },
     ],
   );
@@ -92,22 +76,6 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with m
       .getDiagnostics('\\c 1 \\v 1 this is test scripture text \\v 2 some more text \\v 3 and the end'),
   ).toEqual([
     {
-      code: 'single-scripture-node-passed',
-      source: 'mock-issue-finder',
-      range: {
-        start: {
-          line: 0,
-          character: 0,
-        },
-        end: {
-          line: 0,
-          character: 1,
-        },
-      },
-      severity: DiagnosticSeverity.Error,
-      message: ' ',
-    },
-    {
       code: 'multiple-scripture-nodes-passed',
       source: 'mock-issue-finder',
       range: {
@@ -121,7 +89,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument with m
         },
       },
       severity: DiagnosticSeverity.Error,
-      message: ' this is test scripture text *** some more text *** and the end',
+      message: 'this is test scripture text ***some more text ***and the end',
     },
   ]);
 });
@@ -148,7 +116,7 @@ it('calls produceScriptureDiagnostics once when given a ScriptureDocument a foot
         },
       },
       severity: DiagnosticSeverity.Error,
-      message: ' *** 1.1: *** Some manuscripts do not have *** the Son of God.',
+      message: '1.1: ***Some manuscripts do not have ***the Son of God.',
     },
   ]);
 });
@@ -177,23 +145,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
         },
       },
       severity: DiagnosticSeverity.Error,
-      message: ' book name',
-    },
-    {
-      code: 'single-scripture-node-passed',
-      source: 'mock-issue-finder',
-      range: {
-        start: {
-          line: 0,
-          character: 0,
-        },
-        end: {
-          line: 0,
-          character: 1,
-        },
-      },
-      severity: DiagnosticSeverity.Error,
-      message: ' ',
+      message: 'book name',
     },
     {
       code: 'multiple-scripture-nodes-passed',
@@ -209,7 +161,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
         },
       },
       severity: DiagnosticSeverity.Error,
-      message: ' this is test scripture *** text *** some more text *** and the end',
+      message: 'this is test scripture *** text ***some more text ***and the end',
     },
     {
       code: 'single-scripture-node-passed',
@@ -225,7 +177,7 @@ it('calls produceScriptureDiagnostics once for each non-verse text node and one 
         },
       },
       severity: DiagnosticSeverity.Error,
-      message: ' with a footnote ',
+      message: 'with a footnote ',
     },
   ]);
 });

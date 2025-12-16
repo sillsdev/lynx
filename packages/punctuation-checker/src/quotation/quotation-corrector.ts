@@ -26,7 +26,7 @@ export class QuotationCorrector<TDoc extends TextDocument | ScriptureDocument, T
     private readonly editFactory: EditFactory<TDoc, TEdit>,
     private readonly quotationConfig: QuotationConfig,
   ) {
-    this.onTypeTriggerCharacters = this.quotationConfig.createAmbiguousQuotationMarkSet();
+    this.onTypeTriggerCharacters = this.quotationConfig.getAmbiguousQuotationMarkTriggerCharacterSet();
   }
 
   public init(): Promise<void> {

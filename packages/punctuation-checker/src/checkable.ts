@@ -6,8 +6,8 @@ export abstract class Checkable {
 
   public abstract getText(): string;
   public abstract getEnclosingRange(): Range | undefined;
-  public abstract isLeadingWhitespacePossiblyTruncated(): boolean;
-  public abstract isTrailingWhitespacePossiblyTruncated(): boolean;
+  public abstract isPreviousCheckableRelevantToContext(): boolean;
+  public abstract isNextCheckableRelevantToContext(): boolean;
   public abstract hasParagraphStart(): boolean;
   public abstract getTextSinceLastParagraphStart(endingIndex: number): string | undefined;
   public abstract getVerseRef(): string | undefined;
@@ -38,8 +38,8 @@ export abstract class Checkable {
     const previous: Checkable | undefined = this.previous();
     if (
       previous === undefined ||
-      this.isLeadingWhitespacePossiblyTruncated() ||
-      previous.isTrailingWhitespacePossiblyTruncated()
+      this.isPreviousCheckableRelevantToContext() ||
+      previous.isPreviousCheckableRelevantToContext()
     ) {
       return '';
     }
@@ -62,8 +62,8 @@ export abstract class Checkable {
     const next: Checkable | undefined = this.next();
     if (
       next === undefined ||
-      this.isTrailingWhitespacePossiblyTruncated() ||
-      next.isLeadingWhitespacePossiblyTruncated()
+      this.isPreviousCheckableRelevantToContext() ||
+      next.isPreviousCheckableRelevantToContext()
     ) {
       return '';
     }
@@ -86,10 +86,10 @@ export class TextDocumentCheckable extends Checkable {
   public getEnclosingRange(): Range | undefined {
     return undefined;
   }
-  public isLeadingWhitespacePossiblyTruncated(): boolean {
+  public isPreviousCheckableRelevantToContext(): boolean {
     return false;
   }
-  public isTrailingWhitespacePossiblyTruncated(): boolean {
+  public isNextCheckableRelevantToContext(): boolean {
     return false;
   }
 
@@ -123,10 +123,10 @@ export class ScriptureNodeCheckable extends Checkable {
   public getEnclosingRange(): Range | undefined {
     return this.scriptureNode.range;
   }
-  public isLeadingWhitespacePossiblyTruncated(): boolean {
+  public isPreviousCheckableRelevantToContext(): boolean {
     return this.isNodePrecededByParagraphVerseOrChapterMarker(this.scriptureNode);
   }
-  public isTrailingWhitespacePossiblyTruncated(): boolean {
+  public isNextCheckableRelevantToContext(): boolean {
     return this.isNodeFollowedByParagraphVerseOrChapterMarker(this.scriptureNode);
   }
 

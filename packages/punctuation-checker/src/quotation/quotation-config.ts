@@ -11,6 +11,7 @@ export enum QuoteContinuerStyle {
 export class QuotationConfig {
   private quotationLevels: PairedPunctuationRule[] = [];
   private ambiguousQuoteMap: AmbiguousPunctuationMap = new AmbiguousPunctuationMap();
+  private ambiguousQuoteTriggerCharSet: Set<string> = new Set<string>();
   private quotationsToIgnore: StringContextMatcher[] = [];
   private nestingWarningDepth: QuotationDepth = QuotationDepth.fromNumber(4);
   private openingQuoteRegex = /\u201C/;
@@ -26,6 +27,7 @@ export class QuotationConfig {
     this.openingQuoteRegex = this.createOpeningQuoteRegex();
     this.closingQuoteRegex = this.createClosingQuoteRegex();
     this.ambiguousQuoteRegex = this.createAmbiguousQuoteRegex();
+    this.ambiguousQuoteTriggerCharSet = this.createAmbiguousQuoteTriggerCharSet();
   }
 
   private createOpeningQuoteRegex(): RegExp {
@@ -52,6 +54,13 @@ export class QuotationConfig {
     return quoteRegexBuilder.build();
   }
 
+  private createAmbiguousQuoteTriggerCharSet(): Set<string> {
+    return new Set<string>([
+      ...this.ambiguousQuoteMap.getAmbiguousMarks(),
+      ...[' ', '\n', '.', ',', ';', ')', ']', '—'],
+    ]);
+  }
+
   public createAllQuotesRegex(): RegExp {
     const quoteRegexBuilder: CharacterClassRegexBuilder = new CharacterClassRegexBuilder();
     for (const punctuationPair of this.quotationLevels) {
@@ -67,6 +76,10 @@ export class QuotationConfig {
 
   public createAmbiguousQuotationMarkSet(): Set<string> {
     return new Set<string>(this.ambiguousQuoteMap.getAmbiguousMarks());
+  }
+
+  public getAmbiguousQuotationMarkTriggerCharacterSet(): Set<string> {
+    return this.ambiguousQuoteTriggerCharSet;
   }
 
   public getPossibleQuoteDirections(quotationMark: string): PairedPunctuationDirection[] {

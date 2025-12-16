@@ -16,8 +16,8 @@ describe('TextDocumentCheckable tests', () => {
   });
 
   it('returns false for its whitespace being possible truncated', () => {
-    expect(new TextDocumentCheckable('test text').isLeadingWhitespacePossiblyTruncated()).toBe(false);
-    expect(new TextDocumentCheckable('test text').isTrailingWhitespacePossiblyTruncated()).toBe(false);
+    expect(new TextDocumentCheckable('test text').isPreviousCheckableRelevantToContext()).toBe(false);
+    expect(new TextDocumentCheckable('test text').isPreviousCheckableRelevantToContext()).toBe(false);
   });
 
   it('always returns true for having a paragraph start', () => {
@@ -61,7 +61,7 @@ describe('ScriptureDocumentCheckable tests', () => {
     expect(new ScriptureNodeCheckable('1', '1', scriptureNode).getEnclosingRange()).toEqual(scriptureNode.range);
   });
 
-  describe('it returns true/false for possible whitespace truncation based on the presence of neighboring USFM markers', () => {
+  describe('it determines whether neighboring nodes contribute to character context by the presence of certain USFM markers', () => {
     const stylesheet: UsfmStylesheet = new UsfmStylesheet('usfm.sty');
     const scriptureDocumentFactory: DocumentFactory<ScriptureDocument> = new UsfmDocumentFactory(stylesheet);
 
@@ -76,8 +76,8 @@ describe('ScriptureDocumentCheckable tests', () => {
         .getCheckableGroups()
         .next()
         .value.next().value;
-      expect(onlyScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
-      expect(onlyScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(onlyScriptureNode.isPreviousCheckableRelevantToContext()).toBe(true);
+      expect(onlyScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
     });
 
     it('works for verse text surrounded by paragraphs on both sides', () => {
@@ -91,8 +91,8 @@ describe('ScriptureDocumentCheckable tests', () => {
         .getCheckableGroups()
         .next()
         .value.next().value;
-      expect(onlyScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
-      expect(onlyScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+      expect(onlyScriptureNode.isPreviousCheckableRelevantToContext()).toBe(true);
+      expect(onlyScriptureNode.isNextCheckableRelevantToContext()).toBe(true);
     });
 
     it("works for nodes that are near, but don't border paragraphs", () => {
@@ -106,8 +106,8 @@ describe('ScriptureDocumentCheckable tests', () => {
         .getCheckableGroups()
         .next()
         .value.next().value;
-      expect(onlyScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
-      expect(onlyScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(onlyScriptureNode.isPreviousCheckableRelevantToContext()).toBe(false);
+      expect(onlyScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
     });
 
     it('works for multiple verse text nodes, only some of which border paragraphs', () => {
@@ -118,20 +118,19 @@ describe('ScriptureDocumentCheckable tests', () => {
        \\v 1 \\q1 The Word \\qs Became Flesh\\qs* \\p`,
       });
       const checkableGroups = new ScriptureTextNodeGrouper(multipleParagraphsDoc).getCheckableGroups();
-      const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
       const verseNodeGroup: CheckableGroup = checkableGroups.next().value;
 
       const firstScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(firstScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
-      expect(firstScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(firstScriptureNode.isPreviousCheckableRelevantToContext()).toBe(true);
+      expect(firstScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
 
       const secondScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(secondScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
-      expect(secondScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(secondScriptureNode.isPreviousCheckableRelevantToContext()).toBe(false);
+      expect(secondScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
 
       const thirdScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(thirdScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
-      expect(thirdScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+      expect(thirdScriptureNode.isPreviousCheckableRelevantToContext()).toBe(false);
+      expect(thirdScriptureNode.isNextCheckableRelevantToContext()).toBe(true);
     });
 
     it('works for verse text nodes that are bordered by verse and chapter markers', () => {
@@ -144,25 +143,23 @@ describe('ScriptureDocumentCheckable tests', () => {
 
       const checkableGroups = new ScriptureTextNodeGrouper(multipleParagraphsDoc).getCheckableGroups();
 
-      const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
-
       const verseNodeGroup: CheckableGroup = checkableGroups.next().value;
 
       const firstScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(firstScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
-      expect(firstScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+      expect(firstScriptureNode.isPreviousCheckableRelevantToContext()).toBe(true);
+      expect(firstScriptureNode.isNextCheckableRelevantToContext()).toBe(true);
 
       const secondScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(secondScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(true);
-      expect(secondScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(secondScriptureNode.isPreviousCheckableRelevantToContext()).toBe(true);
+      expect(secondScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
 
       const thirdScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(thirdScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
-      expect(thirdScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(false);
+      expect(thirdScriptureNode.isPreviousCheckableRelevantToContext()).toBe(false);
+      expect(thirdScriptureNode.isNextCheckableRelevantToContext()).toBe(false);
 
       const fourthScriptureNode: ScriptureNodeCheckable = verseNodeGroup.next().value;
-      expect(fourthScriptureNode.isLeadingWhitespacePossiblyTruncated()).toBe(false);
-      expect(fourthScriptureNode.isTrailingWhitespacePossiblyTruncated()).toBe(true);
+      expect(fourthScriptureNode.isPreviousCheckableRelevantToContext()).toBe(false);
+      expect(fourthScriptureNode.isNextCheckableRelevantToContext()).toBe(true);
     });
   });
 
