@@ -159,7 +159,6 @@ describe('Tests with ScriptureNodes', () => {
       '\\c 1 \\v 1 First sentence{- Second sentence',
     );
     const checkableGroups = new ScriptureTextNodeGrouper(correctDoc).getCheckableGroups();
-    const _standaloneNodeGroup: CheckableGroup = checkableGroups.next().value;
     const correctVerseNodeGroup = checkableGroups.next().value;
     await expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctVerseNodeGroup)).resolves.toEqual([]);
 
