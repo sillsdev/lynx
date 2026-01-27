@@ -400,4 +400,40 @@ describe('ScriptureDeltaDocument', () => {
     expect(paragraph1.getText()).toEqual(`\ufffcVerse one.\ufffcVerse two.\n`);
     expect(paragraph1.range).toEqual({ start: { line: 1, character: 0 }, end: { line: 2, character: 0 } });
   });
+
+  it('add paragraph at end of document', () => {
+    const document = new ScriptureDeltaDocument(
+      'uri',
+      'scr-delta',
+      1,
+      new Delta()
+        .insert({ chapter: { number: '1', style: 'c' } })
+        .insert({ verse: { number: '1', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_1' })
+        .insert('\n', { para: { style: 'p' } })
+        .insert({ verse: { number: '2', style: 'v' } })
+        .insert('This is a test.', { segment: 'verse_1_2' })
+        .insert('\n', { para: { style: 'p' } }),
+    );
+
+    expect(document.children.length).toEqual(3);
+
+    document.update(
+      new Delta()
+        .retain(35)
+        .insert('section header.', { segment: 's_1' })
+        .insert('\n', { para: { style: 's' } }),
+      2,
+    );
+
+    expect(document.children.length).toEqual(4);
+
+    const paragraph2 = document.children[2];
+    expect(paragraph2.getText()).toEqual(`\ufffcThis is a test.\n`);
+    expect(paragraph2.range).toEqual({ start: { line: 2, character: 0 }, end: { line: 3, character: 0 } });
+
+    const paragraph3 = document.children[3];
+    expect(paragraph3.getText()).toEqual(`section header.\n`);
+    expect(paragraph3.range).toEqual({ start: { line: 3, character: 0 }, end: { line: 4, character: 0 } });
+  });
 });
