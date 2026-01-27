@@ -47,9 +47,14 @@ export class ScriptureDeltaDocument extends ScriptureDocumentMixin(DeltaDocument
     let lineChildren = this.lineChildren!;
     const childStartIndex = lineChildren[changeStartLine];
     const childEndIndex = lineChildren[changeEndLine];
-    const childStart = this.children[childStartIndex];
-    const childStartLine = childStart.range.start.line;
-    // const childEndLine = this.children[childEndIndex].range.end.line;
+    const childStartLine =
+      childStartIndex < this.children.length
+        ? this.children[childStartIndex].range.start.line
+        : lineChildren.length - 1;
+    const childStartPosition =
+      childStartIndex < this.children.length
+        ? this.children[childStartIndex].range.start
+        : this.children[this.children.length - 1].range.end;
     const childEndLine =
       childEndIndex < this.children.length ? this.children[childEndIndex].range.end.line : lineChildren.length - 1;
 
@@ -69,8 +74,8 @@ export class ScriptureDeltaDocument extends ScriptureDocumentMixin(DeltaDocument
       addedLineOffsets,
       addedLineChildren,
       addedLineOps,
-      childStart.range.start,
-      this.offsetAt(childStart.range.start),
+      childStartPosition,
+      this.offsetAt(childStartPosition),
       childStartIndex,
       opStartIndex,
     );
