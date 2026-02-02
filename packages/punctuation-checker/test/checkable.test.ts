@@ -376,7 +376,7 @@ describe('ScriptureDocumentCheckable tests', () => {
       expect(scriptureNode3a.getTextSinceLastParagraphStart(5)).toEqual('In th');
       expect(scriptureNode3a.getTextSinceLastParagraphStart(15)).toEqual('In the beginnin');
       expect(scriptureNode3a.getTextSinceLastParagraphStart(16)).toEqual('In the beginning');
-      expect(scriptureNode3a.getTextSinceLastParagraphStart(21)).toEqual('In the beginning');
+      expect(scriptureNode3a.getTextSinceLastParagraphStart(21)).toEqual('In the beginning     ');
       expect(scriptureNode3b.getTextSinceLastParagraphStart(0)).toEqual('');
       expect(scriptureNode3b.getTextSinceLastParagraphStart(5)).toEqual('was t');
       expect(scriptureNode3b.getTextSinceLastParagraphStart(10)).toEqual('was the Wo');
