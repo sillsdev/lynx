@@ -1,6 +1,6 @@
 {
   "name": "@sillsdev/lynx-usfm",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "",
   "type": "module",
   "types": "./dist/index.d.mts",
@@ -28,7 +28,7 @@
   "author": "SIL Global",
   "license": "MIT",
   "dependencies": {
-    "@sillsdev/lynx": "^0.3.0",
+    "@sillsdev/lynx": "^0.3.5",
     "@sillsdev/machine": "^3.0.3"
   },
   "devDependencies": {
