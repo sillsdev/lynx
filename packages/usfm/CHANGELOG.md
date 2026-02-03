@@ -1,5 +1,14 @@
 # @sillsdev/lynx-usfm
 
+## 0.3.1
+
+### Patch Changes
+
+- 97513ec: Update dependencies and use trusted publishing with OIDC
+- 2df84ac: Properly handle whitespace in USFM
+- Updated dependencies [97513ec]
+  - @sillsdev/lynx@0.3.5
+
 ## 0.3.0
 
 ### Minor Changes

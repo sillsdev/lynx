@@ -1,5 +1,11 @@
 # @sillsdev/lynx
 
+## 0.3.5
+
+### Patch Changes
+
+- 97513ec: Update dependencies and use trusted publishing with OIDC
+
 ## 0.3.4
 
 ### Patch Changes
