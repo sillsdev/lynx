@@ -27,6 +27,11 @@
   "keywords": [],
   "author": "SIL Global",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/lynx.git",
+    "directory": "packages/core"
+  },
   "dependencies": {
     "i18next": "^23.16.8",
     "rxjs": "^7.8.2"

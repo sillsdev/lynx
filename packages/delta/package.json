@@ -27,6 +27,11 @@
   "keywords": [],
   "author": "SIL Global",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/lynx.git",
+    "directory": "packages/delta"
+  },
   "dependencies": {
     "@sillsdev/lynx": "^0.3.5",
     "lodash-es": "^4.17.21",
