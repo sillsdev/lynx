@@ -18,6 +18,10 @@
   "keywords": [],
   "author": "SIL Global",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillsdev/lynx.git"
+  },
   "workspaces": [
     "packages/*"
   ],
