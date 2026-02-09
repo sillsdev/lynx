@@ -5,7 +5,7 @@ export default (config = { hasLocalizations: false }) => {
   if (config.hasLocalizations) {
     configOptions = {
       ...configOptions,
-      onSuccess: 'cpy "src/**/locales/**" dist',
+      copy: { from: 'src/**/locales/**', flatten: false },
     };
   }
 
@@ -15,6 +15,7 @@ export default (config = { hasLocalizations: false }) => {
     clean: true,
     format: ['esm', 'cjs'],
     unbundle: true,
+    skipNodeModulesBundle: true,
     ...configOptions,
   });
 };

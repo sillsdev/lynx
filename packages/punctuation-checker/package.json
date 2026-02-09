@@ -43,7 +43,7 @@
     "@repo/typescript-config": "*",
     "@sillsdev/lynx-usfm": "*",
     "eslint": "^9.39.1",
-    "tsdown": "^0.16.5",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3"
   },
   "files": [

@@ -7,7 +7,6 @@
     "library.js"
   ],
   "devDependencies": {
-    "cpy-cli": "^5.0.0",
-    "tsdown": "^0.16.5"
+    "tsdown": "^0.20.3"
   }
 }
