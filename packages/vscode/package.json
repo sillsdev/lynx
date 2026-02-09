@@ -45,12 +45,12 @@
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
     "@repo/tsdown-config": "*",
+    "@repo/typescript-config": "*",
     "@types/node": "^20.16.5",
     "@types/vscode": "^1.93.0",
     "eslint": "^9.39.1",
-    "tsdown": "^0.16.5",
+    "tsdown": "^0.20.3",
     "typescript": "^5.9.3"
   },
   "files": [
