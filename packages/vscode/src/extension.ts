@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { ExtensionContext, workspace } from 'vscode';
+import { commands, ExtensionContext, workspace } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 
 let client: LanguageClient | undefined;
@@ -33,6 +33,18 @@ export function activate(context: ExtensionContext) {
 
   // Start the client. This will also launch the server
   void client.start();
+
+  // Register the dismissDiagnostic command
+  context.subscriptions.push(
+    commands.registerCommand('lynx.dismissDiagnostic', async (uri: string, diagnostic: unknown) => {
+      if (client) {
+        await client.sendRequest('workspace/executeCommand', {
+          command: 'lynx.dismissDiagnostic',
+          arguments: [uri, diagnostic],
+        });
+      }
+    }),
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {

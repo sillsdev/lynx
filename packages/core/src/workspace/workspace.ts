@@ -18,7 +18,8 @@ export class Workspace<T = TextEdit> {
   private readonly localizer: Localizer;
   private readonly diagnosticProviders: Map<string, DiagnosticProvider<T>>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider<T>>;
-  private readonly lastDiagnosticChangedEvents = new Map<string, DiagnosticsChanged[]>();
+  private readonly lastDiagnosticChangedEvents = new Map<string, { source: string; event: DiagnosticsChanged }[]>();
+  private readonly dismissedDiagnostics = new Map<string, Set<string>>();
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
@@ -29,7 +30,7 @@ export class Workspace<T = TextEdit> {
       ...Array.from(this.diagnosticProviders.values()).map((provider, i) =>
         provider.diagnosticsChanged$.pipe(
           tap((e) => {
-            this.updateCombinedDiagnosticChangedEvent(i, e);
+            this.updateCombinedDiagnosticChangedEvent(i, provider.id, e);
           }),
         ),
       ),
@@ -52,7 +53,7 @@ export class Workspace<T = TextEdit> {
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = [];
     for (const provider of this.diagnosticProviders.values()) {
-      diagnostics.push(...(await provider.getDiagnostics(uri)));
+      diagnostics.push(...this.filterDismissedDiagnostics(uri, provider.id, await provider.getDiagnostics(uri)));
     }
     return diagnostics;
   }
@@ -87,9 +88,29 @@ export class Workspace<T = TextEdit> {
     return undefined;
   }
 
-  private updateCombinedDiagnosticChangedEvent(providerIndex: number, event: DiagnosticsChanged) {
+  dismissDiagnostic(uri: string, diagnostic: Diagnostic): boolean {
+    if (diagnostic.fingerprint == null) {
+      return false;
+    }
+    const key = `${diagnostic.source}|${uri}`;
+    let dismissedForDoc = this.dismissedDiagnostics.get(key);
+    if (dismissedForDoc == null) {
+      dismissedForDoc = new Set<string>();
+      this.dismissedDiagnostics.set(key, dismissedForDoc);
+    }
+    dismissedForDoc.add(diagnostic.fingerprint);
+
+    // Trigger a refresh on the provider that owns this diagnostic
+    const provider = this.diagnosticProviders.get(diagnostic.source);
+    if (provider != null) {
+      provider.refresh(uri);
+    }
+    return true;
+  }
+
+  private updateCombinedDiagnosticChangedEvent(providerIndex: number, providerId: string, event: DiagnosticsChanged) {
     const docEvents = this.lastDiagnosticChangedEvents.get(event.uri) ?? [];
-    docEvents[providerIndex] = event;
+    docEvents[providerIndex] = { source: providerId, event: event };
     this.lastDiagnosticChangedEvents.set(event.uri, docEvents);
   }
 
@@ -97,8 +118,8 @@ export class Workspace<T = TextEdit> {
     const docEvents = this.lastDiagnosticChangedEvents.get(uri) ?? [];
     const diagnostics: Diagnostic[] = [];
     for (const docEvent of docEvents) {
-      if (version == null || docEvent.version === version) {
-        diagnostics.push(...docEvent.diagnostics);
+      if (version == null || docEvent.event.version === version) {
+        diagnostics.push(...this.filterDismissedDiagnostics(uri, docEvent.source, docEvent.event.diagnostics));
       }
     }
     return {
@@ -106,5 +127,24 @@ export class Workspace<T = TextEdit> {
       version: version,
       diagnostics: diagnostics,
     };
+  }
+
+  private *filterDismissedDiagnostics(uri: string, source: string, diagnostics: Diagnostic[]): Iterable<Diagnostic> {
+    const dismissedForDoc = this.dismissedDiagnostics.get(`${source}|${uri}`);
+    if (dismissedForDoc == null) {
+      yield* diagnostics;
+    } else {
+      const fingerprintsToCleanup = new Set<string>(dismissedForDoc);
+      for (const diagnostic of diagnostics) {
+        if (diagnostic.fingerprint != null && dismissedForDoc.has(diagnostic.fingerprint)) {
+          fingerprintsToCleanup.delete(diagnostic.fingerprint);
+        } else {
+          yield diagnostic;
+        }
+      }
+      for (const fingerprint of fingerprintsToCleanup) {
+        dismissedForDoc.delete(fingerprint);
+      }
+    }
   }
 }

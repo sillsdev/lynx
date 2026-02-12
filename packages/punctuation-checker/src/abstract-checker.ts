@@ -10,7 +10,7 @@ import {
   TextDocument,
   TextEdit,
 } from '@sillsdev/lynx';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 import { CheckableGroup, TextDocumentCheckable } from './checkable';
 import { DiagnosticFactory } from './diagnostic-factory';
@@ -22,6 +22,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
   implements DiagnosticProvider<TEdit>
 {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  private readonly refreshSubject = new Subject<string>();
 
   constructor(
     public readonly id: string,
@@ -30,9 +31,17 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     validateAllDocuments = false,
   ) {
     if (validateAllDocuments) {
-      this.diagnosticsChanged$ = allDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = allDiagnosticsChanged$(
+        documentAccessor,
+        (doc) => this.validateDocument(doc),
+        this.refreshSubject,
+      );
     } else {
-      this.diagnosticsChanged$ = activeDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = activeDiagnosticsChanged$(
+        documentAccessor,
+        (doc) => this.validateDocument(doc),
+        this.refreshSubject,
+      );
     }
   }
 
@@ -54,6 +63,10 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
       return [];
     }
     return this.getFixes(doc, diagnostic);
+  }
+
+  refresh(uri: string): void {
+    this.refreshSubject.next(uri);
   }
 
   private validateDocument(document: TDoc): Diagnostic[] {
