@@ -44,7 +44,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "^.+:dev: ℹ Change detected: .+$",
-          "endsPattern": "^.+:dev: ✔ (Build|Rebuild) complete in \\d+ms$"
+          "endsPattern": "^.+:dev: ✔ (Build|Rebuilt) in \\d+ms.$"
         }
       },
       "isBackground": true,

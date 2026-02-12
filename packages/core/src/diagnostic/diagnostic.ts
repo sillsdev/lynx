@@ -15,4 +15,5 @@ export interface Diagnostic {
   message: string;
   moreInfo?: string;
   data?: unknown;
+  fingerprint?: string;
 }
