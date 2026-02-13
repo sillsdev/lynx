@@ -18,7 +18,10 @@ export class Workspace<T = TextEdit> {
   private readonly localizer: Localizer;
   private readonly diagnosticProviders: Map<string, DiagnosticProvider<T>>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider<T>>;
-  private readonly lastDiagnosticChangedEvents = new Map<string, { source: string; event: DiagnosticsChanged }[]>();
+  private readonly lastDiagnosticChangedEvents = new Map<
+    string,
+    ({ source: string; event: DiagnosticsChanged } | undefined)[]
+  >();
   private readonly dismissedDiagnostics = new Map<string, Set<string>>();
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
@@ -118,7 +121,7 @@ export class Workspace<T = TextEdit> {
     const docEvents = this.lastDiagnosticChangedEvents.get(uri) ?? [];
     const diagnostics: Diagnostic[] = [];
     for (const docEvent of docEvents) {
-      if (version == null || docEvent.event.version === version) {
+      if (docEvent != null && (version == null || docEvent.event.version === version)) {
         diagnostics.push(...this.filterDismissedDiagnostics(uri, docEvent.source, docEvent.event.diagnostics));
       }
     }
