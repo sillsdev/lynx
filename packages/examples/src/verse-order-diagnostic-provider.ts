@@ -31,13 +31,13 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     if (validateAllDocuments) {
       this.diagnosticsChanged$ = allDiagnosticsChanged$(
         documents,
-        (doc) => this.validateDocument(doc),
+        (doc) => Promise.resolve(this.validateDocument(doc)),
         this.refreshSubject,
       );
     } else {
       this.diagnosticsChanged$ = activeDiagnosticsChanged$(
         documents,
-        (doc) => this.validateDocument(doc),
+        (doc) => Promise.resolve(this.validateDocument(doc)),
         this.refreshSubject,
       );
     }
@@ -112,7 +112,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
                 }),
                 moreInfo: this.localizer.t('verseOutOfOrder.moreInfo', { ns: 'verseOrder' }),
                 source: this.id,
-                fingerprint: `1|${chapterNumber}|${prevVerseNumber.toString()}`,
+                fingerprint: `1|${chapterNumber}:${prevVerseNumber.toString()}`,
               });
             }
           }
@@ -143,7 +143,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
           moreInfo: this.localizer.t('missingVerse.moreInfo', { ns: 'verseOrder' }),
           source: this.id,
           data: missingVerse,
-          fingerprint: `2|${chapterNumber}|${missingVerse.toString()}`,
+          fingerprint: `2|${chapterNumber}:${missingVerse.toString()}`,
         });
       }
     }

@@ -31,40 +31,63 @@ export class AllowedCharacterIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
+  public async produceDiagnostics(checkableGroup: CheckableGroup): Promise<Diagnostic[]> {
     this.diagnosticList = new DiagnosticList();
 
     for (const checkable of checkableGroup) {
       let match: RegExpExecArray | null;
-      while ((match = this.characterRegex.exec(checkable.getText()))) {
+      const text = checkable.getText();
+      while ((match = this.characterRegex.exec(text))) {
         const character = match[0];
 
-        this.checkCharacter(character, match.index, match.index + match[0].length, checkable.getEnclosingRange());
+        await this.checkCharacter(
+          character,
+          match.index,
+          match.index + match[0].length,
+          checkable.getEnclosingRange(),
+          checkable.getVerseRef(),
+          checkable.getLeftContext(match.index, 5),
+          checkable.getRightContext(match.index + match[0].length, 5),
+        );
       }
     }
 
     return this.diagnosticList.toArray();
   }
 
-  private checkCharacter(
+  private async checkCharacter(
     character: string,
     characterStartIndex: number,
     characterEndIndex: number,
-    enclosingRange?: Range,
-  ): void {
+    enclosingRange: Range | undefined,
+    verseRef: string | undefined,
+    leftContext: string | undefined,
+    rightContext: string | undefined,
+  ): Promise<void> {
     if (!this.allowedCharacterSet.isCharacterAllowed(character)) {
-      this.addDisallowedCharacterWarning(character, characterStartIndex, characterEndIndex, enclosingRange);
+      await this.addDisallowedCharacterWarning(
+        character,
+        characterStartIndex,
+        characterEndIndex,
+        enclosingRange,
+        verseRef,
+        leftContext,
+        rightContext,
+      );
     }
   }
 
-  private addDisallowedCharacterWarning(
+  private async addDisallowedCharacterWarning(
     character: string,
     characterStartIndex: number,
     characterEndIndex: number,
-    enclosingRange?: Range,
+    enclosingRange: Range | undefined,
+    verseRef: string | undefined,
+    leftContext: string | undefined,
+    rightContext: string | undefined,
   ) {
     const code: string = AllowedCharacterIssueFinder.DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -75,6 +98,10 @@ export class AllowedCharacterIssueFinder implements IssueFinder {
           character: character,
         }),
       )
+      .setVerseRef(verseRef)
+      .setContent(character)
+      .setLeftContext(leftContext)
+      .setRightContext(rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);

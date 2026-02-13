@@ -1,3 +1,4 @@
+import { Sha256 } from '@aws-crypto/sha256-universal';
 import { Diagnostic, DiagnosticSeverity, Range, ScriptureDocument, TextDocument } from '@sillsdev/lynx';
 
 export class DiagnosticFactory {
@@ -17,6 +18,10 @@ class DiagnosticBuilder {
   private range: Range | undefined;
   private message: string | undefined;
   private data: unknown = '';
+  private verseRef: string | undefined = undefined;
+  private content: string | undefined = undefined;
+  private leftContext: string | undefined = undefined;
+  private rightContext: string | undefined = undefined;
 
   constructor(
     private readonly sourceId: string,
@@ -58,7 +63,27 @@ class DiagnosticBuilder {
     return this;
   }
 
-  public build(): Diagnostic {
+  public setVerseRef(verseRef: string | undefined): this {
+    this.verseRef = verseRef;
+    return this;
+  }
+
+  public setContent(content: string | undefined): this {
+    this.content = content;
+    return this;
+  }
+
+  public setLeftContext(leftContext: string | undefined): this {
+    this.leftContext = leftContext;
+    return this;
+  }
+
+  public setRightContext(rightContext: string | undefined): this {
+    this.rightContext = rightContext;
+    return this;
+  }
+
+  public async build(): Promise<Diagnostic> {
     if (this.code === undefined) {
       throw new Error('Diagnostic code was not initialized');
     }
@@ -72,6 +97,27 @@ class DiagnosticBuilder {
       throw new Error('Diagnostic message was not initialized');
     }
 
+    const fingerprintComponents: string[] = [this.code.toString()];
+    if (this.verseRef != null) {
+      fingerprintComponents.push(this.verseRef);
+    }
+    if (this.content != null) {
+      fingerprintComponents.push(this.content);
+    }
+    if (this.leftContext != null) {
+      fingerprintComponents.push(this.leftContext);
+    }
+    if (this.rightContext != null) {
+      fingerprintComponents.push(this.rightContext);
+    }
+
+    let fingerprint: string | undefined = undefined;
+    if (fingerprintComponents.length > 0) {
+      const hash = new Sha256();
+      hash.update(fingerprintComponents.join('|'));
+      fingerprint = toHexString((await hash.digest()).subarray(0, 16));
+    }
+
     return {
       code: this.code,
       source: this.sourceId,
@@ -79,6 +125,13 @@ class DiagnosticBuilder {
       range: this.range,
       message: this.message,
       data: this.data,
+      fingerprint: fingerprint,
     };
   }
+}
+
+function toHexString(buffer: Uint8Array): string {
+  return Array.from(buffer)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }

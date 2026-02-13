@@ -27,6 +27,9 @@ export class UnresolvedQuoteMetadata {
   private isAmbiguous = false;
   private isAutocorrectable = false;
   private isPotentialQuoteContinuer = false;
+  private verseRef: string | undefined = undefined;
+  private leftContext: string | undefined = undefined;
+  private rightContext: string | undefined = undefined;
 
   // Private constructor so that the class can only be instantiated through the Builder
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -97,6 +100,9 @@ export class UnresolvedQuoteMetadata {
       isAmbiguous: this.isAmbiguous,
       isAutocorrectable: this.isAutocorrectable,
       isContinuer: isContinuer,
+      verseRef: this.verseRef,
+      leftContext: this.leftContext,
+      rightContext: this.rightContext,
     };
   }
 
@@ -119,6 +125,9 @@ export class UnresolvedQuoteMetadata {
       endIndex: this.endIndex,
       enclosingRange: this.enclosingRange,
       text: this.text,
+      verseRef: this.verseRef,
+      leftContext: this.leftContext,
+      rightContext: this.rightContext,
     };
   }
 
@@ -168,6 +177,21 @@ export class UnresolvedQuoteMetadata {
 
     public setText(text: string): this {
       this.objectInstance.text = text;
+      return this;
+    }
+
+    public setVerseRef(verseRef: string | undefined): this {
+      this.objectInstance.verseRef = verseRef;
+      return this;
+    }
+
+    public setLeftContext(leftContext: string | undefined): this {
+      this.objectInstance.leftContext = leftContext;
+      return this;
+    }
+
+    public setRightContext(rightContext: string | undefined): this {
+      this.objectInstance.rightContext = rightContext;
       return this;
     }
 
@@ -392,7 +416,10 @@ export class QuotationIterator implements IterableIterator<UnresolvedQuoteMetada
       .setEndIndex(regexMatch.index + regexMatch[0].length)
       .addDepths(this.quotationConfig.getPossibleQuoteDepths(matchingText))
       .addDirections(this.quotationConfig.getPossibleQuoteDirections(matchingText))
-      .setText(matchingText);
+      .setText(matchingText)
+      .setVerseRef(this.currentCheckable.getVerseRef())
+      .setLeftContext(this.currentCheckable.getLeftContext(regexMatch.index, 5))
+      .setRightContext(this.currentCheckable.getRightContext(regexMatch.index + regexMatch[0].length, 5));
 
     unresolvedQuoteMetadataBuilder.setEnclosingRange(this.currentCheckable.getEnclosingRange());
     if (this.quotationConfig.isQuoteAmbiguous(matchingText)) {

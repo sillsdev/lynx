@@ -28,25 +28,32 @@ describe('Tests with plain-text strings', () => {
       it('produces no output for empty strings', async () => {
         const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
         await testEnv.init();
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput(''))).toEqual([]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('')),
+        ).resolves.toEqual([]);
       });
 
       it('produces Diagnostics for disallowed ASCII characters', async () => {
         const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
         await testEnv.init();
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('g'))).toEqual([
-          testEnv.createExpectedDiagnostic('g', 0, 1),
-        ]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('bV'))).toEqual([
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('g')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('g', 0, 1)]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('bV')),
+        ).resolves.toMatchObject([
           testEnv.createExpectedDiagnostic('b', 0, 1),
           testEnv.createExpectedDiagnostic('V', 1, 2),
         ]);
-        expect(
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('aaauoieAEOOOUI')),
-        ).toEqual([]);
-        expect(
+        ).resolves.toEqual([]);
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('aaautoieAEOOOMUI')),
-        ).toEqual([testEnv.createExpectedDiagnostic('t', 4, 5), testEnv.createExpectedDiagnostic('M', 13, 14)]);
+        ).resolves.toMatchObject([
+          testEnv.createExpectedDiagnostic('t', 4, 5),
+          testEnv.createExpectedDiagnostic('M', 13, 14),
+        ]);
       });
     });
 
@@ -55,16 +62,19 @@ describe('Tests with plain-text strings', () => {
         const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[aeiouAEIOU]/));
         await testEnv.init();
 
-        expect(
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             testEnv.createTextInput(
               '\u0061\u0061\u0061\u0075\u006F\u0069\u0065\u0041\u0045\u004F\u004F\u004F\u0055\u0049',
             ),
           ),
-        ).toEqual([]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\u0062\u0056'))).toEqual(
-          [testEnv.createExpectedDiagnostic('b', 0, 1), testEnv.createExpectedDiagnostic('V', 1, 2)],
-        );
+        ).resolves.toEqual([]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\u0062\u0056')),
+        ).resolves.toMatchObject([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
+        ]);
       });
 
       it('correctly handles Unicode-escaped ASCII characters in the whitelist', async () => {
@@ -72,21 +82,25 @@ describe('Tests with plain-text strings', () => {
           new CharacterRegexWhitelist(/[\u0061\u0065\u0069\u006F\u0075\u0041\u0045\u0049\u004F\u0055]/),
         );
         await testEnv.init();
-
-        expect(
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('aaauoieAEOOOUI')),
-        ).toEqual([]);
-        expect(
+        ).resolves.toEqual([]);
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             testEnv.createTextInput(
               '\u0061\u0061\u0061\u0075\u006F\u0069\u0065\u0041\u0045\u004F\u004F\u004F\u0055\u0049',
             ),
           ),
-        ).toEqual([]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\u0062\u0056'))).toEqual(
-          [testEnv.createExpectedDiagnostic('b', 0, 1), testEnv.createExpectedDiagnostic('V', 1, 2)],
-        );
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('bV'))).toEqual([
+        ).resolves.toEqual([]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\u0062\u0056')),
+        ).resolves.toMatchObject([
+          testEnv.createExpectedDiagnostic('b', 0, 1),
+          testEnv.createExpectedDiagnostic('V', 1, 2),
+        ]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('bV')),
+        ).resolves.toMatchObject([
           testEnv.createExpectedDiagnostic('b', 0, 1),
           testEnv.createExpectedDiagnostic('V', 1, 2),
         ]);
@@ -96,19 +110,21 @@ describe('Tests with plain-text strings', () => {
         const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[\u2200-\u22FF]/));
         await testEnv.init();
 
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∂∯'))).toEqual([]);
-        expect(
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∂∯')),
+        ).resolves.toEqual([]);
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             testEnv.createTextInput('\u2264\u2295\u2234\u2200\u2202\u222F'),
           ),
-        ).toEqual([]);
+        ).resolves.toEqual([]);
 
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀A∯'))).toEqual([
-          testEnv.createExpectedDiagnostic('A', 4, 5),
-        ]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∯⨕'))).toEqual([
-          testEnv.createExpectedDiagnostic('⨕', 5, 6),
-        ]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀A∯')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('A', 4, 5)]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∯⨕')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('⨕', 5, 6)]);
       });
     });
 
@@ -119,18 +135,20 @@ describe('Tests with plain-text strings', () => {
         );
         await testEnv.init();
 
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∂∯'))).toEqual([]);
-        expect(
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∂∯')),
+        ).resolves.toEqual([]);
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             testEnv.createTextInput('\u2264\u2295\u2234\u2200\u2202\u222F'),
           ),
-        ).toEqual([]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀A∯'))).toEqual([
-          testEnv.createExpectedDiagnostic('A', 4, 5),
-        ]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∯ච'))).toEqual([
-          testEnv.createExpectedDiagnostic('ච', 5, 6),
-        ]);
+        ).resolves.toEqual([]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀A∯')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('A', 4, 5)]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('≤⊕∴∀∯ච')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('ච', 5, 6)]);
       });
 
       it('correctly handles Unicode scripts in the whitelist regex', async () => {
@@ -139,22 +157,26 @@ describe('Tests with plain-text strings', () => {
         );
         await testEnv.init();
 
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקס'))).toEqual([]);
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקסקּ'))).toEqual([]);
-        expect(
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקס')),
+        ).resolves.toEqual([]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקסקּ')),
+        ).resolves.toEqual([]);
+        await expect(
           testEnv.allowedCharacterIssueFinder.produceDiagnostics(
             testEnv.createTextInput('\u05DC\u05B4\u05D9\u05E0\u05E7\u05E1'),
           ),
-        ).toEqual([]);
+        ).resolves.toEqual([]);
 
         // Mathematical version of aleph
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקסℵ'))).toEqual([
-          testEnv.createExpectedDiagnostic('ℵ', 6, 7),
-        ]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִינקסℵ')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('ℵ', 6, 7)]);
 
-        expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִxינקס'))).toEqual([
-          testEnv.createExpectedDiagnostic('x', 2, 3),
-        ]);
+        await expect(
+          testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('לִxינקס')),
+        ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('x', 2, 3)]);
       });
 
       describe('correctly handles surrogate pairs and characters outside the basic multilingual plane', () => {
@@ -165,39 +187,41 @@ describe('Tests with plain-text strings', () => {
           await testEnv.init();
 
           // all three of these strings should be equivalent
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏'))).toEqual(
-            [],
-          );
-          expect(
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏')),
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
             ),
-          ).toEqual([]);
-          expect(
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
             ),
-          ).toEqual([]);
+          ).resolves.toEqual([]);
 
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤'))).toEqual([
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤')),
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F653}\u{1F600}\u006D\u{1F6A4}'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
@@ -210,41 +234,43 @@ describe('Tests with plain-text strings', () => {
           );
           await testEnv.init();
 
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏'))).toEqual(
-            [],
-          );
-          expect(
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏')),
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
             ),
-          ).toEqual([]);
-          expect(
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
             ),
-          ).toEqual([]);
+          ).resolves.toEqual([]);
 
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤😎'))).toEqual([
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤😎')),
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
             testEnv.createExpectedDiagnostic('😎', 7, 9),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F653}\u{1F600}\u006D\u{1F6A4}\u{1F60E}'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
             testEnv.createExpectedDiagnostic('😎', 7, 9),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4\uD83D\uDE0E'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
@@ -258,54 +284,59 @@ describe('Tests with plain-text strings', () => {
           );
           await testEnv.init();
 
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏'))).toEqual(
-            [],
-          );
-          expect(
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('😀😶🙅🙏')),
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F600}\u{1F636}\u{1F645}\u{1F64F}'),
             ),
-          ).toEqual([]);
-          expect(
+          ).resolves.toEqual([]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE00\uD83D\uDE36\uD83D\uDE45\uD83D\uDE4F'),
             ),
-          ).toEqual([]);
+          ).resolves.toEqual([]);
 
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤'))).toEqual([
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('🙓😀m🚤')),
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\u{1F653}\u{1F600}\u006D\u{1F6A4}'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
-          expect(
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(
               testEnv.createTextInput('\uD83D\uDE53\uD83D\uDE00m\uD83D\uDEA4'),
             ),
-          ).toEqual([
+          ).resolves.toMatchObject([
             testEnv.createExpectedDiagnostic('🙓', 0, 2),
             testEnv.createExpectedDiagnostic('m', 4, 5),
             testEnv.createExpectedDiagnostic('🚤', 5, 7),
           ]);
 
           // invalid surrogate pairs
-          expect(testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\uD83D'))).toEqual([
-            testEnv.createExpectedDiagnostic('\uD83D', 0, 1),
-          ]);
-          expect(
+          await expect(
+            testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\uD83D')),
+          ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('\uD83D', 0, 1)]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\uD83D\u0061')),
-          ).toEqual([testEnv.createExpectedDiagnostic('\uD83D', 0, 1), testEnv.createExpectedDiagnostic('a', 1, 2)]);
-          expect(
+          ).resolves.toMatchObject([
+            testEnv.createExpectedDiagnostic('\uD83D', 0, 1),
+            testEnv.createExpectedDiagnostic('a', 1, 2),
+          ]);
+          await expect(
             testEnv.allowedCharacterIssueFinder.produceDiagnostics(testEnv.createTextInput('\uD83D\u{1F600}')),
-          ).toEqual([testEnv.createExpectedDiagnostic('\uD83D', 0, 1)]);
+          ).resolves.toMatchObject([testEnv.createExpectedDiagnostic('\uD83D', 0, 1)]);
         });
       });
     });
@@ -317,25 +348,25 @@ describe('Tests with ScriptureNodes', () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardEnglishCharacters();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.allowedCharacterIssueFinder.produceDiagnostics(
         testEnv.createScriptureInput(testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20)),
       ),
-    ).toEqual([testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11)]);
+    ).resolves.toMatchObject([testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11)]);
   });
 
   it('identifies issues in multiple ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardEnglishCharacters();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.allowedCharacterIssueFinder.produceDiagnostics(
         testEnv.createScriptureInput(
           testEnv.createScriptureNode('Some @verse text', 5, 5, 5, 20),
           testEnv.createScriptureNode('$ome other *verse text', 6, 8, 6, 30),
         ),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       testEnv.createExpectedScriptureDiagnostic('@', 5, 10, 5, 11),
       testEnv.createExpectedScriptureDiagnostic('$', 6, 8, 6, 9),
       testEnv.createExpectedScriptureDiagnostic('*', 6, 19, 6, 20),
@@ -529,6 +560,6 @@ class ScriptureTestEnvironment {
   }
 
   createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

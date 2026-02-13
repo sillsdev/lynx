@@ -10,6 +10,7 @@ export abstract class Checkable {
   public abstract isTrailingWhitespacePossiblyTruncated(): boolean;
   public abstract hasParagraphStart(): boolean;
   public abstract getTextSinceLastParagraphStart(endingIndex: number): string | undefined;
+  public abstract getVerseRef(): string | undefined;
 
   public previous(): Checkable | undefined {
     return this.previousNeighbor;
@@ -23,6 +24,54 @@ export abstract class Checkable {
   }
   setNext(next: Checkable): void {
     this.nextNeighbor = next;
+  }
+
+  getLeftContext(index: number, length: number): string {
+    let context = this.getText().substring(Math.max(0, index - length), index);
+    if (context.length < length) {
+      context = this.getLastCharactersOfPreviousNode(length - context.length) + context;
+    }
+    return context;
+  }
+
+  private getLastCharactersOfPreviousNode(length: number): string {
+    const previous: Checkable | undefined = this.previous();
+    if (
+      previous === undefined ||
+      this.isLeadingWhitespacePossiblyTruncated() ||
+      previous.isTrailingWhitespacePossiblyTruncated()
+    ) {
+      return '';
+    }
+    let context = previous.getText().substring(previous.getText().length - length);
+    if (context.length < length) {
+      context = previous.getLastCharactersOfPreviousNode(length - context.length) + context;
+    }
+    return context;
+  }
+
+  getRightContext(index: number, length: number): string {
+    let context = this.getText().substring(index, Math.min(this.getText().length, index + length));
+    if (context.length < length) {
+      context = context + this.getFirstCharactersOfNextNode(length - context.length);
+    }
+    return context;
+  }
+
+  private getFirstCharactersOfNextNode(length: number): string {
+    const next: Checkable | undefined = this.next();
+    if (
+      next === undefined ||
+      this.isTrailingWhitespacePossiblyTruncated() ||
+      next.isLeadingWhitespacePossiblyTruncated()
+    ) {
+      return '';
+    }
+    let context = next.getText().substring(0, length);
+    if (context.length < length) {
+      context = context + next.getFirstCharactersOfNextNode(length - context.length);
+    }
+    return context;
   }
 }
 
@@ -48,6 +97,10 @@ export class TextDocumentCheckable extends Checkable {
     return true;
   }
 
+  public getVerseRef(): string | undefined {
+    return undefined;
+  }
+
   public getTextSinceLastParagraphStart(endingIndex: number): string | undefined {
     const textUpToEndingIndex = this.text.slice(0, Math.min(Math.max(endingIndex, 0), this.text.length));
     const lastParagraphBreakIndex = textUpToEndingIndex.lastIndexOf('\n');
@@ -56,7 +109,11 @@ export class TextDocumentCheckable extends Checkable {
 }
 
 export class ScriptureNodeCheckable extends Checkable {
-  constructor(private readonly scriptureNode: ScriptureNode) {
+  constructor(
+    private readonly chapter: string,
+    private readonly verse: string,
+    private readonly scriptureNode: ScriptureNode,
+  ) {
     super();
   }
 
@@ -75,6 +132,10 @@ export class ScriptureNodeCheckable extends Checkable {
 
   public hasParagraphStart(): boolean {
     return this.doesNodeHaveParagraphMarkerAncestorWithNoInterveningText(this.scriptureNode);
+  }
+
+  public getVerseRef(): string | undefined {
+    return `${this.chapter}:${this.verse}`;
   }
 
   public getTextSinceLastParagraphStart(endingIndex: number): string | undefined {

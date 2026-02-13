@@ -11,22 +11,22 @@ describe('Text tests', () => {
   it('creates no Diagnostics for error-free text', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('creates Diagnostics for unmatched paired punctuation', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The (rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-parenthesis',
         source: 'paired-punctuation-checker',
@@ -46,11 +46,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The [rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -70,11 +70,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The {rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-curly-bracket',
         source: 'paired-punctuation-checker',
@@ -94,11 +94,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The <rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-punctuation-mark',
         source: 'paired-punctuation-checker',
@@ -118,11 +118,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The )rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-parenthesis',
         source: 'paired-punctuation-checker',
@@ -142,11 +142,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The ]rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-square-bracket',
         source: 'paired-punctuation-checker',
@@ -166,11 +166,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The }rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-curly-bracket',
         source: 'paired-punctuation-checker',
@@ -190,11 +190,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The >rain in Spain falls mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-punctuation-mark',
         source: 'paired-punctuation-checker',
@@ -214,11 +214,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The (rain in Spain falls] mainly on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-square-bracket',
         source: 'paired-punctuation-checker',
@@ -255,11 +255,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The \u2018rain in Spain falls mainly\u2019 on the {plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-curly-bracket',
         source: 'paired-punctuation-checker',
@@ -284,27 +284,27 @@ describe('Text tests', () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The rain in \u201CSpain falls mainly on the plain.'),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The rain in (Spain falls mainly) on the plain.\u2019'),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('creates Diagnostics for incorrectly overlapping paired punctuation', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The (rain in [Spain) falls mainly] on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',
@@ -341,11 +341,11 @@ describe('Text tests', () => {
       },
     ]);
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createTextInput('The \u201Crain in {Spain\u201D falls mainly} on the plain.'),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',
@@ -390,17 +390,17 @@ describe('ScriptureDocument tests', () => {
       ScriptureTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(testEnv.createScriptureNode('Genesis', 3, 13, 3, 20)),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27)),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(
           testEnv.createScriptureNode(
@@ -412,7 +412,7 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('identifies quotation errors in a single text node', async () => {
@@ -420,7 +420,7 @@ describe('ScriptureDocument tests', () => {
       ScriptureTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(
           testEnv.createScriptureNode(
@@ -432,7 +432,7 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-square-bracket',
         source: 'paired-punctuation-checker',
@@ -458,7 +458,7 @@ describe('ScriptureDocument tests', () => {
       ScriptureTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(
           testEnv.createScriptureNode(
@@ -486,7 +486,7 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('correctly identifies issues that occur in groups of multiple ScriptureNodes', async () => {
@@ -494,7 +494,7 @@ describe('ScriptureDocument tests', () => {
       ScriptureTestEnvironment.createWithStandardPairedPunctuationAndAngleBrackets();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.pairedPunctuationErrorFinder.produceDiagnostics(
         testEnv.createScriptureInput(
           testEnv.createScriptureNode(
@@ -522,7 +522,7 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-closing-parenthesis',
         source: 'paired-punctuation-checker',
@@ -778,6 +778,6 @@ class ScriptureTestEnvironment {
   }
 
   createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

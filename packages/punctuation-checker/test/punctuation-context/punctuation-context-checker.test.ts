@@ -177,7 +177,7 @@ describe('PunctuationContextChecker tests', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardContextRulesAndCustomLocalizer(customLocalizer);
     await testEnv.init();
 
-    expect(await testEnv.punctuationContextChecker.getDiagnostics('Errors(all)around')).toEqual([
+    await expect(testEnv.punctuationContextChecker.getDiagnostics('Errors(all)around')).resolves.toMatchObject([
       {
         code: 'incorrect-leading-context',
         severity: DiagnosticSeverity.Warning,

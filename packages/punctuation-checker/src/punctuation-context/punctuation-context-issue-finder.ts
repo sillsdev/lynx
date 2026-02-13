@@ -35,120 +35,77 @@ class PunctuationContextIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
+  public async produceDiagnostics(checkableGroup: CheckableGroup): Promise<Diagnostic[]> {
     this.diagnosticList = new DiagnosticList();
 
     for (const checkable of checkableGroup) {
-      this.processCheckable(checkable);
+      await this.processCheckable(checkable);
     }
 
     return this.diagnosticList.toArray();
   }
 
-  private processCheckable(checkable: Checkable): void {
+  private async processCheckable(checkable: Checkable): Promise<void> {
     let match: RegExpExecArray | null;
     while ((match = this.punctuationRegex.exec(checkable.getText()))) {
       const punctuationMark = match[0];
-      const leftContext = this.getLeftContextForMatch(checkable, match);
-      const rightContext = this.getRightContextForMatch(checkable, match);
 
-      this.checkWhitespaceAroundPunctuationMark(
+      await this.checkWhitespaceAroundPunctuationMark(
         punctuationMark,
-        leftContext,
-        rightContext,
+        checkable.getLeftContext(match.index, 5),
+        checkable.getRightContext(match.index + match[0].length, 5),
         match.index,
         match.index + match[0].length,
         checkable.getEnclosingRange(),
+        checkable.getVerseRef(),
       );
     }
   }
 
-  private getLeftContextForMatch(checkable: Checkable, match: RegExpExecArray): string {
-    if (match.index === 0) {
-      return this.getLastCharacterOfPreviousNode(checkable);
-    }
-    return checkable.getText().substring(Math.max(0, match.index - 1), match.index);
-  }
-
-  private getLastCharacterOfPreviousNode(checkable: Checkable): string {
-    const previous: Checkable | undefined = checkable.previous();
-    if (
-      previous === undefined ||
-      checkable.isLeadingWhitespacePossiblyTruncated() ||
-      previous.isTrailingWhitespacePossiblyTruncated()
-    ) {
-      return '';
-    }
-    if (previous.getText().length === 0) {
-      return this.getLastCharacterOfPreviousNode(previous);
-    }
-    return previous.getText().substring(previous.getText().length - 1);
-  }
-
-  private getRightContextForMatch(checkable: Checkable, match: RegExpExecArray): string {
-    if (match.index === checkable.getText().length - 1) {
-      return this.getFirstCharacterOfNextNode(checkable);
-    }
-    return checkable
-      .getText()
-      .substring(
-        match.index + match[0].length,
-        Math.min(checkable.getText().length, match.index + match[0].length + 1),
-      );
-  }
-
-  private getFirstCharacterOfNextNode(checkable: Checkable): string {
-    const next: Checkable | undefined = checkable.next();
-    if (
-      next === undefined ||
-      checkable.isTrailingWhitespacePossiblyTruncated() ||
-      next.isLeadingWhitespacePossiblyTruncated()
-    ) {
-      return '';
-    }
-    if (next.getText().length === 0) {
-      return this.getFirstCharacterOfNextNode(next);
-    }
-    return next.getText().substring(0, 1);
-  }
-
-  private checkWhitespaceAroundPunctuationMark(
+  private async checkWhitespaceAroundPunctuationMark(
     punctuationMark: string,
     leftContext: string,
     rightContext: string,
     characterStartIndex: number,
     characterEndIndex: number,
-    enclosingRange?: Range,
-  ): void {
-    if (!this.whitespaceConfig.isLeadingContextCorrect(punctuationMark, leftContext)) {
-      this.addIncorrectLeadingWhitespaceWarning(
+    enclosingRange: Range | undefined,
+    verseRef: string | undefined,
+  ): Promise<void> {
+    if (!this.whitespaceConfig.isLeadingContextCorrect(punctuationMark, leftContext.charAt(leftContext.length - 1))) {
+      await this.addIncorrectLeadingWhitespaceWarning(
         punctuationMark,
         leftContext,
-        characterStartIndex,
-        characterEndIndex,
-        enclosingRange,
-      );
-    }
-    if (!this.whitespaceConfig.isTrailingContextCorrect(punctuationMark, rightContext)) {
-      this.addIncorrectTrailingWhitespaceWarning(
-        punctuationMark,
         rightContext,
         characterStartIndex,
         characterEndIndex,
         enclosingRange,
+        verseRef,
+      );
+    }
+    if (!this.whitespaceConfig.isTrailingContextCorrect(punctuationMark, rightContext.charAt(0))) {
+      await this.addIncorrectTrailingWhitespaceWarning(
+        punctuationMark,
+        leftContext,
+        rightContext,
+        characterStartIndex,
+        characterEndIndex,
+        enclosingRange,
+        verseRef,
       );
     }
   }
 
-  private addIncorrectLeadingWhitespaceWarning(
+  private async addIncorrectLeadingWhitespaceWarning(
     character: string,
     leftContext: string,
+    rightContext: string,
     characterStartIndex: number,
     characterEndIndex: number,
-    enclosingRange?: Range,
+    enclosingRange: Range | undefined,
+    verseRef: string | undefined,
   ) {
     const code: string = LEADING_CONTEXT_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -157,26 +114,32 @@ class PunctuationContextIssueFinder implements IssueFinder {
         this.localizer.t(`diagnosticMessagesByCode.${code}`, {
           ns: PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
           punctuationMark: character,
-          precedingCharacter: leftContext,
+          precedingCharacter: leftContext.charAt(leftContext.length - 1),
         }),
       )
       .setData({
         isSpaceAllowed: this.whitespaceConfig.isLeadingContextCorrect(character, ' '),
       } as WhitespaceDiagnosticData)
+      .setVerseRef(verseRef)
+      .setContent(character)
+      .setLeftContext(leftContext)
+      .setRightContext(rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addIncorrectTrailingWhitespaceWarning(
+  private async addIncorrectTrailingWhitespaceWarning(
     character: string,
+    leftContext: string,
     rightContext: string,
     characterStartIndex: number,
     characterEndIndex: number,
-    enclosingRange?: Range,
+    enclosingRange: Range | undefined,
+    verseRef: string | undefined,
   ) {
     const code: string = TRAILING_CONTEXT_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -185,12 +148,16 @@ class PunctuationContextIssueFinder implements IssueFinder {
         this.localizer.t(`diagnosticMessagesByCode.${code}`, {
           ns: PUNCTUATION_CONTEXT_CHECKER_LOCALIZER_NAMESPACE,
           punctuationMark: character,
-          followingCharacter: rightContext,
+          followingCharacter: rightContext.charAt(0),
         }),
       )
       .setData({
         isSpaceAllowed: this.whitespaceConfig.isTrailingContextCorrect(character, ' '),
       } as WhitespaceDiagnosticData)
+      .setVerseRef(verseRef)
+      .setContent(character)
+      .setLeftContext(leftContext)
+      .setRightContext(rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);

@@ -94,9 +94,9 @@ describe('PairedPunctuationChecker tests', () => {
     const testEnv: TestEnvironment = TestEnvironment.createWithStandardPairedPunctuation();
     await testEnv.init();
 
-    expect(
-      await testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
-    ).toEqual([
+    await expect(
+      testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -116,11 +116,9 @@ describe('PairedPunctuationChecker tests', () => {
       },
     ]);
 
-    expect(
-      await testEnv.pairedPunctuationChecker.getDiagnostics(
-        'The {rain in \u2018Spain} falls mainly\u2019 on the plain.',
-      ),
-    ).toEqual([
+    await expect(
+      testEnv.pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+    ).resolves.toMatchObject([
       {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',
@@ -173,9 +171,9 @@ describe('PairedPunctuationChecker tests', () => {
       TestEnvironment.createWithStandardPairedPunctuationAndCustomLocalizer(customLocalizer);
     await testEnv.init();
 
-    expect(
-      await testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
-    ).toEqual([
+    await expect(
+      testEnv.pairedPunctuationChecker.getDiagnostics('The [rain in Spain falls mainly on the plain.'),
+    ).resolves.toMatchObject([
       {
         code: 'unmatched-opening-square-bracket',
         source: 'paired-punctuation-checker',
@@ -195,11 +193,9 @@ describe('PairedPunctuationChecker tests', () => {
       },
     ]);
 
-    expect(
-      await testEnv.pairedPunctuationChecker.getDiagnostics(
-        'The {rain in \u2018Spain} falls mainly\u2019 on the plain.',
-      ),
-    ).toEqual([
+    await expect(
+      testEnv.pairedPunctuationChecker.getDiagnostics('The {rain in \u2018Spain} falls mainly\u2019 on the plain.'),
+    ).resolves.toMatchObject([
       {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',

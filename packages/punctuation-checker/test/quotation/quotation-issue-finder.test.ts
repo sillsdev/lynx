@@ -23,15 +23,15 @@ describe('QuotationErrorFinder tests', () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithTopLevelQuotes();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text \u201Dwith more text')),
-    ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
-    expect(
+    ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text \u201Dwith more text')),
-    ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
-    expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text with no quote'))).toEqual(
-      [],
-    );
+    ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
+    await expect(
+      testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text with no quote')),
+    ).resolves.toEqual([]);
   });
 
   describe('For standard English top-level quotes', () => {
@@ -39,33 +39,33 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithTopLevelQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text \u201Cwith more text')),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(12, 13)]);
-      expect(
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(12, 13)]);
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('Sample text \u201Dwith more text')),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
-      expect(
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(12, 13)]);
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CSample text\u201D \u201Cwith more text'),
         ),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(14, 15)]);
-      expect(
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(14, 15)]);
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CSample text\u201D \u201Dwith more text'),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(14, 15)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(14, 15)]);
     });
 
     it('creates Diagnostics for incorrectly nested quotation marks', async () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithTopLevelQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CSample text \u201Cwith more text\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createIncorrectlyNestedDiagnostic(13, 14, QuotationDepth.Primary),
       ]);
@@ -75,7 +75,9 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithTopLevelQuotes();
       await testEnv.init();
 
-      expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('"Sample text"'))).toEqual([
+      await expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('"Sample text"')),
+      ).resolves.toMatchObject([
         testEnv.createAmbiguousDiagnostic(0, 1, '"', '\u201C'),
         testEnv.createAmbiguousDiagnostic(12, 13, '"', '\u201D'),
       ]);
@@ -87,93 +89,93 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CSample text \u201Cwith more text\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createIncorrectlyNestedDiagnostic(13, 14, QuotationDepth.fromNumber(1)),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains two \u2018levels of unclosed quotes'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createUnmatchedOpeningQuoteDiagnostic(19, 20),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains an \u2018unclosed second level quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(18, 19)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(18, 19)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains three \u2018levels of unclosed \u201Cquotes'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createUnmatchedOpeningQuoteDiagnostic(21, 22),
         testEnv.createUnmatchedOpeningQuoteDiagnostic(41, 42),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains two \u2018levels of unclosed \u201Cquotes\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createUnmatchedOpeningQuoteDiagnostic(19, 20),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains one \u2018level of unclosed \u201Cquotes\u201D\u2019'),
         ),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis contains a nested \u2018unclosed quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(24, 25)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(24, 25)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('"This has an \u2018ambiguous unclosed\u2019 quote'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(0, 1),
         testEnv.createAmbiguousDiagnostic(0, 1, '"', '\u201C'),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput("\u201CThis has an 'ambiguous unclosed quote\u201D"),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(13, 14),
         testEnv.createAmbiguousDiagnostic(13, 14, "'", '\u2018'),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has an ambiguous\u201D unpaired" quote'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(37, 38),
         testEnv.createAmbiguousDiagnostic(37, 38, '"', '\u201C'),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput("\u201CThis text has an ambiguous\u201D unpaired' quote"),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(37, 38),
         testEnv.createIncorrectlyNestedDiagnostic(37, 38, new QuotationRootLevel()),
         testEnv.createAmbiguousDiagnostic(37, 38, "'", '\u2018'),
@@ -184,35 +186,35 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('Text with an \u2018unpaired\u2019 closing quote\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedClosingQuoteDiagnostic(37, 38),
         testEnv.createIncorrectlyNestedDiagnostic(13, 14, new QuotationRootLevel()),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CText with an unpaired\u2019 closing quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(22, 23)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(22, 23)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('This text has multiple\u2019 unpaired quotes\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedClosingQuoteDiagnostic(22, 23),
         testEnv.createUnmatchedClosingQuoteDiagnostic(39, 40),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has multiple\u201D unpaired\u2019 quotes\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedClosingQuoteDiagnostic(33, 34),
         testEnv.createUnmatchedClosingQuoteDiagnostic(41, 42),
       ]);
@@ -222,37 +224,37 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u2018\u2019'))).toEqual([
-        testEnv.createIncorrectlyNestedDiagnostic(0, 1, new QuotationRootLevel()),
-      ]);
+      await expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u2018\u2019')),
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(0, 1, new QuotationRootLevel())]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text has a \u2018secondary quote \u2018opening inside a secondary quote\u2019\u2019\u201D',
           ),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createIncorrectlyNestedDiagnostic(34, 35, QuotationDepth.fromNumber(2)),
         testEnv.createTooDeeplyNestedDiagnostic(34, 35),
         testEnv.createTooDeeplyNestedDiagnostic(67, 68),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text has a \u2018tertiary quote \u201Copening \u201Cinside a tertiary quote\u201D\u201D\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(42, 43, QuotationDepth.fromNumber(3))]);
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(42, 43, QuotationDepth.fromNumber(3))]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             "\u201CThis text has a 'secondary quote \u2018opening inside a secondary quote\u2019\u2019\u201D",
           ),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createIncorrectlyNestedDiagnostic(34, 35, QuotationDepth.fromNumber(2)),
         testEnv.createAmbiguousDiagnostic(17, 18, "'", '\u2018'),
         testEnv.createTooDeeplyNestedDiagnostic(34, 35),
@@ -264,27 +266,27 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput("\u201CSample 'text'\u201D"))).toEqual(
-        [
-          testEnv.createAmbiguousDiagnostic(8, 9, "'", '\u2018'),
-          testEnv.createAmbiguousDiagnostic(13, 14, "'", '\u2019'),
-        ],
-      );
+      await expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput("\u201CSample 'text'\u201D")),
+      ).resolves.toMatchObject([
+        testEnv.createAmbiguousDiagnostic(8, 9, "'", '\u2018'),
+        testEnv.createAmbiguousDiagnostic(13, 14, "'", '\u2019'),
+      ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CSample \u2018text with an "ambiguous" third level quote\u2019\u201D'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createAmbiguousDiagnostic(22, 23, '"', '\u201C'),
         testEnv.createAmbiguousDiagnostic(32, 33, '"', '\u201D'),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CText with \'mixed\u2019 ambiguous quotes"'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createAmbiguousDiagnostic(11, 12, "'", '\u2018'),
         testEnv.createAmbiguousDiagnostic(35, 36, '"', '\u201D'),
       ]);
@@ -294,17 +296,20 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis \u2018has \u201Cfour \u2018level\u2019 of\u201D quotes\u2019\u201D'),
         ),
-      ).toEqual([testEnv.createTooDeeplyNestedDiagnostic(17, 18), testEnv.createTooDeeplyNestedDiagnostic(23, 24)]);
+      ).resolves.toMatchObject([
+        testEnv.createTooDeeplyNestedDiagnostic(17, 18),
+        testEnv.createTooDeeplyNestedDiagnostic(23, 24),
+      ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('"This \'has "four \'level\' of" quotes\'"'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createAmbiguousDiagnostic(0, 1, '"', '\u201C'),
         testEnv.createAmbiguousDiagnostic(6, 7, "'", '\u2018'),
         testEnv.createAmbiguousDiagnostic(11, 12, '"', '\u201C'),
@@ -322,19 +327,19 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithFullEnglishQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text \u2018contains\n\u201Ca missing quote continuer\u2019\u201D'),
         ),
-      ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2018')]);
+      ).resolves.toMatchObject([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2018')]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis \u2018text \u201ccontains\n\u201Ctwo missing quote continuers\u201D\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2018\u201C')]);
+      ).resolves.toMatchObject([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2018\u201C')]);
     });
   });
 
@@ -343,96 +348,96 @@ describe('QuotationErrorFinder tests', () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithDifferentThirdLevelQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has a \u2018primary \u201Equote\u201D closing inside a tertiary quote'),
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         testEnv.createUnmatchedOpeningQuoteDiagnostic(26, 27),
         testEnv.createUnmatchedOpeningQuoteDiagnostic(17, 18),
       ]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text has a \u2018primary \u201Equote\u2019 closing inside a tertiary quote\u201D',
           ),
         ),
-      ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(26, 27)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(26, 27)]);
     });
 
     it('creates Diagnostics for unmatched closing quotation marks', async () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithDifferentThirdLevelQuotes();
       await testEnv.init();
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CText \u2018with an unpaired\u201F\u2019 closing quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(23, 24)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(23, 24)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has a\u2019 secondary quote closing inside a primary quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(16, 17)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(16, 17)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text has a\u2018 tertiary quote\u201F closing inside a secondary quote\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(32, 33)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(32, 33)]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has a tertiary quote\u201F closing inside a primary quote\u201D'),
         ),
-      ).toEqual([testEnv.createUnmatchedClosingQuoteDiagnostic(31, 32)]);
+      ).resolves.toMatchObject([testEnv.createUnmatchedClosingQuoteDiagnostic(31, 32)]);
     });
 
     it('creates Diagnostics for incorrectly nested quotation marks', async () => {
       const testEnv: TextTestEnvironment = TextTestEnvironment.createWithDifferentThirdLevelQuotes();
       await testEnv.init();
 
-      expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u201E\u201F'))).toEqual([
-        testEnv.createIncorrectlyNestedDiagnostic(0, 1, new QuotationRootLevel()),
-      ]);
+      await expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u201E\u201F')),
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(0, 1, new QuotationRootLevel())]);
 
-      expect(testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u201C\u201E\u201F\u201D'))).toEqual([
-        testEnv.createIncorrectlyNestedDiagnostic(1, 2, QuotationDepth.fromNumber(1)),
-      ]);
+      await expect(
+        testEnv.quotationErrorFinder.produceDiagnostics(testEnv.createInput('\u201C\u201E\u201F\u201D')),
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(1, 2, QuotationDepth.fromNumber(1))]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput('\u201CThis text has a \u201Etertiary quote opening in a primary context\u201F\u201D'),
         ),
-      ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(17, 18, QuotationDepth.fromNumber(1))]);
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(17, 18, QuotationDepth.fromNumber(1))]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text \u2018contains a \u201Esecond-level \u2018quote\u2019 inside a third-level quote\u201F\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(37, 38, QuotationDepth.fromNumber(3))]);
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(37, 38, QuotationDepth.fromNumber(3))]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text \u2018contains a \u201Efirst-level \u201Cquote\u201D inside a third-level quote\u201F\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(36, 37, QuotationDepth.fromNumber(3))]);
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(36, 37, QuotationDepth.fromNumber(3))]);
 
-      expect(
+      await expect(
         testEnv.quotationErrorFinder.produceDiagnostics(
           testEnv.createInput(
             '\u201CThis text \u2018contains a first-level \u201Cquote\u201D inside a second-level quote\u2019\u201D',
           ),
         ),
-      ).toEqual([testEnv.createIncorrectlyNestedDiagnostic(35, 36, QuotationDepth.fromNumber(2))]);
+      ).resolves.toMatchObject([testEnv.createIncorrectlyNestedDiagnostic(35, 36, QuotationDepth.fromNumber(2))]);
     });
   });
 
@@ -440,19 +445,19 @@ describe('QuotationErrorFinder tests', () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithSpanishQuoteContinuers();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput('\u201CThis text \u2018contains\n\u201Da missing quote continuer\u2019\u201D'),
       ),
-    ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2019')]);
+    ).resolves.toMatchObject([testEnv.createMissingQuoteContinuerDiagnostic(21, 22, '\u2019')]);
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(
           '\u201CThis \u2018text \u201ccontains\n\u201Dtwo missing quote continuers\u201D\u2019\u201D',
         ),
       ),
-    ).toEqual([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2019\u201D')]);
+    ).resolves.toMatchObject([testEnv.createMissingQuoteContinuerDiagnostic(22, 23, '\u2019\u201D')]);
   });
 });
 
@@ -461,17 +466,17 @@ describe('ScriptureDocument tests', () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('Genesis', 3, 13, 3, 20)),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('Isaac and Rebekah', 8, 13, 3, 27)),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode(
@@ -483,14 +488,14 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('identifies quotation errors in a single text node', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode(
@@ -502,14 +507,14 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([testEnv.createUnmatchedOpeningQuoteDiagnostic(10, 68, 10, 69)]);
+    ).resolves.toMatchObject([testEnv.createUnmatchedOpeningQuoteDiagnostic(10, 68, 10, 69)]);
   });
 
   it('produces no issues for well-formed quotes that span across ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode(
@@ -535,14 +540,14 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('correctly identifies issues that occur in groups of multiple ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithFullEnglishQuotes();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.quotationErrorFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode(
@@ -568,7 +573,7 @@ describe('ScriptureDocument tests', () => {
           ),
         ),
       ),
-    ).toEqual([
+    ).resolves.toMatchObject([
       testEnv.createUnmatchedOpeningQuoteDiagnostic(11, 147, 11, 148),
       testEnv.createUnmatchedClosingQuoteDiagnostic(12, 147, 12, 148),
     ]);
@@ -1160,6 +1165,6 @@ class ScriptureTestEnvironment {
   }
 
   createInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

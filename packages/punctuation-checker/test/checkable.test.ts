@@ -52,13 +52,13 @@ describe('ScriptureDocumentCheckable tests', () => {
   it('returns the text of the Scripture Node passed to it', () => {
     const scriptureNode: ScriptureNode = createScriptureNode('scripture text', 0, 3, 1, 4);
 
-    expect(new ScriptureNodeCheckable(scriptureNode).getText()).toEqual(scriptureNode.getText());
+    expect(new ScriptureNodeCheckable('1', '1', scriptureNode).getText()).toEqual(scriptureNode.getText());
   });
 
   it("returns the ScriptureNode's range as its enclosing range", () => {
     const scriptureNode: ScriptureNode = createScriptureNode('scripture text', 0, 3, 1, 4);
 
-    expect(new ScriptureNodeCheckable(scriptureNode).getEnclosingRange()).toEqual(scriptureNode.range);
+    expect(new ScriptureNodeCheckable('1', '1', scriptureNode).getEnclosingRange()).toEqual(scriptureNode.range);
   });
 
   describe('it returns true/false for possible whitespace truncation based on the presence of neighboring USFM markers', () => {

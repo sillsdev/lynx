@@ -7,5 +7,5 @@
       "pattern": "./packages/*/"
     }
   ],
-  "cSpell.words": ["clientrc", "sillsdev", "Usfm"]
+  "cSpell.words": ["checkables", "clientrc", "sillsdev", "Usfm"]
 }

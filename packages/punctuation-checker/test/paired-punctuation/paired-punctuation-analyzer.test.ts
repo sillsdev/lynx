@@ -50,6 +50,8 @@ describe('Text tests', () => {
         startIndex: 0,
         endIndex: 1,
         text: '(',
+        leftContext: '',
+        rightContext: '',
       },
     ]);
 
@@ -60,6 +62,8 @@ describe('Text tests', () => {
         startIndex: 0,
         endIndex: 1,
         text: ')',
+        leftContext: '',
+        rightContext: '',
       },
     ]);
 
@@ -72,6 +76,8 @@ describe('Text tests', () => {
         startIndex: 0,
         endIndex: 1,
         text: '(',
+        leftContext: '',
+        rightContext: 'The r',
       },
     ]);
 
@@ -84,6 +90,8 @@ describe('Text tests', () => {
         startIndex: 45,
         endIndex: 46,
         text: ')',
+        leftContext: 'plain',
+        rightContext: '',
       },
     ]);
 
@@ -96,6 +104,8 @@ describe('Text tests', () => {
         startIndex: 13,
         endIndex: 14,
         text: '[',
+        leftContext: 'n in ',
+        rightContext: 'Spain',
       },
     ]);
 
@@ -108,6 +118,8 @@ describe('Text tests', () => {
         startIndex: 13,
         endIndex: 14,
         text: ']',
+        leftContext: 'n in ',
+        rightContext: 'Spain',
       },
     ]);
   });
@@ -143,15 +155,17 @@ describe('Text tests', () => {
           direction: PairedPunctuationDirection.Opening,
           startIndex: 13,
           endIndex: 14,
-          enclosingRange: undefined,
           text: '[',
+          leftContext: 'n in ',
+          rightContext: 'Spain',
         },
         {
           direction: PairedPunctuationDirection.Closing,
           startIndex: 19,
           endIndex: 20,
-          enclosingRange: undefined,
           text: ')',
+          leftContext: 'Spain',
+          rightContext: ' fall',
         },
       ),
     ]);
@@ -165,15 +179,17 @@ describe('Text tests', () => {
           direction: PairedPunctuationDirection.Opening,
           startIndex: 13,
           endIndex: 14,
-          enclosingRange: undefined,
           text: '\u201C',
+          leftContext: 'n in ',
+          rightContext: 'Spain',
         },
         {
           direction: PairedPunctuationDirection.Closing,
           startIndex: 19,
           endIndex: 20,
-          enclosingRange: undefined,
           text: ')',
+          leftContext: 'Spain',
+          rightContext: ' fall',
         },
       ),
     ]);
@@ -214,6 +230,9 @@ describe('ScriptureNode tests', () => {
         endIndex: 12,
         text: '[',
         enclosingRange: scriptureNode1.range,
+        leftContext: 'test ',
+        rightContext: 'texta',
+        verseRef: '1:1',
       },
     ]);
 
@@ -229,6 +248,9 @@ describe('ScriptureNode tests', () => {
           endIndex: 12,
           text: '[',
           enclosingRange: scriptureNode1.range,
+          leftContext: 'test ',
+          rightContext: 'texta',
+          verseRef: '1:1',
         },
         {
           direction: PairedPunctuationDirection.Closing,
@@ -236,6 +258,9 @@ describe('ScriptureNode tests', () => {
           endIndex: 9,
           text: ')',
           enclosingRange: scriptureNode2.range,
+          leftContext: ' some',
+          rightContext: ' othe',
+          verseRef: '1:1',
         },
       ),
     ]);
@@ -300,6 +325,6 @@ class TestEnvironment {
   }
 
   createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }
