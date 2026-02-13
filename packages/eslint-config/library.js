@@ -42,4 +42,10 @@ export default tseslint.config(
     files: ['**/*.{js,cjs,mjs}'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
 );
