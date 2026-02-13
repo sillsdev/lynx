@@ -4,6 +4,7 @@ import { mock, MockProxy } from 'vitest-mock-extended';
 
 import { Diagnostic, DiagnosticSeverity } from '../diagnostic/diagnostic';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
+import { DiagnosticDismissalStore } from './diagnostic-dismissal-store';
 import { Localizer } from './localizer';
 import { Workspace } from './workspace';
 
@@ -460,6 +461,50 @@ describe('Workspace', () => {
       expect(file2Diagnostics).toHaveLength(1);
       expect(file2Diagnostics[0].message).toEqual('Diagnostic for file2');
     });
+
+    it('uses custom dismissal store when provided', async () => {
+      const dismissalStore = mock<DiagnosticDismissalStore>();
+      const dismissedSet = new Set<string>(['fp1']);
+
+      // Mock the store to return a dismissed fingerprint
+      dismissalStore.getDismissals.mockReturnValue(dismissedSet);
+
+      const env = new TestEnvironment(dismissalStore);
+      const diagnostics: Diagnostic[] = [
+        {
+          range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+          severity: DiagnosticSeverity.Warning,
+          code: 1,
+          source: 'provider1',
+          message: 'Diagnostic 1',
+          fingerprint: 'fp1',
+        },
+        {
+          range: { start: { line: 1, character: 0 }, end: { line: 1, character: 5 } },
+          severity: DiagnosticSeverity.Warning,
+          code: 2,
+          source: 'provider1',
+          message: 'Diagnostic 2',
+          fingerprint: 'fp2',
+        },
+      ];
+
+      env.provider1.getDiagnostics.mockResolvedValue(diagnostics);
+
+      // Get diagnostics - should filter out fp1
+      const result = await env.workspace.getDiagnostics('file1');
+      expect(result).toHaveLength(1);
+      expect(result[0].message).toEqual('Diagnostic 2');
+
+      // Verify the store was called
+      expect(dismissalStore.getDismissals).toHaveBeenCalledWith('file1', 'provider1');
+
+      // Dismiss another diagnostic
+      env.workspace.dismissDiagnostic('file1', diagnostics[1]);
+
+      // Verify addDismissal was called
+      expect(dismissalStore.addDismissal).toHaveBeenCalledWith('file1', diagnostics[1]);
+    });
   });
 });
 
@@ -471,7 +516,7 @@ class TestEnvironment {
   readonly provider2Subject: Subject<DiagnosticsChanged>;
   readonly workspace: Workspace;
 
-  constructor() {
+  constructor(dismissalStore?: DiagnosticDismissalStore) {
     this.localizer = mock<Localizer>();
     this.localizer.init.mockResolvedValue();
 
@@ -500,6 +545,7 @@ class TestEnvironment {
     this.workspace = new Workspace({
       localizer: this.localizer,
       diagnosticProviders: [this.provider1, this.provider2],
+      diagnosticDismissalStore: dismissalStore,
     });
   }
 }

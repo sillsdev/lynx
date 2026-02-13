@@ -6,12 +6,14 @@ import { Diagnostic } from '../diagnostic/diagnostic';
 import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
+import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from './diagnostic-dismissal-store';
 import { Localizer } from './localizer';
 
 export interface WorkspaceConfig<T = TextEdit> {
   localizer: Localizer;
   diagnosticProviders?: DiagnosticProvider<T>[];
   onTypeFormattingProviders?: OnTypeFormattingProvider<T>[];
+  diagnosticDismissalStore?: DiagnosticDismissalStore;
 }
 
 export class Workspace<T = TextEdit> {
@@ -22,13 +24,14 @@ export class Workspace<T = TextEdit> {
     string,
     ({ source: string; event: DiagnosticsChanged } | undefined)[]
   >();
-  private readonly dismissedDiagnostics = new Map<string, Set<string>>();
+  private readonly diagnosticDismissalStore: DiagnosticDismissalStore;
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 
   constructor(config: WorkspaceConfig<T>) {
     this.localizer = config.localizer;
     this.diagnosticProviders = new Map(config.diagnosticProviders?.map((provider) => [provider.id, provider]));
+    this.diagnosticDismissalStore = config.diagnosticDismissalStore ?? new InMemoryDiagnosticDismissalStore();
     this.diagnosticsChanged$ = merge(
       ...Array.from(this.diagnosticProviders.values()).map((provider, i) =>
         provider.diagnosticsChanged$.pipe(
@@ -95,13 +98,7 @@ export class Workspace<T = TextEdit> {
     if (diagnostic.fingerprint == null) {
       return false;
     }
-    const key = `${diagnostic.source}|${uri}`;
-    let dismissedForDoc = this.dismissedDiagnostics.get(key);
-    if (dismissedForDoc == null) {
-      dismissedForDoc = new Set<string>();
-      this.dismissedDiagnostics.set(key, dismissedForDoc);
-    }
-    dismissedForDoc.add(diagnostic.fingerprint);
+    this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
 
     // Trigger a refresh on the provider that owns this diagnostic
     const provider = this.diagnosticProviders.get(diagnostic.source);
@@ -133,7 +130,7 @@ export class Workspace<T = TextEdit> {
   }
 
   private *filterDismissedDiagnostics(uri: string, source: string, diagnostics: Diagnostic[]): Iterable<Diagnostic> {
-    const dismissedForDoc = this.dismissedDiagnostics.get(`${source}|${uri}`);
+    const dismissedForDoc = this.diagnosticDismissalStore.getDismissals(uri, source);
     if (dismissedForDoc == null) {
       yield* diagnostics;
     } else {
@@ -146,7 +143,7 @@ export class Workspace<T = TextEdit> {
         }
       }
       for (const fingerprint of fingerprintsToCleanup) {
-        dismissedForDoc.delete(fingerprint);
+        this.diagnosticDismissalStore.removeDismissal(uri, source, fingerprint);
       }
     }
   }
