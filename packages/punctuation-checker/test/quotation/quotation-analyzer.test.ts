@@ -30,6 +30,8 @@ describe('QuotationAnalyzer tests', () => {
           isAmbiguous: false,
           isAutocorrectable: false,
           isContinuer: false,
+          leftContext: '',
+          rightContext: 'Sampl',
         },
       ]);
 
@@ -129,6 +131,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: '',
             },
           ]);
 
@@ -145,6 +149,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'with ',
+              rightContext: 'More ',
             },
           ]);
 
@@ -161,6 +167,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'with ',
+              rightContext: 'More ',
             },
           ]);
 
@@ -177,6 +185,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'Sampl',
             },
           ]);
         });
@@ -197,6 +207,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: '',
             },
           ]);
 
@@ -213,6 +225,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' with',
+              rightContext: ' more',
             },
           ]);
 
@@ -229,6 +243,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' with',
+              rightContext: ' \u201Cmor',
             },
           ]);
 
@@ -245,6 +261,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' text',
+              rightContext: '',
             },
           ]);
         });
@@ -268,6 +286,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Primary,
+              leftContext: ' with',
+              rightContext: ' more',
             },
           ]);
         });
@@ -381,6 +401,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'This ',
             },
           ]);
 
@@ -397,6 +419,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 's an ',
+              rightContext: 'unclo',
             },
           ]);
 
@@ -413,6 +437,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' \u2018an ',
+              rightContext: 'unclo',
             },
           ]);
 
@@ -429,6 +455,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'This ',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -439,6 +467,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' two ',
+              rightContext: 'unclo',
             },
           ]);
 
@@ -455,6 +485,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'This ',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -465,6 +497,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' two ',
+              rightContext: 'unclo',
             },
           ]);
 
@@ -481,6 +515,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'This ',
             },
           ]);
 
@@ -497,6 +533,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 's an ',
+              rightContext: 'ambig',
             },
           ]);
         });
@@ -519,6 +557,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'mary ',
+              rightContext: 'quote',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -529,6 +569,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'as a ',
+              rightContext: 'prima',
             },
           ]);
 
@@ -547,6 +589,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'mary ',
+              rightContext: 'quote',
             },
           ]);
         });
@@ -567,6 +611,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'quote',
+              rightContext: '',
             },
           ]);
 
@@ -583,6 +629,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'aired',
+              rightContext: ' clos',
             },
           ]);
 
@@ -599,6 +647,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'tiple',
+              rightContext: ' unpa',
             },
             {
               depth: QuotationDepth.Primary,
@@ -609,6 +659,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'uotes',
+              rightContext: '',
             },
           ]);
 
@@ -625,6 +677,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'aired',
+              rightContext: ' quot',
             },
             {
               depth: QuotationDepth.Primary,
@@ -635,6 +689,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'uotes',
+              rightContext: '',
             },
           ]);
 
@@ -651,6 +707,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 'aired',
+              rightContext: ' quot',
             },
           ]);
 
@@ -668,6 +726,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: new QuotationRootLevel(),
+              leftContext: 'aired',
+              rightContext: ' quot',
             },
           ]);
         });
@@ -688,6 +748,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'aired',
+              rightContext: '\u2019 clo',
             },
           ]);
 
@@ -704,6 +766,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'has a',
+              rightContext: ' seco',
             },
           ]);
 
@@ -722,6 +786,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'quote',
+              rightContext: ' clos',
             },
           ]);
 
@@ -738,6 +804,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'quote',
+              rightContext: ' clos',
             },
           ]);
         });
@@ -765,6 +833,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Secondary,
+              leftContext: 'uote ',
+              rightContext: 'openi',
             },
           ]);
 
@@ -784,6 +854,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Secondary,
+              leftContext: 'uote ',
+              rightContext: 'openi',
             },
           ]);
 
@@ -803,6 +875,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Tertiary,
+              leftContext: 'ning ',
+              rightContext: 'insid',
             },
           ]);
 
@@ -820,6 +894,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Secondary,
+              leftContext: 'uote ',
+              rightContext: 'openi',
             },
           ]);
         });
@@ -841,6 +917,8 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: false,
               parentDepth: QuotationDepth.Primary,
+              leftContext: 'as a ',
+              rightContext: 'terti',
             },
           ]);
         });
@@ -865,6 +943,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'First',
             },
             {
               depth: QuotationDepth.Primary,
@@ -875,6 +955,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' only',
+              rightContext: '',
             },
           ]);
 
@@ -894,6 +976,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: '',
+              rightContext: 'First',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -904,6 +988,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'secon',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -914,6 +1000,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'level',
+              rightContext: ' quot',
             },
             {
               depth: QuotationDepth.Primary,
@@ -924,6 +1012,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'uotes',
+              rightContext: '',
             },
           ]);
 
@@ -952,6 +1042,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'secon',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -962,6 +1054,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'level',
+              rightContext: ' quot',
             },
           ]);
 
@@ -983,6 +1077,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'rst, ',
+              rightContext: 'secon',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -993,6 +1089,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'third',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -1003,6 +1101,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'third',
+              rightContext: ' leve',
             },
             {
               depth: QuotationDepth.Secondary,
@@ -1013,6 +1113,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'level',
+              rightContext: ' quot',
             },
           ]);
 
@@ -1051,6 +1153,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'third',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -1061,6 +1165,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'third',
+              rightContext: ' leve',
             },
           ]);
 
@@ -1082,6 +1188,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'ond, ',
+              rightContext: 'third',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1092,6 +1200,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'fourt',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1102,6 +1212,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'ourth',
+              rightContext: '\u201D lev',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -1112,6 +1224,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'urth\u2019',
+              rightContext: ' leve',
             },
           ]);
 
@@ -1160,6 +1274,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'fourt',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1170,6 +1286,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: false,
               isAutocorrectable: false,
               isContinuer: false,
+              leftContext: 'ourth',
+              rightContext: '\u201D lev',
             },
           ]);
         });
@@ -1204,6 +1322,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'third',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -1214,6 +1334,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 'third',
+              rightContext: ' leve',
             },
           ]);
 
@@ -1233,6 +1355,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 'ond, ',
+              rightContext: 'third',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1243,6 +1367,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'fourt',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1253,6 +1379,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 'ourth',
+              rightContext: '" lev',
             },
             {
               depth: QuotationDepth.Tertiary,
@@ -1263,6 +1391,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: "urth'",
+              rightContext: ' leve',
             },
           ]);
 
@@ -1305,6 +1435,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: ' and ',
+              rightContext: 'fourt',
             },
             {
               depth: QuotationDepth.fromNumber(4),
@@ -1315,6 +1447,8 @@ describe('QuotationAnalyzer tests', () => {
               isAmbiguous: true,
               isAutocorrectable: true,
               isContinuer: false,
+              leftContext: 'ourth',
+              rightContext: '" lev',
             },
           ]);
         });
@@ -1345,6 +1479,10 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: true,
               missingQuoteContinuers: '\u2018',
+              leftContext: '\u2018two\n',
+              rightContext: 'quote',
+              enclosingRange: undefined,
+              verseRef: undefined,
             },
           ]);
 
@@ -1371,6 +1509,10 @@ describe('QuotationAnalyzer tests', () => {
               isAutocorrectable: false,
               isContinuer: true,
               missingQuoteContinuers: '\u201d',
+              leftContext: 'ree\n\u201d',
+              rightContext: 'Spani',
+              enclosingRange: undefined,
+              verseRef: undefined,
             },
           ]);
         });
@@ -1411,6 +1553,9 @@ describe('QuotationAnalyzer tests', () => {
           isAmbiguous: false,
           isAutocorrectable: false,
           isContinuer: false,
+          leftContext: 'test ',
+          rightContext: 'texta',
+          verseRef: '1:1',
         },
       ]);
     });
@@ -1441,6 +1586,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '',
+            rightContext: '',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Primary,
@@ -1451,6 +1600,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '',
+            rightContext: '',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
         },
       ]);
@@ -1470,6 +1623,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '',
+            rightContext: 'Sampl',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Primary,
@@ -1480,6 +1637,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '',
+            rightContext: 'Sampl',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
         },
         {
@@ -1492,6 +1653,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: 'arks ',
+            rightContext: '',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
@@ -1502,6 +1667,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: 'arks ',
+            rightContext: '',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
         },
       ]);
@@ -1524,6 +1693,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '\u201C',
+            rightContext: 'Sampl',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
@@ -1534,6 +1707,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: true,
             isContinuer: false,
+            leftContext: '\u201C',
+            rightContext: 'Sampl',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
         },
         {
@@ -1546,6 +1723,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: false,
             isContinuer: false,
+            leftContext: 'table',
+            rightContext: ' quot',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
           correctedQuotationMark: {
             depth: QuotationDepth.Secondary,
@@ -1556,6 +1737,10 @@ describe('QuotationAnalyzer tests', () => {
             isAmbiguous: true,
             isAutocorrectable: false,
             isContinuer: false,
+            leftContext: 'table',
+            rightContext: ' quot',
+            enclosingRange: undefined,
+            verseRef: undefined,
           },
         },
       ]);
@@ -1627,6 +1812,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: '',
+      rightContext: '',
     };
     let quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuotePrimaryOpening, null);
 
@@ -1640,6 +1827,8 @@ describe('QuotationResolver tests', () => {
           .setText("'")
           .markAsAmbiguous()
           .markAsAutocorrectable()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1651,6 +1840,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     expect(
@@ -1663,6 +1854,8 @@ describe('QuotationResolver tests', () => {
           .setText('"')
           .markAsAmbiguous()
           .markAsAutocorrectable()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1674,6 +1867,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const deepestQuoteSecondaryOpening: QuoteMetadata = {
@@ -1686,6 +1881,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: '',
+      rightContext: '',
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuoteSecondaryOpening, null);
 
@@ -1699,6 +1896,8 @@ describe('QuotationResolver tests', () => {
           .setText("'")
           .markAsAmbiguous()
           .markAsAutocorrectable()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1710,6 +1909,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     expect(
@@ -1722,6 +1923,8 @@ describe('QuotationResolver tests', () => {
           .setText('"')
           .markAsAmbiguous()
           .markAsAutocorrectable()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1733,6 +1936,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     quotationResolver = new _privateTestingClasses.QuotationResolver(
@@ -1746,6 +1951,8 @@ describe('QuotationResolver tests', () => {
         isAmbiguous: false,
         isAutocorrectable: false,
         isContinuer: false,
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -1760,6 +1967,8 @@ describe('QuotationResolver tests', () => {
           .setText("'")
           .markAsAmbiguous()
           .markAsAutocorrectable()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1771,6 +1980,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -1785,6 +1996,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(0)
           .setEndIndex(1)
           .setText('\u201D')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1796,6 +2009,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const deepestQuotePrimaryOpening: QuoteMetadata = {
@@ -1808,6 +2023,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: '',
+      rightContext: '',
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuotePrimaryOpening, null);
 
@@ -1819,6 +2036,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('\u201D')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1830,6 +2049,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     expect(
@@ -1840,6 +2061,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(5)
           .setEndIndex(6)
           .setText('\u2019')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1851,6 +2074,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const deepestQuoteSecondaryOpening: QuoteMetadata = {
@@ -1863,6 +2088,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: '',
+      rightContext: '',
     };
     quotationResolver = new _privateTestingClasses.QuotationResolver(deepestQuoteSecondaryOpening, null);
 
@@ -1876,6 +2103,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(15)
           .setEndIndex(16)
           .setText('\u2019')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1887,6 +2116,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -1904,6 +2135,8 @@ describe('QuotationResolver tests', () => {
         isAmbiguous: false,
         isAutocorrectable: false,
         isContinuer: false,
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -1915,6 +2148,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201D')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1926,6 +2161,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // “example of this case“<--
@@ -1940,6 +2177,8 @@ describe('QuotationResolver tests', () => {
         isAmbiguous: false,
         isAutocorrectable: false,
         isContinuer: false,
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -1951,6 +2190,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201C')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1962,6 +2203,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // example of this case”<--
@@ -1974,6 +2217,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(10)
           .setEndIndex(11)
           .setText('\u201D')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -1985,6 +2230,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // “example ‘of “this case“<--
@@ -1999,6 +2246,8 @@ describe('QuotationResolver tests', () => {
         isAmbiguous: false,
         isAutocorrectable: false,
         isContinuer: false,
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -2010,6 +2259,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(15)
           .setEndIndex(16)
           .setText('\u201C')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2021,6 +2272,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -2046,6 +2299,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: enclosingRange,
         text: '\u201c',
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -2061,6 +2316,8 @@ describe('QuotationResolver tests', () => {
           .setText('\u201c')
           .markAsPotentialContinuer()
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2073,6 +2330,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // UnresolvedQuoteMetadata does not have the correct depth
@@ -2086,6 +2345,8 @@ describe('QuotationResolver tests', () => {
           .setText('\u2018')
           .markAsPotentialContinuer()
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2098,6 +2359,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const quotationResolver2 = new _privateTestingClasses.QuotationResolver(
@@ -2111,6 +2374,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: enclosingRange,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -2126,6 +2391,8 @@ describe('QuotationResolver tests', () => {
           .setText('\u201c')
           .markAsPotentialContinuer()
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2138,6 +2405,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const quotationResolver3 = new _privateTestingClasses.QuotationResolver(
@@ -2151,6 +2420,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: enclosingRange,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
       null,
     );
@@ -2165,6 +2436,8 @@ describe('QuotationResolver tests', () => {
           .setEndIndex(6)
           .setText('\u201c')
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2177,6 +2450,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // This quotation mark immediately follows an opening quotation mark
@@ -2190,6 +2465,8 @@ describe('QuotationResolver tests', () => {
           .setText('\u201c')
           .markAsPotentialContinuer()
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2202,6 +2479,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const quotationResolver4 = new _privateTestingClasses.QuotationResolver(null, null);
@@ -2217,6 +2496,8 @@ describe('QuotationResolver tests', () => {
           .setText('\u201c')
           .markAsPotentialContinuer()
           .setEnclosingRange(enclosingRange)
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2229,6 +2510,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -2244,6 +2527,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
       {
         depth: QuotationDepth.Primary,
@@ -2255,6 +2540,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u201c',
+        leftContext: '',
+        rightContext: '',
       },
     );
 
@@ -2268,6 +2555,8 @@ describe('QuotationResolver tests', () => {
           .setEndIndex(26)
           .setText('\u2018')
           .markAsPotentialContinuer()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2280,6 +2569,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // UnresolvedQuoteMetadata is not marked as a potential continuer
@@ -2291,6 +2582,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(25)
           .setEndIndex(26)
           .setText('\u2018')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2303,6 +2596,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     // UnresolvedQuoteMetadata does not have the correct depth
@@ -2314,6 +2609,8 @@ describe('QuotationResolver tests', () => {
           .setStartIndex(25)
           .setEndIndex(26)
           .setText('\u201c')
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2326,6 +2623,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: false,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const quotationResolver2 = new _privateTestingClasses.QuotationResolver(
@@ -2339,6 +2638,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
       {
         depth: QuotationDepth.Secondary,
@@ -2350,6 +2651,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
     );
 
@@ -2363,6 +2666,8 @@ describe('QuotationResolver tests', () => {
           .setEndIndex(26)
           .setText('\u201c')
           .markAsPotentialContinuer()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2375,6 +2680,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -2390,6 +2697,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u201c',
+        leftContext: '',
+        rightContext: '',
       },
       null,
       QuoteContinuerStyle.Spanish,
@@ -2405,6 +2714,8 @@ describe('QuotationResolver tests', () => {
           .setEndIndex(6)
           .setText('\u201d')
           .markAsPotentialContinuer()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2417,6 +2728,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
 
     const quotationResolver2 = new _privateTestingClasses.QuotationResolver(
@@ -2430,6 +2743,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u2018',
+        leftContext: '',
+        rightContext: '',
       },
       {
         depth: QuotationDepth.Primary,
@@ -2441,6 +2756,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '\u201d',
+        leftContext: '',
+        rightContext: '',
       },
       QuoteContinuerStyle.Spanish,
     );
@@ -2455,6 +2772,8 @@ describe('QuotationResolver tests', () => {
           .setEndIndex(26)
           .setText('\u2019')
           .markAsPotentialContinuer()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2467,6 +2786,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: false,
       isAutocorrectable: false,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 
@@ -2482,6 +2803,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: "'",
+        leftContext: '',
+        rightContext: '',
       },
       {
         depth: QuotationDepth.Primary,
@@ -2493,6 +2816,8 @@ describe('QuotationResolver tests', () => {
         isContinuer: false,
         enclosingRange: undefined,
         text: '"',
+        leftContext: '',
+        rightContext: '',
       },
     );
 
@@ -2508,6 +2833,8 @@ describe('QuotationResolver tests', () => {
           .markAsAmbiguous()
           .markAsAutocorrectable()
           .markAsPotentialContinuer()
+          .setLeftContext('left')
+          .setRightContext('right')
           .build(),
       ),
     ).toEqual({
@@ -2520,6 +2847,8 @@ describe('QuotationResolver tests', () => {
       isAmbiguous: true,
       isAutocorrectable: true,
       isContinuer: true,
+      leftContext: 'left',
+      rightContext: 'right',
     });
   });
 });
@@ -2680,6 +3009,6 @@ class TestEnvironment {
   }
 
   createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

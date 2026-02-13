@@ -28,45 +28,45 @@ describe('Tests with plain-text strings', () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('end of sentence. start of next')),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput('spaces (on both sides) of parentheses'),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput('this contains: colons; semicolons, and commas'),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('produces Diagnostics for text with missing required punctuation context', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space after.period')),
-    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 'p', 14, 15)]);
-    expect(
+    ).resolves.toMatchObject([testEnv.createExpectedTrailingContextDiagnostic('.', 'p', 14, 15)]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space(before parenthesis')),
-    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 8, 9)]);
+    ).resolves.toMatchObject([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 8, 9)]);
   });
 
   it('produces no Diagnostics for punctuation marks at the beginning/end of the string', async () => {
     const testEnv: TextTestEnvironment = TextTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput('\u201Cquote at start and end of string\u201D'),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('period ending the sentence.')),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 });
 
@@ -75,77 +75,77 @@ describe('Tests with ScriptureNodes', () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('space. after the period', 1, 15, 1, 38)),
       ),
-    ).toEqual([]);
-    expect(
+    ).resolves.toEqual([]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('correct (spaces around the) parentheses', 2, 1, 2, 40)),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('produces Diagnostics for punctuation context errors in a single ScriptureNode', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('missing.space', 3, 16, 3, 29)),
       ),
-    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 's', 3, 23, 3, 24)]);
-    expect(
+    ).resolves.toMatchObject([testEnv.createExpectedTrailingContextDiagnostic('.', 's', 3, 23, 3, 24)]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(testEnv.createScriptureNode('no space(before parenthesis', 4, 5, 4, 32)),
       ),
-    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 4, 13, 4, 14)]);
+    ).resolves.toMatchObject([testEnv.createExpectedLeadingContextDiagnostic('(', 'e', 4, 13, 4, 14)]);
   });
 
   it('produces no Diagnostics for well-formed punctuation context that spans across ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with period.', 5, 12, 5, 29),
           testEnv.createScriptureNode(' starts with space', 5, 31, 5, 49),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with a space ', 6, 1, 6, 19),
           testEnv.createScriptureNode('(starts with a parenthesis', 6, 35, 6, 61),
         ),
       ),
-    ).toEqual([]);
+    ).resolves.toEqual([]);
   });
 
   it('produces Diagnostics for punctuation context errors that occur across ScriptureNodes', async () => {
     const testEnv: ScriptureTestEnvironment = ScriptureTestEnvironment.createWithStandardContextRules();
     await testEnv.init();
 
-    expect(
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends with a period.', 18, 15, 18, 34),
           testEnv.createScriptureNode('no space to start', 18, 41, 18, 58),
         ),
       ),
-    ).toEqual([testEnv.createExpectedTrailingContextDiagnostic('.', 'n', 18, 33, 18, 34)]);
-    expect(
+    ).resolves.toMatchObject([testEnv.createExpectedTrailingContextDiagnostic('.', 'n', 18, 33, 18, 34)]);
+    await expect(
       testEnv.PunctuationContextIssueFinder.produceDiagnostics(
         testEnv.createInput(
           testEnv.createScriptureNode('ends without a space', 9, 122, 9, 142),
           testEnv.createScriptureNode('\u201Cstarts with a quote', 9, 151, 9, 171),
         ),
       ),
-    ).toEqual([testEnv.createExpectedLeadingContextDiagnostic('\u201C', 'e', 9, 151, 9, 152)]);
+    ).resolves.toMatchObject([testEnv.createExpectedLeadingContextDiagnostic('\u201C', 'e', 9, 151, 9, 152)]);
   });
 
   it("doesn't consider punctuation context across ScriptureNodes when the punctuation context is possibly truncated", async () => {
@@ -159,15 +159,15 @@ describe('Tests with ScriptureNodes', () => {
       '\\c 1 \\v 1 First sentence{- Second sentence',
     );
     const correctVerseNodeGroup = new ScriptureTextNodeGrouper(correctDoc).getCheckableGroups().next().value;
-    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctVerseNodeGroup)).toEqual([]);
+    await expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctVerseNodeGroup)).resolves.toEqual([]);
 
     const incorrectDoc: ScriptureDocument = await testEnv.createScriptureDocument(
       `\\c 1 \\v 1 First sentence{\\v 2 -Second sentence`,
     );
     const incorrectVerseNodeGroup = new ScriptureTextNodeGrouper(incorrectDoc).getCheckableGroups().next().value;
-    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(incorrectVerseNodeGroup)).toEqual([
-      testEnv.createExpectedTrailingContextDiagnostic('{', ' ', 0, 24, 0, 25, false),
-    ]);
+    await expect(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(incorrectVerseNodeGroup),
+    ).resolves.toMatchObject([testEnv.createExpectedTrailingContextDiagnostic('{', ' ', 0, 24, 0, 25, false)]);
 
     const correctBecauseOfTruncationDoc: ScriptureDocument = await testEnv.createScriptureDocument(
       `\\c 1 \\v 1 First sentence{ \\p \\v 2 -Second sentence`,
@@ -175,9 +175,9 @@ describe('Tests with ScriptureNodes', () => {
     const correctBecauseOfTruncationVerseNodeGroup = new ScriptureTextNodeGrouper(correctBecauseOfTruncationDoc)
       .getCheckableGroups()
       .next().value;
-    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctBecauseOfTruncationVerseNodeGroup)).toEqual(
-      [],
-    );
+    await expect(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(correctBecauseOfTruncationVerseNodeGroup),
+    ).resolves.toEqual([]);
   });
 });
 
@@ -206,7 +206,9 @@ describe('Miscellaneous tests', () => {
       TextTestEnvironment.createWithStandardContextRulesAndCustomLocalizer(customLocalizer);
     await testEnv.init();
 
-    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
+    await expect(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here')),
+    ).resolves.toMatchObject([
       {
         code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
@@ -229,7 +231,9 @@ describe('Miscellaneous tests', () => {
     ]);
 
     await customLocalizer.changeLanguage('es');
-    expect(testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here'))).toEqual([
+    await expect(
+      testEnv.PunctuationContextIssueFinder.produceDiagnostics(testEnv.createInput('no space.here')),
+    ).resolves.toMatchObject([
       {
         code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
@@ -532,6 +536,6 @@ class ScriptureTestEnvironment {
   }
 
   createInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

@@ -46,44 +46,48 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
+  public async produceDiagnostics(checkableGroup: CheckableGroup): Promise<Diagnostic[]> {
     this.reset();
     const pairedPunctuationAnalyzer: PairedPunctuationAnalyzer = new PairedPunctuationAnalyzer(
       this.pairedPunctuationConfig,
     );
     const analysis: PairedPunctuationAnalysis = pairedPunctuationAnalyzer.analyze(checkableGroup);
 
-    this.createDiagnostics(analysis);
+    await this.createDiagnostics(analysis);
     return this.diagnosticList.toArray();
   }
 
-  private createDiagnostics(analysis: PairedPunctuationAnalysis): void {
-    this.createUnmatchedPunctuationDiagnostics(analysis);
-    this.createOverlappingPunctuationDiagnostics(analysis);
+  private async createDiagnostics(analysis: PairedPunctuationAnalysis): Promise<void> {
+    await this.createUnmatchedPunctuationDiagnostics(analysis);
+    await this.createOverlappingPunctuationDiagnostics(analysis);
   }
 
-  private createUnmatchedPunctuationDiagnostics(analysis: PairedPunctuationAnalysis): void {
+  private async createUnmatchedPunctuationDiagnostics(analysis: PairedPunctuationAnalysis): Promise<void> {
     for (const unmatchedQuote of analysis.getUnmatchedPunctuationMarks()) {
-      this.addUnmatchedPunctuationMarkError(unmatchedQuote);
+      await this.addUnmatchedPunctuationMarkError(unmatchedQuote);
     }
   }
 
-  private createOverlappingPunctuationDiagnostics(analysis: PairedPunctuationAnalysis): void {
+  private async createOverlappingPunctuationDiagnostics(analysis: PairedPunctuationAnalysis): Promise<void> {
     for (const overlappingPunctuation of analysis.getOverlappingPunctuationMarks()) {
-      this.addOverlappingPunctuationWarning(overlappingPunctuation);
+      await this.addOverlappingPunctuationWarning(overlappingPunctuation);
     }
   }
 
-  private addUnmatchedPunctuationMarkError(punctuationMark: PairedPunctuationMetadata): void {
+  private async addUnmatchedPunctuationMarkError(punctuationMark: PairedPunctuationMetadata): Promise<void> {
     const code: string = this.getUnmatchedErrorCode(punctuationMark);
     const message: string = this.getUnmatchedErrorMessage(code);
 
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Error)
       .setRange(punctuationMark.startIndex, punctuationMark.endIndex, punctuationMark.enclosingRange)
       .setMessage(message)
+      .setVerseRef(punctuationMark.verseRef)
+      .setContent(punctuationMark.text)
+      .setLeftContext(punctuationMark.leftContext)
+      .setRightContext(punctuationMark.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
@@ -118,15 +122,15 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
     });
   }
 
-  private addOverlappingPunctuationWarning(overlappingPairs: OverlappingPairs): void {
-    this.addFirstOverlappingPairWarning(overlappingPairs);
-    this.addSecondOverlappingPairWarning(overlappingPairs);
+  private async addOverlappingPunctuationWarning(overlappingPairs: OverlappingPairs): Promise<void> {
+    await this.addFirstOverlappingPairWarning(overlappingPairs);
+    await this.addSecondOverlappingPairWarning(overlappingPairs);
   }
 
-  private addFirstOverlappingPairWarning(overlappingPairs: OverlappingPairs): void {
+  private async addFirstOverlappingPairWarning(overlappingPairs: OverlappingPairs): Promise<void> {
     const code: string = OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE;
 
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -138,15 +142,19 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
       .setMessage(
         this.createOverlappingPairMessage(code, overlappingPairs.getOpeningMark(), overlappingPairs.getClosingMark()),
       )
+      .setVerseRef(overlappingPairs.getOpeningMark().verseRef)
+      .setContent(overlappingPairs.getOpeningMark().text)
+      .setLeftContext(overlappingPairs.getOpeningMark().leftContext)
+      .setRightContext(overlappingPairs.getOpeningMark().rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addSecondOverlappingPairWarning(overlappingPairs: OverlappingPairs): void {
+  private async addSecondOverlappingPairWarning(overlappingPairs: OverlappingPairs): Promise<void> {
     const code: string = OVERLAPPING_PUNCTUATION_PAIR_DIAGNOSTIC_CODE;
 
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -158,6 +166,10 @@ export class PairedPunctuationIssueFinder implements IssueFinder {
       .setMessage(
         this.createOverlappingPairMessage(code, overlappingPairs.getClosingMark(), overlappingPairs.getOpeningMark()),
       )
+      .setVerseRef(overlappingPairs.getClosingMark().verseRef)
+      .setContent(overlappingPairs.getClosingMark().text)
+      .setLeftContext(overlappingPairs.getClosingMark().leftContext)
+      .setRightContext(overlappingPairs.getClosingMark().rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);

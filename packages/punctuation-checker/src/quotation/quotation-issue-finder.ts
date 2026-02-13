@@ -44,63 +44,67 @@ export class QuotationIssueFinder implements IssueFinder {
     this.diagnosticList = new DiagnosticList();
   }
 
-  public produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
+  public async produceDiagnostics(checkableGroup: CheckableGroup): Promise<Diagnostic[]> {
     this.reset();
     const quotationAnalyzer: QuotationAnalyzer = new QuotationAnalyzer(this.quotationConfig);
     const analysis: QuotationAnalysis = quotationAnalyzer.analyze(checkableGroup);
 
-    this.createDiagnostics(analysis);
+    await this.createDiagnostics(analysis);
     return this.diagnosticList.toArray();
   }
 
-  private createDiagnostics(analysis: QuotationAnalysis) {
-    this.createUnmatchedQuoteDiagnostics(analysis);
-    this.createIncorrectlyNestedQuoteDiagnostics(analysis);
-    this.createAmbiguousQuoteDiagnostics(analysis);
-    this.createTooDeeplyNestedQuoteDiagnostics(analysis);
-    this.createMissingQuoteContinuerDiagnostics(analysis);
+  private async createDiagnostics(analysis: QuotationAnalysis): Promise<void> {
+    await this.createUnmatchedQuoteDiagnostics(analysis);
+    await this.createIncorrectlyNestedQuoteDiagnostics(analysis);
+    await this.createAmbiguousQuoteDiagnostics(analysis);
+    await this.createTooDeeplyNestedQuoteDiagnostics(analysis);
+    await this.createMissingQuoteContinuerDiagnostics(analysis);
   }
 
-  private createUnmatchedQuoteDiagnostics(analysis: QuotationAnalysis): void {
+  private async createUnmatchedQuoteDiagnostics(analysis: QuotationAnalysis): Promise<void> {
     for (const unmatchedQuote of analysis.getUnmatchedQuotes()) {
-      this.addUnmatchedQuoteError(unmatchedQuote);
+      await this.addUnmatchedQuoteError(unmatchedQuote);
     }
   }
 
-  private createIncorrectlyNestedQuoteDiagnostics(analysis: QuotationAnalysis): void {
+  private async createIncorrectlyNestedQuoteDiagnostics(analysis: QuotationAnalysis): Promise<void> {
     for (const incorrectlyNestedQuote of analysis.getIncorrectlyNestedQuotes()) {
-      this.addIncorrectlyNestedQuoteWarning(incorrectlyNestedQuote);
+      await this.addIncorrectlyNestedQuoteWarning(incorrectlyNestedQuote);
     }
   }
 
-  private createAmbiguousQuoteDiagnostics(analysis: QuotationAnalysis): void {
+  private async createAmbiguousQuoteDiagnostics(analysis: QuotationAnalysis): Promise<void> {
     for (const ambiguousQuote of analysis.getAmbiguousQuoteCorrections()) {
-      this.addAmbiguousQuoteWarning(ambiguousQuote);
+      await this.addAmbiguousQuoteWarning(ambiguousQuote);
     }
   }
 
-  private createTooDeeplyNestedQuoteDiagnostics(analysis: QuotationAnalysis): void {
+  private async createTooDeeplyNestedQuoteDiagnostics(analysis: QuotationAnalysis): Promise<void> {
     for (const tooDeeplyNestedQuote of analysis.getTooDeeplyNestedQuotes()) {
-      this.addTooDeeplyNestedQuoteWarning(tooDeeplyNestedQuote);
+      await this.addTooDeeplyNestedQuoteWarning(tooDeeplyNestedQuote);
     }
   }
 
-  private createMissingQuoteContinuerDiagnostics(analysis: QuotationAnalysis): void {
+  private async createMissingQuoteContinuerDiagnostics(analysis: QuotationAnalysis): Promise<void> {
     for (const missingQuoteContinuer of analysis.getMissingQuoteContinuers()) {
-      this.addMissingQuoteContinuerWarning(missingQuoteContinuer);
+      await this.addMissingQuoteContinuerWarning(missingQuoteContinuer);
     }
   }
 
-  private addIncorrectlyNestedQuoteWarning(quotationMark: QuoteMetadata): void {
+  private async addIncorrectlyNestedQuoteWarning(quotationMark: QuoteMetadata): Promise<void> {
     const code: string = INCORRECTLY_NESTED_QUOTE_DIAGNOSTIC_CODE;
 
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(quotationMark.startIndex, quotationMark.endIndex, quotationMark.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
       .setData({ depth: quotationMark.parentDepth?.asNumber() ?? 0 })
+      .setVerseRef(quotationMark.verseRef)
+      .setContent(quotationMark.text)
+      .setLeftContext(quotationMark.leftContext)
+      .setRightContext(quotationMark.rightContext)
       .build();
 
     this.diagnosticList.addDiagnostic(diagnostic);
@@ -112,41 +116,49 @@ export class QuotationIssueFinder implements IssueFinder {
     });
   }
 
-  private addUnmatchedQuoteError(quotationMark: QuoteMetadata): void {
+  private async addUnmatchedQuoteError(quotationMark: QuoteMetadata): Promise<void> {
     if (quotationMark.direction === PairedPunctuationDirection.Opening) {
-      this.addUnmatchedOpeningQuoteError(quotationMark);
+      await this.addUnmatchedOpeningQuoteError(quotationMark);
     } else if (quotationMark.direction === PairedPunctuationDirection.Closing) {
-      this.addUnmatchedClosingQuoteError(quotationMark);
+      await this.addUnmatchedClosingQuoteError(quotationMark);
     }
   }
 
-  private addUnmatchedOpeningQuoteError(quotationMark: QuoteMetadata): void {
+  private async addUnmatchedOpeningQuoteError(quotationMark: QuoteMetadata): Promise<void> {
     const code: string = UNMATCHED_OPENING_QUOTE_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Error)
       .setRange(quotationMark.startIndex, quotationMark.endIndex, quotationMark.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
+      .setVerseRef(quotationMark.verseRef)
+      .setContent(quotationMark.text)
+      .setLeftContext(quotationMark.leftContext)
+      .setRightContext(quotationMark.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addUnmatchedClosingQuoteError(quotationMark: QuoteMetadata): void {
+  private async addUnmatchedClosingQuoteError(quotationMark: QuoteMetadata): Promise<void> {
     const code = UNMATCHED_CLOSING_QUOTE_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Error)
       .setRange(quotationMark.startIndex, quotationMark.endIndex, quotationMark.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
+      .setVerseRef(quotationMark.verseRef)
+      .setContent(quotationMark.text)
+      .setLeftContext(quotationMark.leftContext)
+      .setRightContext(quotationMark.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addAmbiguousQuoteWarning(ambiguousQuote: QuoteCorrection): void {
+  private async addAmbiguousQuoteWarning(ambiguousQuote: QuoteCorrection): Promise<void> {
     const code: string = AMBIGUOUS_QUOTE_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
@@ -160,31 +172,43 @@ export class QuotationIssueFinder implements IssueFinder {
         existingQuotationMark: ambiguousQuote.existingQuotationMark.text,
         correctedQuotationMark: ambiguousQuote.correctedQuotationMark.text,
       })
+      .setVerseRef(ambiguousQuote.existingQuotationMark.verseRef)
+      .setContent(ambiguousQuote.existingQuotationMark.text)
+      .setLeftContext(ambiguousQuote.existingQuotationMark.leftContext)
+      .setRightContext(ambiguousQuote.existingQuotationMark.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addTooDeeplyNestedQuoteWarning(quotationMark: QuoteMetadata): void {
+  private async addTooDeeplyNestedQuoteWarning(quotationMark: QuoteMetadata): Promise<void> {
     const code: string = TOO_DEEPLY_NESTED_QUOTE_DIAGNOSTIC_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(quotationMark.startIndex, quotationMark.endIndex, quotationMark.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
+      .setVerseRef(quotationMark.verseRef)
+      .setContent(quotationMark.text)
+      .setLeftContext(quotationMark.leftContext)
+      .setRightContext(quotationMark.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }
 
-  private addMissingQuoteContinuerWarning(missingQuoteContinuer: MissingQuoteContinuerMetadata): void {
+  private async addMissingQuoteContinuerWarning(missingQuoteContinuer: MissingQuoteContinuerMetadata): Promise<void> {
     const code: string = MISSING_QUOTE_CONTINUER_CODE;
-    const diagnostic: Diagnostic = this.diagnosticFactory
+    const diagnostic: Diagnostic = await this.diagnosticFactory
       .newBuilder()
       .setCode(code)
       .setSeverity(DiagnosticSeverity.Warning)
       .setRange(missingQuoteContinuer.startIndex, missingQuoteContinuer.endIndex, missingQuoteContinuer.enclosingRange)
       .setMessage(this.getErrorMessageByCode(code))
       .setData(missingQuoteContinuer.missingQuoteContinuers)
+      .setVerseRef(missingQuoteContinuer.verseRef)
+      .setContent(missingQuoteContinuer.text)
+      .setLeftContext(missingQuoteContinuer.leftContext)
+      .setRightContext(missingQuoteContinuer.rightContext)
       .build();
     this.diagnosticList.addDiagnostic(diagnostic);
   }

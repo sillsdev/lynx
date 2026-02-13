@@ -54,7 +54,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     if (doc == null) {
       return [];
     }
-    return this.validateDocument(doc);
+    return await this.validateDocument(doc);
   }
 
   async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<TEdit>[]> {
@@ -69,21 +69,23 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     this.refreshSubject.next(uri);
   }
 
-  private validateDocument(document: TDoc): Diagnostic[] {
+  private async validateDocument(document: TDoc): Promise<Diagnostic[]> {
     if (isScriptureDocument(document)) {
-      return this.validateScriptureDocument(document);
+      return await this.validateScriptureDocument(document);
     }
-    return this.validateTextDocument(document);
+    return await this.validateTextDocument(document);
   }
 
-  protected validateTextDocument(textDocument: TextDocument): Diagnostic[] {
+  protected async validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const issueFinder: IssueFinder = this.issueFinderFactory.createIssueFinder(diagnosticFactory);
-    return issueFinder.produceDiagnostics(new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]));
+    return await issueFinder.produceDiagnostics(
+      new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]),
+    );
   }
 
-  protected validateScriptureDocument(scriptureDocument: ScriptureDocument): Diagnostic[] {
+  protected async validateScriptureDocument(scriptureDocument: ScriptureDocument): Promise<Diagnostic[]> {
     let diagnostics: Diagnostic[] = [];
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, scriptureDocument);
 
@@ -91,7 +93,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
 
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
     for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
-      diagnostics = diagnostics.concat(issueFinder.produceDiagnostics(checkableGroup));
+      diagnostics = diagnostics.concat(await issueFinder.produceDiagnostics(checkableGroup));
     }
     return diagnostics;
   }

@@ -3,8 +3,11 @@ import { Range, ScriptureDocument, TextDocument } from '@sillsdev/lynx';
 export interface PunctuationMetadata {
   startIndex: number;
   endIndex: number;
-  enclosingRange: Range | undefined;
+  enclosingRange?: Range;
   text: string;
+  verseRef?: string;
+  leftContext: string | undefined;
+  rightContext: string | undefined;
 }
 
 export interface PairedPunctuationMetadata extends PunctuationMetadata {
