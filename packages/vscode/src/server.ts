@@ -57,6 +57,9 @@ connection.onInitialize(async (params: InitializeParams) => {
         workspaceDiagnostics: false,
       },
       codeActionProvider: true,
+      executeCommandProvider: {
+        commands: ['lynx.dismissDiagnostic'],
+      },
     },
   };
   const onTypeTriggerCharacters = workspace.getOnTypeTriggerCharacters();
@@ -158,10 +161,10 @@ connection.onDocumentOnTypeFormatting(async (params) => {
   return await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch);
 });
 
-connection.onExecuteCommand((params) => {
+connection.onExecuteCommand(async (params) => {
   if (params.command === 'lynx.dismissDiagnostic' && params.arguments != null) {
     const [uri, diagnostic] = params.arguments as [string, Diagnostic];
-    if (workspace.dismissDiagnostic(uri, diagnostic)) {
+    if (await workspace.dismissDiagnostic(uri, diagnostic)) {
       connection.languages.diagnostics.refresh();
     }
   }
