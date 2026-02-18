@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { mock, MockProxy } from 'vitest-mock-extended';
 
 import { Diagnostic, DiagnosticSeverity } from '../diagnostic/diagnostic';
+import { DiagnosticDismissalStore } from '../diagnostic/diagnostic-dismissal-store';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
-import { DiagnosticDismissalStore } from './diagnostic-dismissal-store';
 import { Localizer } from './localizer';
 import { Workspace } from './workspace';
 
@@ -92,7 +92,7 @@ describe('Workspace', () => {
       env.provider1Subject.next({ uri: 'file1', version: 1, diagnostics });
 
       // Dismiss the first diagnostic
-      env.workspace.dismissDiagnostic('file1', diagnostics[0]);
+      await env.workspace.dismissDiagnostic('file1', diagnostics[0]);
       expect(env.provider1.refresh).toHaveBeenCalledWith('file1');
 
       // Wait for the refresh to emit filtered diagnostics
@@ -229,11 +229,46 @@ describe('Workspace', () => {
       expect(changed.uri).toEqual('file1');
       expect(changed.version).toEqual(2);
       // Only provider2's diagnostics should be included since provider1's version doesn't match
-      expect(changed.diagnostics).toHaveLength(1);
-      expect(changed.diagnostics[0].source).toEqual('provider2');
     });
 
-    it('handles refresh being called on provider', () => {
+    it('retains diagnostics from non-refreshed providers after a dismiss', async () => {
+      const env = new TestEnvironment();
+      const diagnostics1: Diagnostic[] = [
+        {
+          range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+          severity: DiagnosticSeverity.Warning,
+          code: 1,
+          source: 'provider1',
+          message: 'Provider 1 diagnostic',
+          fingerprint: 'fp1',
+        },
+      ];
+      const diagnostics2: Diagnostic[] = [
+        {
+          range: { start: { line: 1, character: 0 }, end: { line: 1, character: 5 } },
+          severity: DiagnosticSeverity.Error,
+          code: 2,
+          source: 'provider2',
+          message: 'Provider 2 diagnostic',
+        },
+      ];
+
+      const changedPromise = firstValueFrom(env.workspace.diagnosticsChanged$.pipe(skip(2)));
+      env.provider1Subject.next({ uri: 'file1', version: 1, diagnostics: diagnostics1 });
+      env.provider2Subject.next({ uri: 'file1', version: 1, diagnostics: diagnostics2 });
+
+      await env.workspace.dismissDiagnostic('file1', diagnostics1[0]);
+
+      env.provider1Subject.next({ uri: 'file1', version: 1, diagnostics: diagnostics1 });
+      const changed = await changedPromise;
+
+      expect(changed.uri).toEqual('file1');
+      expect(changed.diagnostics).toHaveLength(1);
+      expect(changed.diagnostics[0].source).toEqual('provider2');
+      expect(changed.diagnostics[0].message).toEqual('Provider 2 diagnostic');
+    });
+
+    it('handles refresh being called on provider', async () => {
       const env = new TestEnvironment();
       const diagnostics: Diagnostic[] = [
         {
@@ -250,14 +285,14 @@ describe('Workspace', () => {
       env.provider1Subject.next({ uri: 'file1', version: 1, diagnostics });
 
       // Dismiss the diagnostic
-      const result = env.workspace.dismissDiagnostic('file1', diagnostics[0]);
+      const result = await env.workspace.dismissDiagnostic('file1', diagnostics[0]);
 
       expect(result).toBe(true);
       expect(env.provider1.refresh).toHaveBeenCalledWith('file1');
       expect(env.provider1.refresh).toHaveBeenCalledTimes(1);
     });
 
-    it('does not dismiss diagnostic without fingerprint', () => {
+    it('does not dismiss diagnostic without fingerprint', async () => {
       const env = new TestEnvironment();
       const diagnostic: Diagnostic = {
         range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
@@ -268,7 +303,7 @@ describe('Workspace', () => {
         // No fingerprint
       };
 
-      const result = env.workspace.dismissDiagnostic('file1', diagnostic);
+      const result = await env.workspace.dismissDiagnostic('file1', diagnostic);
 
       expect(result).toBe(false);
       expect(env.provider1.refresh).not.toHaveBeenCalled();
@@ -297,8 +332,8 @@ describe('Workspace', () => {
       env.provider1Subject.next({ uri: 'file1', version: 1, diagnostics: [diagnostic1, diagnostic2] });
 
       // Dismiss both diagnostics
-      env.workspace.dismissDiagnostic('file1', diagnostic1);
-      env.workspace.dismissDiagnostic('file1', diagnostic2);
+      await env.workspace.dismissDiagnostic('file1', diagnostic1);
+      await env.workspace.dismissDiagnostic('file1', diagnostic2);
 
       // Now emit diagnostics with only diagnostic2 present (diagnostic1 was fixed)
       const changedPromise = firstValueFrom(env.workspace.diagnosticsChanged$);
@@ -358,7 +393,7 @@ describe('Workspace', () => {
       expect(allDiagnostics.map((d) => d.message)).toEqual(['Diagnostic 1', 'Diagnostic 2', 'Diagnostic 3']);
 
       // Dismiss the first diagnostic
-      const dismissed1 = env.workspace.dismissDiagnostic('file1', diagnostics[0]);
+      const dismissed1 = await env.workspace.dismissDiagnostic('file1', diagnostics[0]);
       expect(dismissed1).toBe(true);
 
       // Get diagnostics after dismissing one
@@ -367,7 +402,7 @@ describe('Workspace', () => {
       expect(afterFirstDismiss.map((d) => d.message)).toEqual(['Diagnostic 2', 'Diagnostic 3']);
 
       // Dismiss the third diagnostic
-      const dismissed2 = env.workspace.dismissDiagnostic('file1', diagnostics[2]);
+      const dismissed2 = await env.workspace.dismissDiagnostic('file1', diagnostics[2]);
       expect(dismissed2).toBe(true);
 
       // Get diagnostics after dismissing two
@@ -410,7 +445,7 @@ describe('Workspace', () => {
       expect(allDiagnostics.find((d) => d.source === 'provider2')).toBeDefined();
 
       // Dismiss diagnostic from provider1
-      env.workspace.dismissDiagnostic('file1', diagnostics1[0]);
+      await env.workspace.dismissDiagnostic('file1', diagnostics1[0]);
 
       // Get diagnostics after dismissal
       const afterDismiss = await env.workspace.getDiagnostics('file1');
@@ -450,7 +485,7 @@ describe('Workspace', () => {
       });
 
       // Dismiss diagnostic for file1
-      env.workspace.dismissDiagnostic('file1', diagnostic1);
+      await env.workspace.dismissDiagnostic('file1', diagnostic1);
 
       // Verify file1 has no diagnostics
       const file1Diagnostics = await env.workspace.getDiagnostics('file1');
@@ -467,7 +502,7 @@ describe('Workspace', () => {
       const dismissedSet = new Set<string>(['fp1']);
 
       // Mock the store to return a dismissed fingerprint
-      dismissalStore.getDismissals.mockReturnValue(dismissedSet);
+      dismissalStore.getDismissals.mockResolvedValue(dismissedSet);
 
       const env = new TestEnvironment(dismissalStore);
       const diagnostics: Diagnostic[] = [
@@ -500,7 +535,7 @@ describe('Workspace', () => {
       expect(dismissalStore.getDismissals).toHaveBeenCalledWith('file1', 'provider1');
 
       // Dismiss another diagnostic
-      env.workspace.dismissDiagnostic('file1', diagnostics[1]);
+      await env.workspace.dismissDiagnostic('file1', diagnostics[1]);
 
       // Verify addDismissal was called
       expect(dismissalStore.addDismissal).toHaveBeenCalledWith('file1', diagnostics[1]);

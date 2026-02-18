@@ -97,26 +97,21 @@ class DiagnosticBuilder {
       throw new Error('Diagnostic message was not initialized');
     }
 
-    const fingerprintComponents: string[] = [this.code.toString()];
+    const hash = new Sha256();
+    hash.update(this.code.toString());
     if (this.verseRef != null) {
-      fingerprintComponents.push(this.verseRef);
+      hash.update('|' + this.verseRef);
     }
     if (this.content != null) {
-      fingerprintComponents.push(this.content);
+      hash.update('|' + this.content);
     }
     if (this.leftContext != null) {
-      fingerprintComponents.push(this.leftContext);
+      hash.update('|' + this.leftContext);
     }
     if (this.rightContext != null) {
-      fingerprintComponents.push(this.rightContext);
+      hash.update('|' + this.rightContext);
     }
-
-    let fingerprint: string | undefined = undefined;
-    if (fingerprintComponents.length > 0) {
-      const hash = new Sha256();
-      hash.update(fingerprintComponents.join('|'));
-      fingerprint = toHexString((await hash.digest()).subarray(0, 16));
-    }
+    const fingerprint = toHexString((await hash.digest()).subarray(0, 16));
 
     return {
       code: this.code,

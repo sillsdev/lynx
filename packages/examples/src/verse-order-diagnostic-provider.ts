@@ -81,8 +81,9 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     return fixes;
   }
 
-  refresh(uri: string): void {
+  refresh(uri: string): Promise<void> {
     this.refreshSubject.next(uri);
+    return Promise.resolve();
   }
 
   private validateDocument(doc: ScriptureDocument): Diagnostic[] {

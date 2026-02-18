@@ -32,7 +32,7 @@ export interface DiagnosticProvider<T = TextEdit> {
   init(): Promise<void>;
   getDiagnostics(uri: string): Promise<Diagnostic[]>;
   getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]>;
-  refresh(uri: string): void;
+  refresh(uri: string): Promise<void>;
 }
 
 export function activeDiagnosticsChanged$<T extends Document>(
@@ -127,6 +127,10 @@ export function allDiagnosticsChanged$<T extends Document>(
   //
   // To avoid missing live events that occur during phase (1), we connect and buffer
   // live streams immediately using a ReplaySubject-backed connectable observable.
+  //
+  // Each call to the returned observable (i.e. each subscriber) gets its own
+  // independent connectable + ReplaySubject, ensuring full isolation between
+  // concurrent subscribers.
   return defer(() => {
     const liveStreams$ = connectable(merge(...streams), {
       connector: () => new ReplaySubject<DiagnosticsChanged>(),

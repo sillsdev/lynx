@@ -65,8 +65,9 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     return this.getFixes(doc, diagnostic);
   }
 
-  refresh(uri: string): void {
+  refresh(uri: string): Promise<void> {
     this.refreshSubject.next(uri);
+    return Promise.resolve();
   }
 
   private async validateDocument(document: TDoc): Promise<Diagnostic[]> {

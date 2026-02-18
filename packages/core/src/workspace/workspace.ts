@@ -1,12 +1,12 @@
-import { map, merge, Observable, tap } from 'rxjs';
+import { concatMap, merge, Observable, tap } from 'rxjs';
 
 import { Position } from '../common/position';
 import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from '../diagnostic/diagnostic';
+import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from '../diagnostic/diagnostic-dismissal-store';
 import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
-import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from './diagnostic-dismissal-store';
 import { Localizer } from './localizer';
 
 export interface WorkspaceConfig<T = TextEdit> {
@@ -40,7 +40,7 @@ export class Workspace<T = TextEdit> {
           }),
         ),
       ),
-    ).pipe(map((e) => this.getCombinedDiagnosticChangedEvent(e.uri, e.version)));
+    ).pipe(concatMap((e) => this.getCombinedDiagnosticChangedEvent(e.uri, e.version)));
     this.onTypeFormattingProviders = new Map(
       config.onTypeFormattingProviders?.map((provider) => [provider.id, provider]),
     );
@@ -59,7 +59,10 @@ export class Workspace<T = TextEdit> {
   async getDiagnostics(uri: string): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = [];
     for (const provider of this.diagnosticProviders.values()) {
-      diagnostics.push(...this.filterDismissedDiagnostics(uri, provider.id, await provider.getDiagnostics(uri)));
+      const providerDiagnostics = await provider.getDiagnostics(uri);
+      for await (const diagnostic of this.filterDismissedDiagnostics(uri, provider.id, providerDiagnostics)) {
+        diagnostics.push(diagnostic);
+      }
     }
     return diagnostics;
   }
@@ -94,16 +97,16 @@ export class Workspace<T = TextEdit> {
     return undefined;
   }
 
-  dismissDiagnostic(uri: string, diagnostic: Diagnostic): boolean {
+  async dismissDiagnostic(uri: string, diagnostic: Diagnostic): Promise<boolean> {
     if (diagnostic.fingerprint == null) {
       return false;
     }
-    this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
+    await this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
 
     // Trigger a refresh on the provider that owns this diagnostic
     const provider = this.diagnosticProviders.get(diagnostic.source);
     if (provider != null) {
-      provider.refresh(uri);
+      await provider.refresh(uri);
     }
     return true;
   }
@@ -114,12 +117,18 @@ export class Workspace<T = TextEdit> {
     this.lastDiagnosticChangedEvents.set(event.uri, docEvents);
   }
 
-  private getCombinedDiagnosticChangedEvent(uri: string, version?: number): DiagnosticsChanged {
+  private async getCombinedDiagnosticChangedEvent(uri: string, version?: number): Promise<DiagnosticsChanged> {
     const docEvents = this.lastDiagnosticChangedEvents.get(uri) ?? [];
     const diagnostics: Diagnostic[] = [];
     for (const docEvent of docEvents) {
       if (docEvent != null && (version == null || docEvent.event.version === version)) {
-        diagnostics.push(...this.filterDismissedDiagnostics(uri, docEvent.source, docEvent.event.diagnostics));
+        for await (const diagnostic of this.filterDismissedDiagnostics(
+          uri,
+          docEvent.source,
+          docEvent.event.diagnostics,
+        )) {
+          diagnostics.push(diagnostic);
+        }
       }
     }
     return {
@@ -129,8 +138,12 @@ export class Workspace<T = TextEdit> {
     };
   }
 
-  private *filterDismissedDiagnostics(uri: string, source: string, diagnostics: Diagnostic[]): Iterable<Diagnostic> {
-    const dismissedForDoc = this.diagnosticDismissalStore.getDismissals(uri, source);
+  private async *filterDismissedDiagnostics(
+    uri: string,
+    source: string,
+    diagnostics: Diagnostic[],
+  ): AsyncIterable<Diagnostic> {
+    const dismissedForDoc = await this.diagnosticDismissalStore.getDismissals(uri, source);
     if (dismissedForDoc == null) {
       yield* diagnostics;
     } else {
@@ -142,9 +155,7 @@ export class Workspace<T = TextEdit> {
           yield diagnostic;
         }
       }
-      for (const fingerprint of fingerprintsToCleanup) {
-        this.diagnosticDismissalStore.removeDismissal(uri, source, fingerprint);
-      }
+      await this.diagnosticDismissalStore.removeDismissals(uri, source, fingerprintsToCleanup);
     }
   }
 }
