@@ -24,7 +24,7 @@ export class Workspace<T = TextEdit> {
     string,
     ({ source: string; event: DiagnosticsChanged } | undefined)[]
   >();
-  private readonly diagnosticDismissalStore: DiagnosticDismissalStore;
+  diagnosticDismissalStore: DiagnosticDismissalStore;
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
 

@@ -3,36 +3,36 @@ import { Diagnostic } from './diagnostic';
 export interface DiagnosticDismissalStore {
   getDismissals(uri: string, source: string): Promise<Set<string> | undefined>;
   addDismissal(uri: string, diagnostic: Diagnostic): Promise<void>;
-  removeDismissals(uri: string, source: string, fingerprints: Iterable<string>): Promise<void>;
+  removeDismissals(uri: string, source: string, fingerprints: Set<string>): Promise<void>;
 }
 
 export class InMemoryDiagnosticDismissalStore implements DiagnosticDismissalStore {
-  private readonly dismissals = new Map<string, Set<string>>();
-
-  private getKey(uri: string, source: string): string {
-    return `${source}|${uri}`;
-  }
+  private readonly dismissals = new Map<string, Map<string, Set<string>>>();
 
   getDismissals(uri: string, source: string): Promise<Set<string> | undefined> {
-    return Promise.resolve(this.dismissals.get(this.getKey(uri, source)));
+    return Promise.resolve(this.dismissals.get(uri)?.get(source));
   }
 
   addDismissal(uri: string, diagnostic: Diagnostic): Promise<void> {
     if (diagnostic.fingerprint == null) {
       return Promise.resolve();
     }
-    const key = this.getKey(uri, diagnostic.source);
-    let dismissedForDoc = this.dismissals.get(key);
+    let dismissedForDoc = this.dismissals.get(uri);
     if (dismissedForDoc == null) {
-      dismissedForDoc = new Set<string>();
-      this.dismissals.set(key, dismissedForDoc);
+      dismissedForDoc = new Map<string, Set<string>>();
+      this.dismissals.set(uri, dismissedForDoc);
     }
-    dismissedForDoc.add(diagnostic.fingerprint);
+    let dismissedForSource = dismissedForDoc.get(diagnostic.source);
+    if (dismissedForSource == null) {
+      dismissedForSource = new Set<string>();
+      dismissedForDoc.set(diagnostic.source, dismissedForSource);
+    }
+    dismissedForSource.add(diagnostic.fingerprint);
     return Promise.resolve();
   }
 
-  removeDismissals(uri: string, source: string, fingerprints: Iterable<string>): Promise<void> {
-    const dismissedForDoc = this.dismissals.get(this.getKey(uri, source));
+  removeDismissals(uri: string, source: string, fingerprints: Set<string>): Promise<void> {
+    const dismissedForDoc = this.dismissals.get(uri)?.get(source);
     if (dismissedForDoc != null) {
       for (const fingerprint of fingerprints) {
         dismissedForDoc.delete(fingerprint);
