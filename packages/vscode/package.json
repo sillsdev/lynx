@@ -6,7 +6,7 @@
   "main": "./dist/extension.cjs",
   "scripts": {
     "build": "tsdown",
-    "dev": "tsdown --sourcemap",
+    "dev": "tsdown --watch --sourcemap",
     "check-types": "tsc --noEmit",
     "lint": "eslint ."
   },
@@ -33,7 +33,17 @@
           "USFM"
         ]
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Lynx",
+      "properties": {
+        "lynx.diagnosticDismissalFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a JSON file for persisting dismissed diagnostics. If empty, dismissals are stored in memory only."
+        }
+      }
+    }
   },
   "dependencies": {
     "@sillsdev/lynx": "*",

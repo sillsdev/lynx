@@ -72,6 +72,8 @@ describe('QuotationMarkMatch tests', () => {
         .setEndIndex(1)
         .setText('\u201C')
         .markAsPotentialContinuer()
+        .setLeftContext('')
+        .setRightContext('This ')
         .build(),
     });
     expect(quotedApostropheIterator.next()).toEqual({
@@ -82,6 +84,8 @@ describe('QuotationMarkMatch tests', () => {
         .setStartIndex(38)
         .setEndIndex(39)
         .setText('\u201D')
+        .setLeftContext('dren.')
+        .setRightContext('')
         .build(),
     });
     expect(quotedApostropheIterator.next()).toEqual({ done: true, value: undefined });
@@ -227,6 +231,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('')
               .build(),
           });
           expect(openingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -242,6 +248,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201D')
+              .setLeftContext('')
+              .setRightContext('')
               .build(),
           });
           expect(closingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -261,6 +269,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(12)
               .setEndIndex(13)
               .setText('\u201C')
+              .setLeftContext('ext, ')
+              .setRightContext('')
               .build(),
           });
           expect(previousContextOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -276,6 +286,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('With ')
               .build(),
           });
           expect(trailingContextOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -291,6 +303,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(19)
               .setEndIndex(20)
               .setText('\u201C')
+              .setLeftContext('art, ')
+              .setRightContext('With ')
               .build(),
           });
           expect(twoSidedContextOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -306,6 +320,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(14)
               .setEndIndex(15)
               .setText('\u201D')
+              .setLeftContext(' text')
+              .setRightContext('')
               .build(),
           });
           expect(previousContextClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -321,6 +337,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201D')
+              .setLeftContext('')
+              .setRightContext('with ')
               .build(),
           });
           expect(trailingContextClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -336,6 +354,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(11)
               .setEndIndex(12)
               .setText('\u201D')
+              .setLeftContext('text ')
+              .setRightContext('with ')
               .build(),
           });
           expect(twoSidedContextClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -355,6 +375,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(22)
               .setEndIndex(23)
               .setText('\u201C')
+              .setLeftContext('prior')
+              .setRightContext('with ')
               .build(),
           });
           expect(noWhitespaceOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -370,6 +392,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(17)
               .setEndIndex(18)
               .setText('\u201C')
+              .setLeftContext('space')
+              .setRightContext(' but ')
               .build(),
           });
           expect(reversedWhitespaceOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -385,6 +409,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(22)
               .setEndIndex(23)
               .setText('\u201D')
+              .setLeftContext('prior')
+              .setRightContext('with ')
               .build(),
           });
           expect(noWhitespaceClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -400,6 +426,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(17)
               .setEndIndex(18)
               .setText('\u201D')
+              .setLeftContext('pace ')
+              .setRightContext('but n')
               .build(),
           });
           expect(reversedWhitespaceClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -420,6 +448,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -430,6 +460,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(1)
               .setEndIndex(2)
               .setText('\u201D')
+              .setLeftContext('\u201C')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -448,6 +480,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -458,6 +492,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(13)
               .setEndIndex(14)
               .setText('\u201D')
+              .setLeftContext('text.')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -473,6 +509,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(21)
               .setEndIndex(22)
               .setText('\u201C')
+              .setLeftContext('eft, ')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(previousContextQuotationPairIterator.next()).toEqual({
@@ -483,6 +521,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(34)
               .setEndIndex(35)
               .setText('\u201D')
+              .setLeftContext('text.')
+              .setRightContext('')
               .build(),
           });
           expect(previousContextQuotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -498,6 +538,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(trailingContextQuotationPairIterator.next()).toEqual({
@@ -508,6 +550,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(13)
               .setEndIndex(14)
               .setText('\u201D')
+              .setLeftContext('text.')
+              .setRightContext(' with')
               .build(),
           });
           expect(trailingContextQuotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -523,6 +567,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(21)
               .setEndIndex(22)
               .setText('\u201C')
+              .setLeftContext('eft, ')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(twoSidedContextQuotationPairIterator.next()).toEqual({
@@ -533,6 +579,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(34)
               .setEndIndex(35)
               .setText('\u201D')
+              .setLeftContext('text.')
+              .setRightContext(' with')
               .build(),
           });
           expect(twoSidedContextQuotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -552,6 +600,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -562,6 +612,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(13)
               .setEndIndex(14)
               .setText('\u201D')
+              .setLeftContext('text.')
+              .setRightContext(' and,')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -572,6 +624,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(20)
               .setEndIndex(21)
               .setText('\u201C')
+              .setLeftContext('and, ')
+              .setRightContext('more ')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -582,6 +636,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(37)
               .setEndIndex(38)
               .setText('\u201D')
+              .setLeftContext(' text')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -606,6 +662,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('ample')
+              .setRightContext(' text')
               .build(),
           });
           expect(singleQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -624,6 +682,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('')
+              .setRightContext('Sampl')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -637,6 +697,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('text.')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -656,6 +718,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(10)
               .setEndIndex(11)
               .setText('\u201C')
+              .setLeftContext('text ')
+              .setRightContext('conta')
               .build(),
           });
           expect(mixedQuotationIterator.next()).toEqual({
@@ -669,6 +733,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('ains ')
+              .setRightContext('strai')
               .build(),
           });
           expect(mixedQuotationIterator.next()).toEqual({
@@ -682,6 +748,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('aight')
+              .setRightContext(' and ')
               .build(),
           });
           expect(mixedQuotationIterator.next()).toEqual({
@@ -692,6 +760,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(48)
               .setEndIndex(49)
               .setText('\u201D')
+              .setLeftContext('otes.')
+              .setRightContext('')
               .build(),
           });
           expect(mixedQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -716,6 +786,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('This ')
+              .setRightContext('text ')
               .build(),
           });
           expect(quotationIterator.next()).toEqual({
@@ -730,6 +802,8 @@ describe('QuotationIterator tests', () => {
               .setText("'")
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('ains ')
+              .setRightContext("some'")
               .build(),
           });
           expect(quotationIterator.next()).toEqual({
@@ -743,6 +817,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(26)
               .setText("'")
               .markAsAmbiguous()
+              .setLeftContext("'some")
+              .setRightContext(' ambi')
               .build(),
           });
           expect(quotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -763,6 +839,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(improperlyNestedOpeningQuotationIterator.next()).toEqual({
@@ -773,6 +851,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(18)
               .setEndIndex(19)
               .setText('\u201C')
+              .setLeftContext('s an ')
+              .setRightContext(' impr')
               .build(),
           });
           expect(improperlyNestedOpeningQuotationIterator.next()).toEqual({
@@ -783,6 +863,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(53)
               .setEndIndex(54)
               .setText('\u201D')
+              .setLeftContext('mark.')
+              .setRightContext('')
               .build(),
           });
           expect(improperlyNestedOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -798,6 +880,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(improperlyNestedClosingQuotationIterator.next()).toEqual({
@@ -808,6 +892,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(18)
               .setEndIndex(19)
               .setText('\u201D')
+              .setLeftContext('s an ')
+              .setRightContext(' impr')
               .build(),
           });
           expect(improperlyNestedClosingQuotationIterator.next()).toEqual({
@@ -818,6 +904,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(53)
               .setEndIndex(54)
               .setText('\u201D')
+              .setLeftContext('mark.')
+              .setRightContext('')
               .build(),
           });
           expect(improperlyNestedClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -836,6 +924,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('The s')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({
@@ -846,6 +936,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(26)
               .setEndIndex(27)
               .setText('\u201D')
+              .setLeftContext(' mark')
+              .setRightContext(' is \u201C')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({
@@ -856,6 +948,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(31)
               .setEndIndex(32)
               .setText('\u201C')
+              .setLeftContext('\u201D is ')
+              .setRightContext(' neve')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -871,6 +965,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(10)
               .setEndIndex(11)
               .setText('\u201D')
+              .setLeftContext('irst ')
+              .setRightContext(' quot')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({
@@ -881,6 +977,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(27)
               .setEndIndex(28)
               .setText('\u201C')
+              .setLeftContext('mark ')
+              .setRightContext('is un')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({
@@ -891,6 +989,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(40)
               .setEndIndex(41)
               .setText('\u201D')
+              .setLeftContext('ired.')
+              .setRightContext('')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -912,6 +1012,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -923,6 +1025,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(28)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('ual \n')
+              .setRightContext(' quot')
               .build(),
           });
         });
@@ -941,6 +1045,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -951,6 +1057,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText('\u2018')
+              .setLeftContext('ains ')
+              .setRightContext('two a')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -962,6 +1070,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(29)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('ual \n')
+              .setRightContext('\u2018quot')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -973,6 +1083,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(30)
               .setText('\u2018')
               .markAsPotentialContinuer()
+              .setLeftContext('al \n\u201C')
+              .setRightContext('quote')
               .build(),
           });
         });
@@ -993,6 +1105,8 @@ describe('QuotationIterator tests', () => {
               .markAsAmbiguous()
               .markAsAutocorrectable()
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1005,6 +1119,8 @@ describe('QuotationIterator tests', () => {
               .setText("'")
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('ains ')
+              .setRightContext('two a')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1018,6 +1134,8 @@ describe('QuotationIterator tests', () => {
               .markAsAmbiguous()
               .markAsAutocorrectable()
               .markAsPotentialContinuer()
+              .setLeftContext('ual \n')
+              .setRightContext("'quot")
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1031,6 +1149,8 @@ describe('QuotationIterator tests', () => {
               .markAsAmbiguous()
               .markAsAutocorrectable()
               .markAsPotentialContinuer()
+              .setLeftContext('al \n"')
+              .setRightContext('quote')
               .build(),
           });
         });
@@ -1049,6 +1169,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1059,6 +1181,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText('\u2018')
+              .setLeftContext('ains ')
+              .setRightContext('two a')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1070,6 +1194,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(29)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('ual \n')
+              .setRightContext(' \u2018quo')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1080,6 +1206,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(30)
               .setEndIndex(31)
               .setText('\u2018')
+              .setLeftContext('l \n\u201C ')
+              .setRightContext('quote')
               .build(),
           });
         });
@@ -1097,6 +1225,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1107,6 +1237,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText('\u2018')
+              .setLeftContext('ains ')
+              .setRightContext('two a')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1118,6 +1250,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(29)
               .setText('\u201D')
               .markAsPotentialContinuer()
+              .setLeftContext('ual \n')
+              .setRightContext('\u2019quot')
               .build(),
           });
           expect(quoteContinuerQuotationIterator.next()).toEqual({
@@ -1129,6 +1263,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(30)
               .setText('\u2019')
               .markAsPotentialContinuer()
+              .setLeftContext('al \n\u201D')
+              .setRightContext('quote')
               .build(),
           });
         });
@@ -1153,6 +1289,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('doubl')
               .build(),
           });
           expect(singleAndDoubleQuotationIterator.next()).toEqual({
@@ -1163,6 +1301,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(31)
               .setEndIndex(32)
               .setText('\u201D')
+              .setLeftContext(' text')
+              .setRightContext('')
               .build(),
           });
           expect(singleAndDoubleQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1191,6 +1331,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('curly')
               .build(),
           });
           expect(curlyAndStraightDoubleQuoteIterator.next()).toEqual({ done: true, value: undefined });
@@ -1206,6 +1348,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(0)
               .setEndIndex(1)
               .setText('\u201C')
+              .setLeftContext('')
+              .setRightContext('curly')
               .build(),
           });
           expect(curlyDoubleAndStraightSingleQuoteIterator.next()).toEqual({ done: true, value: undefined });
@@ -1242,6 +1386,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('\u2018\u2019\u201D')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1253,6 +1399,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(2)
               .setText('\u2018')
               .markAsPotentialContinuer()
+              .setLeftContext('\u201C')
+              .setRightContext('\u2019\u201D')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1263,6 +1411,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(2)
               .setEndIndex(3)
               .setText('\u2019')
+              .setLeftContext('\u201C\u2018')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1273,6 +1423,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(3)
               .setEndIndex(4)
               .setText('\u201D')
+              .setLeftContext('\u201C\u2018\u2019')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1289,6 +1441,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('\u2018\u201C\u201D\u2019\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1300,6 +1454,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(2)
               .setText('\u2018')
               .markAsPotentialContinuer()
+              .setLeftContext('\u201C')
+              .setRightContext('\u201C\u201D\u2019\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1311,6 +1467,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(3)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('\u201C\u2018')
+              .setRightContext('\u201D\u2019\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1321,6 +1479,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(3)
               .setEndIndex(4)
               .setText('\u201D')
+              .setLeftContext('\u201C\u2018\u201C')
+              .setRightContext('\u2019\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1331,6 +1491,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(4)
               .setEndIndex(5)
               .setText('\u2019')
+              .setLeftContext('\u201C\u2018\u201C\u201D')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1341,6 +1503,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(5)
               .setEndIndex(6)
               .setText('\u201D')
+              .setLeftContext('\u201C\u2018\u201C\u201D\u2019')
+              .setRightContext('')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1361,6 +1525,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1371,6 +1537,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(11)
               .setEndIndex(12)
               .setText('\u2018')
+              .setLeftContext('text ')
+              .setRightContext('conta')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1381,6 +1549,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(29)
               .setEndIndex(30)
               .setText('\u2019')
+              .setLeftContext('tiple')
+              .setRightContext(' quot')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1391,6 +1561,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(43)
               .setEndIndex(44)
               .setText('\u201D')
+              .setLeftContext('evels')
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1407,6 +1579,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1417,6 +1591,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(11)
               .setEndIndex(12)
               .setText('\u2018')
+              .setLeftContext('text ')
+              .setRightContext('has \u201C')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1427,6 +1603,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(16)
               .setEndIndex(17)
               .setText('\u201C')
+              .setLeftContext('\u2018has ')
+              .setRightContext('three')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1437,6 +1615,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(29)
               .setEndIndex(30)
               .setText('\u201D')
+              .setLeftContext('evels')
+              .setRightContext(' of q')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1447,6 +1627,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(44)
               .setEndIndex(45)
               .setText('\u2019')
+              .setLeftContext('tions')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({
@@ -1457,6 +1639,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(45)
               .setEndIndex(46)
               .setText('\u201D')
+              .setLeftContext('ions\u2019')
+              .setRightContext('')
               .build(),
           });
           expect(threeLevelQuotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1480,6 +1664,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('text ')
+              .setRightContext("has '")
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1492,6 +1678,8 @@ describe('QuotationIterator tests', () => {
               .setText("'")
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('"has ')
+              .setRightContext('multi')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1504,6 +1692,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('s of ')
+              .setRightContext('ambig')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1516,6 +1706,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('guous')
+              .setRightContext(' quot')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1527,6 +1719,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(58)
               .setText("'")
               .markAsAmbiguous()
+              .setLeftContext('tions')
+              .setRightContext('"')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1539,6 +1733,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext("ions'")
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1560,6 +1756,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('text ')
+              .setRightContext('has \u2018')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1570,6 +1768,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText('\u2018')
+              .setLeftContext('"has ')
+              .setRightContext('multi')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1580,6 +1780,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(35)
               .setEndIndex(36)
               .setText('\u201C')
+              .setLeftContext('s of ')
+              .setRightContext('ambig')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1592,6 +1794,8 @@ describe('QuotationIterator tests', () => {
               .setText('"')
               .markAsAmbiguous()
               .markAsAutocorrectable()
+              .setLeftContext('guous')
+              .setRightContext(' quot')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1603,6 +1807,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(58)
               .setText("'")
               .markAsAmbiguous()
+              .setLeftContext('tions')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({
@@ -1613,6 +1819,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(58)
               .setEndIndex(59)
               .setText('\u201D')
+              .setLeftContext("ions'")
+              .setRightContext('')
               .build(),
           });
           expect(quotationPairIterator.next()).toEqual({ done: true, value: undefined });
@@ -1646,6 +1854,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(17)
               .setEndIndex(18)
               .setText('\u2018')
+              .setLeftContext('s an ')
+              .setRightContext(' impr')
               .build(),
           });
           expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual({
@@ -1656,6 +1866,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(42)
               .setEndIndex(43)
               .setText('\u2019')
+              .setLeftContext('quote')
+              .setRightContext('')
               .build(),
           });
           expect(improperlyNestedSecondaryQuoteIterator.next()).toEqual({ done: true, value: undefined });
@@ -1672,6 +1884,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual({
@@ -1682,6 +1896,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(18)
               .setEndIndex(19)
               .setText('\u201C')
+              .setLeftContext('s an ')
+              .setRightContext(' impr')
               .build(),
           });
           expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual({
@@ -1692,6 +1908,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(53)
               .setEndIndex(54)
               .setText('\u201D')
+              .setLeftContext('mark.')
+              .setRightContext('')
               .build(),
           });
           expect(improperlyNestedTertiaryQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1712,6 +1930,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({
@@ -1722,6 +1942,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(16)
               .setEndIndex(17)
               .setText('\u2018')
+              .setLeftContext('hree ')
+              .setRightContext('unclo')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({
@@ -1732,6 +1954,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(26)
               .setEndIndex(27)
               .setText('\u201C')
+              .setLeftContext('osed ')
+              .setRightContext('quota')
               .build(),
           });
           expect(unpairedOpeningQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1747,6 +1971,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(8)
               .setEndIndex(9)
               .setText('\u201D')
+              .setLeftContext('s has')
+              .setRightContext(' thre')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({
@@ -1757,6 +1983,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(15)
               .setEndIndex(16)
               .setText('\u2019')
+              .setLeftContext('three')
+              .setRightContext(' unpa')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({
@@ -1767,6 +1995,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(25)
               .setEndIndex(26)
               .setText('\u201D')
+              .setLeftContext('aired')
+              .setRightContext(' clos')
               .build(),
           });
           expect(unpairedClosingQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1789,6 +2019,8 @@ describe('QuotationIterator tests', () => {
               .setEndIndex(1)
               .setText('\u201C')
               .markAsPotentialContinuer()
+              .setLeftContext('')
+              .setRightContext('This ')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1799,6 +2031,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(10)
               .setEndIndex(11)
               .setText('\u2018')
+              .setLeftContext(' has ')
+              .setRightContext('four ')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1809,6 +2043,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(16)
               .setEndIndex(17)
               .setText('\u201C')
+              .setLeftContext('four ')
+              .setRightContext('level')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1819,6 +2055,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(27)
               .setEndIndex(28)
               .setText('\u2018')
+              .setLeftContext('s of ')
+              .setRightContext('quota')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1829,6 +2067,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(43)
               .setEndIndex(44)
               .setText('\u2019')
+              .setLeftContext('marks')
+              .setRightContext('\u201D\u2019\u201D')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1839,6 +2079,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(44)
               .setEndIndex(45)
               .setText('\u201D')
+              .setLeftContext('arks\u2019')
+              .setRightContext('\u2019\u201D')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1849,6 +2091,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(45)
               .setEndIndex(46)
               .setText('\u2019')
+              .setLeftContext('rks\u2019\u201D')
+              .setRightContext('\u201D')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({
@@ -1859,6 +2103,8 @@ describe('QuotationIterator tests', () => {
               .setStartIndex(46)
               .setEndIndex(47)
               .setText('\u201D')
+              .setLeftContext('ks\u2019\u201D\u2019')
+              .setRightContext('')
               .build(),
           });
           expect(tooDeeplyNestedQuotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1884,6 +2130,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(6)
           .setEnclosingRange(scriptureNode.range)
           .setText('\u201C')
+          .setLeftContext('text ')
+          .setRightContext('with\u201D')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toStrictEqual({
@@ -1895,6 +2144,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(11)
           .setEnclosingRange(scriptureNode.range)
           .setText('\u201D')
+          .setLeftContext('\u201Cwith')
+          .setRightContext(' quot')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -1917,6 +2169,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(6)
           .setEnclosingRange(scriptureNode1.range)
           .setText('\u201C')
+          .setLeftContext('text ')
+          .setRightContext('with ')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toEqual({
@@ -1928,6 +2183,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(12)
           .setEnclosingRange(scriptureNode1.range)
           .setText('\u2018')
+          .setLeftContext('with ')
+          .setRightContext('quote')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toEqual({
@@ -1939,6 +2197,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(10)
           .setEnclosingRange(scriptureNode2.range)
           .setText('\u2019')
+          .setLeftContext('erent')
+          .setRightContext(' text')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toEqual({
@@ -1950,6 +2211,9 @@ describe('QuotationIterator tests', () => {
           .setEndIndex(16)
           .setEnclosingRange(scriptureNode2.range)
           .setText('\u201D')
+          .setLeftContext(' text')
+          .setRightContext('')
+          .setVerseRef('1:1')
           .build(),
       });
       expect(quotationIterator.next()).toEqual({ done: true, value: undefined });
@@ -2529,6 +2793,6 @@ class TestEnvironment {
   }
 
   createScriptureInput(...scriptureNodes: ScriptureNode[]): CheckableGroup {
-    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable(x)));
+    return new CheckableGroup(scriptureNodes.map((x) => new ScriptureNodeCheckable('1', '1', x)));
   }
 }

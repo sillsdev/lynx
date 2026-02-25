@@ -39,7 +39,7 @@ describe('TextDocument tests', () => {
     const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
     await testEnv.init();
 
-    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toMatchObject([
       testEnv.createExpectedDiagnostic('^', 5, 6),
     ]);
   });
@@ -68,7 +68,7 @@ describe('TextDocument tests', () => {
     );
     await testEnv.init();
 
-    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toMatchObject([
       {
         code: 'disallowed-character',
         severity: DiagnosticSeverity.Warning,
@@ -89,7 +89,7 @@ describe('TextDocument tests', () => {
     ]);
 
     await customLocalizer.changeLanguage('es');
-    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toEqual([
+    expect(await testEnv.allowedCharacterChecker.getDiagnostics('Hello^there')).toMatchObject([
       {
         code: 'disallowed-character',
         severity: DiagnosticSeverity.Warning,
@@ -126,7 +126,7 @@ describe('integration tests', () => {
       await testEnv.init();
 
       expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there')).toEqual([]);
-      expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there!')).toEqual([
+      expect(await testEnv.allowedCharacterChecker.getDiagnostics('hello there!')).toMatchObject([
         testEnv.createExpectedDiagnostic('!', 11, 12),
       ]);
     });
@@ -134,7 +134,7 @@ describe('integration tests', () => {
       const testEnv: TextTestEnvironment = new TextTestEnvironment(new CharacterRegexWhitelist(/[a-zA-Z ]/));
       await testEnv.init();
 
-      expect(await testEnv.allowedCharacterChecker.getDiagnostics('h𝕖llo ther𝖊')).toEqual([
+      expect(await testEnv.allowedCharacterChecker.getDiagnostics('h𝕖llo ther𝖊')).toMatchObject([
         testEnv.createExpectedDiagnostic('𝕖', 1, 3),
         testEnv.createExpectedDiagnostic('𝖊', 11, 13),
       ]);
@@ -191,7 +191,7 @@ describe('integration tests', () => {
       await standardEnglishCharacterChecker.init();
       await testEnv.allowedCharacterCheckerLocalizer.init();
 
-      expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$~')).toEqual([
+      expect(await standardEnglishCharacterChecker.getDiagnostics('&{+$~')).toMatchObject([
         testEnv.createExpectedDiagnostic('&', 0, 1),
         testEnv.createExpectedDiagnostic('{', 1, 2),
         testEnv.createExpectedDiagnostic('+', 2, 3),
@@ -214,7 +214,7 @@ describe('integration tests', () => {
       await testEnv.allowedCharacterCheckerLocalizer.init();
 
       // confusable characters
-      expect(await standardEnglishCharacterChecker.getDiagnostics('аᖯ𝐜𝖽ｅ')).toEqual([
+      expect(await standardEnglishCharacterChecker.getDiagnostics('аᖯ𝐜𝖽ｅ')).toMatchObject([
         testEnv.createExpectedDiagnostic('а', 0, 1),
         testEnv.createExpectedDiagnostic('ᖯ', 1, 2),
         testEnv.createExpectedDiagnostic('𝐜', 2, 4),
@@ -223,7 +223,7 @@ describe('integration tests', () => {
       ]);
 
       // other seemingly plausible characters
-      expect(await standardEnglishCharacterChecker.getDiagnostics('‟″á×ꭗﬁ')).toEqual([
+      expect(await standardEnglishCharacterChecker.getDiagnostics('‟″á×ꭗﬁ')).toMatchObject([
         testEnv.createExpectedDiagnostic('‟', 0, 1),
         testEnv.createExpectedDiagnostic('″', 1, 2),
 
@@ -271,7 +271,7 @@ describe('ScriptureDocument tests', () => {
       \\s Isaac and Rebekah
       \\p
       \\v 1 The servant% said to him, “Perhaps the woman may not be ‘willing to follow me to this land. Must I then take your son back to the land from which you came?”`),
-    ).toEqual([testEnv.createExpectedScriptureDiagnostic('%', 9, 22, 9, 23)]);
+    ).toMatchObject([testEnv.createExpectedScriptureDiagnostic('%', 9, 22, 9, 23)]);
   });
 
   it('identifies disallowed characters that occur in non-verse portions', async () => {
@@ -289,7 +289,7 @@ describe('ScriptureDocument tests', () => {
       \\s |saac & Rebekah
       \\p
       \\v 1 The servant said to him, “Perhaps the woman may not be willing to follow me to this land. Must I then take your son back to the land from which you came?”`),
-    ).toEqual([
+    ).toMatchObject([
       testEnv.createExpectedScriptureDiagnostic('*', 1, 13, 1, 14),
       testEnv.createExpectedScriptureDiagnostic('$', 2, 16, 2, 17),
       testEnv.createExpectedScriptureDiagnostic('@', 4, 16, 4, 17),

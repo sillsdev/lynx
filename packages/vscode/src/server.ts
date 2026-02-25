@@ -1,5 +1,9 @@
 import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
-import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
+import {
+  JsonFileDiagnosticDismissalStore,
+  SimpleQuoteFormattingProvider,
+  VerseOrderDiagnosticProvider,
+} from '@sillsdev/lynx-examples';
 import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
 import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
@@ -40,6 +44,10 @@ const workspace = new Workspace({
 let hasWorkspaceFolderCapability = false;
 
 connection.onInitialize(async (params: InitializeParams) => {
+  const dismissalFilePath: string | undefined = params.initializationOptions?.diagnosticDismissalFilePath;
+  if (dismissalFilePath) {
+    workspace.diagnosticDismissalStore = new JsonFileDiagnosticDismissalStore(dismissalFilePath);
+  }
   await workspace.init();
   if (params.locale != null) {
     await workspace.changeLanguage(params.locale);
@@ -57,6 +65,9 @@ connection.onInitialize(async (params: InitializeParams) => {
         workspaceDiagnostics: false,
       },
       codeActionProvider: true,
+      executeCommandProvider: {
+        commands: ['lynx.dismissDiagnostic'],
+      },
     },
   };
   const onTypeTriggerCharacters = workspace.getOnTypeTriggerCharacters();
@@ -79,15 +90,36 @@ connection.onInitialize(async (params: InitializeParams) => {
 connection.languages.diagnostics.on(async (params) => {
   return {
     kind: DocumentDiagnosticReportKind.Full,
-    items: await workspace.getDiagnostics(params.textDocument.uri),
+    items: (await workspace.getDiagnostics(params.textDocument.uri)).map((diagnostic) => ({
+      range: diagnostic.range,
+      severity: diagnostic.severity,
+      code: diagnostic.code,
+      source: diagnostic.source,
+      message: diagnostic.message,
+      data: {
+        data: diagnostic.data,
+        fingerprint: diagnostic.fingerprint,
+        moreInfo: diagnostic.moreInfo,
+      },
+    })),
   } satisfies DocumentDiagnosticReport;
 });
 
 connection.onCodeAction(async (params) => {
   const actions: CodeAction[] = [];
   for (const diagnostic of params.context.diagnostics) {
+    const lynxDiagnostic: Diagnostic = {
+      range: diagnostic.range,
+      severity: diagnostic.severity!,
+      code: diagnostic.code!,
+      source: diagnostic.source!,
+      message: diagnostic.message,
+      data: diagnostic.data?.data,
+      fingerprint: diagnostic.data?.fingerprint,
+      moreInfo: diagnostic.data?.moreInfo,
+    };
     actions.push(
-      ...(await workspace.getDiagnosticFixes(params.textDocument.uri, diagnostic as Diagnostic)).map((fix) => ({
+      ...(await workspace.getDiagnosticFixes(params.textDocument.uri, lynxDiagnostic)).map((fix) => ({
         title: fix.title,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
@@ -99,6 +131,17 @@ connection.onCodeAction(async (params) => {
         },
       })),
     );
+    if (lynxDiagnostic.fingerprint != null) {
+      actions.push({
+        title: 'Dismiss',
+        kind: CodeActionKind.QuickFix,
+        command: {
+          title: 'Dismiss Diagnostic',
+          command: 'lynx.dismissDiagnostic',
+          arguments: [params.textDocument.uri, lynxDiagnostic],
+        },
+      });
+    }
   }
   return actions;
 });
@@ -124,6 +167,15 @@ connection.onDidChangeTextDocument((params) => {
 
 connection.onDocumentOnTypeFormatting(async (params) => {
   return await workspace.getOnTypeEdits(params.textDocument.uri, params.position, params.ch);
+});
+
+connection.onExecuteCommand(async (params) => {
+  if (params.command === 'lynx.dismissDiagnostic' && params.arguments != null) {
+    const [uri, diagnostic] = params.arguments as [string, Diagnostic];
+    if (await workspace.dismissDiagnostic(uri, diagnostic)) {
+      connection.languages.diagnostics.refresh();
+    }
+  }
 });
 
 // Listen on the connection

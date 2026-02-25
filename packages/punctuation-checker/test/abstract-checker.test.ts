@@ -271,8 +271,8 @@ class TestEnvironment {
       };
     };
     const mockIssueFinder = mock<IssueFinder>({
-      produceDiagnostics(checkableGroup: CheckableGroup): Diagnostic[] {
-        return [createDiagnostic(checkableGroup)];
+      produceDiagnostics(checkableGroup: CheckableGroup): Promise<Diagnostic[]> {
+        return Promise.resolve([createDiagnostic(checkableGroup)]);
       },
     });
 

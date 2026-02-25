@@ -6,5 +6,6 @@
     {
       "pattern": "./packages/*/"
     }
-  ]
+  ],
+  "cSpell.words": ["checkables", "clientrc", "sillsdev", "Usfm"]
 }

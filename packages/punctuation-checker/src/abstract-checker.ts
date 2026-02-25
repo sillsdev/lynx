@@ -10,7 +10,7 @@ import {
   TextDocument,
   TextEdit,
 } from '@sillsdev/lynx';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 import { CheckableGroup, TextDocumentCheckable } from './checkable';
 import { DiagnosticFactory } from './diagnostic-factory';
@@ -22,6 +22,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
   implements DiagnosticProvider<TEdit>
 {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  private readonly refreshSubject = new Subject<string>();
 
   constructor(
     public readonly id: string,
@@ -30,9 +31,17 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     validateAllDocuments = false,
   ) {
     if (validateAllDocuments) {
-      this.diagnosticsChanged$ = allDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = allDiagnosticsChanged$(
+        documentAccessor,
+        (doc) => this.validateDocument(doc),
+        this.refreshSubject,
+      );
     } else {
-      this.diagnosticsChanged$ = activeDiagnosticsChanged$(documentAccessor, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = activeDiagnosticsChanged$(
+        documentAccessor,
+        (doc) => this.validateDocument(doc),
+        this.refreshSubject,
+      );
     }
   }
 
@@ -45,7 +54,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     if (doc == null) {
       return [];
     }
-    return this.validateDocument(doc);
+    return await this.validateDocument(doc);
   }
 
   async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<TEdit>[]> {
@@ -56,21 +65,28 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     return this.getFixes(doc, diagnostic);
   }
 
-  private validateDocument(document: TDoc): Diagnostic[] {
-    if (isScriptureDocument(document)) {
-      return this.validateScriptureDocument(document);
-    }
-    return this.validateTextDocument(document);
+  refresh(uri: string): Promise<void> {
+    this.refreshSubject.next(uri);
+    return Promise.resolve();
   }
 
-  protected validateTextDocument(textDocument: TextDocument): Diagnostic[] {
+  private async validateDocument(document: TDoc): Promise<Diagnostic[]> {
+    if (isScriptureDocument(document)) {
+      return await this.validateScriptureDocument(document);
+    }
+    return await this.validateTextDocument(document);
+  }
+
+  protected async validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, textDocument);
 
     const issueFinder: IssueFinder = this.issueFinderFactory.createIssueFinder(diagnosticFactory);
-    return issueFinder.produceDiagnostics(new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]));
+    return await issueFinder.produceDiagnostics(
+      new CheckableGroup([new TextDocumentCheckable(textDocument.getText())]),
+    );
   }
 
-  protected validateScriptureDocument(scriptureDocument: ScriptureDocument): Diagnostic[] {
+  protected async validateScriptureDocument(scriptureDocument: ScriptureDocument): Promise<Diagnostic[]> {
     let diagnostics: Diagnostic[] = [];
     const diagnosticFactory: DiagnosticFactory = new DiagnosticFactory(this.id, scriptureDocument);
 
@@ -78,7 +94,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
 
     const scriptureNodeGrouper: ScriptureTextNodeGrouper = new ScriptureTextNodeGrouper(scriptureDocument);
     for (const checkableGroup of scriptureNodeGrouper.getCheckableGroups()) {
-      diagnostics = diagnostics.concat(issueFinder.produceDiagnostics(checkableGroup));
+      diagnostics = diagnostics.concat(await issueFinder.produceDiagnostics(checkableGroup));
     }
     return diagnostics;
   }

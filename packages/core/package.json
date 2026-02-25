@@ -33,6 +33,7 @@
     "directory": "packages/core"
   },
   "dependencies": {
+    "@aws-crypto/sha256-universal": "^5.2.0",
     "i18next": "^23.16.8",
     "rxjs": "^7.8.2"
   },

@@ -54,6 +54,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 0,
           endIndex: 1,
           text: '\u201C',
+          leftContext: '',
+          rightContext: 'The r',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -63,6 +65,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 9,
           endIndex: 10,
           text: '\u201D',
+          leftContext: ' rain',
+          rightContext: ' in [',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -72,6 +76,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 14,
           endIndex: 15,
           text: '[',
+          leftContext: '\u201D in ',
+          rightContext: 'Spain',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -81,6 +87,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 21,
           endIndex: 22,
           text: '{',
+          leftContext: 'pain ',
+          rightContext: 'falls',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -90,6 +98,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 27,
           endIndex: 28,
           text: '}',
+          leftContext: 'falls',
+          rightContext: ' main',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -99,6 +109,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 35,
           endIndex: 36,
           text: ']',
+          leftContext: 'ainly',
+          rightContext: ' (on ',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -108,6 +120,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 37,
           endIndex: 38,
           text: '(',
+          leftContext: 'nly] ',
+          rightContext: 'on th',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -117,6 +131,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 50,
           endIndex: 51,
           text: ')',
+          leftContext: 'plain',
+          rightContext: '.',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -138,6 +154,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 0,
           endIndex: 1,
           text: '\u201D',
+          leftContext: '',
+          rightContext: 'The r',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -147,6 +165,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 9,
           endIndex: 10,
           text: '\u201C',
+          leftContext: ' rain',
+          rightContext: ' in [',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -156,6 +176,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 14,
           endIndex: 15,
           text: '[',
+          leftContext: '\u201C in ',
+          rightContext: 'Spain',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -165,6 +187,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 21,
           endIndex: 22,
           text: '[',
+          leftContext: 'pain ',
+          rightContext: 'falls',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -174,6 +198,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 27,
           endIndex: 28,
           text: '{',
+          leftContext: 'falls',
+          rightContext: ' main',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -183,6 +209,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 35,
           endIndex: 36,
           text: ')',
+          leftContext: 'ainly',
+          rightContext: ' (on ',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -192,6 +220,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 37,
           endIndex: 38,
           text: '(',
+          leftContext: 'nly) ',
+          rightContext: 'on th',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -201,6 +231,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 50,
           endIndex: 51,
           text: ']',
+          leftContext: 'plain',
+          rightContext: '.',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -222,6 +254,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 0,
           endIndex: 1,
           text: '\u201C',
+          leftContext: '',
+          rightContext: 'The r',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -231,6 +265,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 9,
           endIndex: 10,
           text: '\u201D',
+          leftContext: ' rain',
+          rightContext: ' in [',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -240,6 +276,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 14,
           endIndex: 15,
           text: '[',
+          leftContext: '\u201D in ',
+          rightContext: 'Spain',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -249,6 +287,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 21,
           endIndex: 22,
           text: '{',
+          leftContext: 'pain ',
+          rightContext: 'falls',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -258,6 +298,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 27,
           endIndex: 28,
           text: '}',
+          leftContext: 'falls',
+          rightContext: ' main',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -267,6 +309,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 35,
           endIndex: 36,
           text: ']',
+          leftContext: 'ainly',
+          rightContext: ' (on ',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -276,6 +320,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 37,
           endIndex: 38,
           text: '(',
+          leftContext: 'nly] ',
+          rightContext: 'on th',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -285,6 +331,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 50,
           endIndex: 51,
           text: ')',
+          leftContext: 'plain',
+          rightContext: '.',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -304,6 +352,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 4,
           endIndex: 5,
           text: '+',
+          leftContext: 'The ',
+          rightContext: 'rain ',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -313,6 +363,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 13,
           endIndex: 14,
           text: '/',
+          leftContext: 'n in ',
+          rightContext: 'Spain',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -322,6 +374,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 20,
           endIndex: 21,
           text: '+',
+          leftContext: 'pain ',
+          rightContext: 'falls',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -331,6 +385,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 26,
           endIndex: 27,
           text: '-',
+          leftContext: 'falls',
+          rightContext: ' main',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -340,6 +396,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 34,
           endIndex: 35,
           text: '\\',
+          leftContext: 'ainly',
+          rightContext: ' on t',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -349,6 +407,8 @@ describe('PairedPunctuationIterator tests', () => {
           startIndex: 42,
           endIndex: 43,
           text: '-',
+          leftContext: 'n the',
+          rightContext: ' plai',
         },
       });
       expect(bizarrePairedPunctuationIterator.next()).toEqual({
@@ -374,6 +434,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode.range,
           text: '(',
           direction: PairedPunctuationDirection.Opening,
+          leftContext: 'text ',
+          rightContext: 'with)',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -384,6 +447,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode.range,
           text: ')',
           direction: PairedPunctuationDirection.Closing,
+          leftContext: '(with',
+          rightContext: ' pare',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -409,6 +475,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode1.range,
           text: '(',
           direction: PairedPunctuationDirection.Opening,
+          leftContext: 'text ',
+          rightContext: 'with ',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -419,6 +488,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode1.range,
           text: '[',
           direction: PairedPunctuationDirection.Opening,
+          leftContext: 'with ',
+          rightContext: 'brack',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -429,6 +501,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode2.range,
           text: ']',
           direction: PairedPunctuationDirection.Closing,
+          leftContext: 'erent',
+          rightContext: ' text',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toStrictEqual({
@@ -439,6 +514,9 @@ describe('PairedPunctuationIterator tests', () => {
           enclosingRange: scriptureNode2.range,
           text: ')',
           direction: PairedPunctuationDirection.Closing,
+          leftContext: ' text',
+          rightContext: '',
+          verseRef: '1:1',
         },
       });
       expect(pairedPunctuationIterator.next()).toEqual({
@@ -561,7 +639,7 @@ class TestEnvironment {
     }
     return new PairedPunctuationIterator(
       this.pairedPunctuationConfig,
-      new CheckableGroup(text.map((x) => new ScriptureNodeCheckable(x))),
+      new CheckableGroup(text.map((x) => new ScriptureNodeCheckable('1', '1', x))),
     );
   }
 

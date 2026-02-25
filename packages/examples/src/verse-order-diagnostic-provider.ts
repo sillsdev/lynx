@@ -15,11 +15,12 @@ import {
   ScriptureVerse,
   TextEdit,
 } from '@sillsdev/lynx';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticProvider<T> {
   public readonly id = 'verse-order';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  private readonly refreshSubject = new Subject<string>();
 
   constructor(
     private readonly localizer: Localizer,
@@ -28,9 +29,17 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     validateAllDocuments = false,
   ) {
     if (validateAllDocuments) {
-      this.diagnosticsChanged$ = allDiagnosticsChanged$(documents, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = allDiagnosticsChanged$(
+        documents,
+        (doc) => Promise.resolve(this.validateDocument(doc)),
+        this.refreshSubject,
+      );
     } else {
-      this.diagnosticsChanged$ = activeDiagnosticsChanged$(documents, (doc) => this.validateDocument(doc));
+      this.diagnosticsChanged$ = activeDiagnosticsChanged$(
+        documents,
+        (doc) => Promise.resolve(this.validateDocument(doc)),
+        this.refreshSubject,
+      );
     }
   }
 
@@ -72,6 +81,11 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     return fixes;
   }
 
+  refresh(uri: string): Promise<void> {
+    this.refreshSubject.next(uri);
+    return Promise.resolve();
+  }
+
   private validateDocument(doc: ScriptureDocument): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
 
@@ -99,6 +113,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
                 }),
                 moreInfo: this.localizer.t('verseOutOfOrder.moreInfo', { ns: 'verseOrder' }),
                 source: this.id,
+                fingerprint: `1|${chapterNumber}:${prevVerseNumber.toString()}`,
               });
             }
           }
@@ -129,6 +144,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
           moreInfo: this.localizer.t('missingVerse.moreInfo', { ns: 'verseOrder' }),
           source: this.id,
           data: missingVerse,
+          fingerprint: `2|${chapterNumber}:${missingVerse.toString()}`,
         });
       }
     }

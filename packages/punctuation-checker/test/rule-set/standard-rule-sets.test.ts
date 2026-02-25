@@ -303,8 +303,8 @@ describe('Standard English rule set tests', () => {
       await localizer.init();
 
       // The top-level closing quote has been removed
-      expect(
-        await quotationChecker.getDiagnostics(
+      await expect(
+        quotationChecker.getDiagnostics(
           `So he said, “I am Abraham's servant. The Lord has greatly blessed my master, and he has become great.
           He has given him flocks and herds, silver and gold, male servants and female servants, camels and donkeys.
           And Sarah my master's wife bore a son to my master when she was old, and to him he has given all that he has.
@@ -314,7 +314,7 @@ describe('Standard English rule set tests', () => {
           will send his angel with you and prosper your way. You shall take a wife for my son from my clan and from my father's house.
           Then you will be free from my oath, when you come to my clan. And if they will not give her to you, you will be free from my oath.’`,
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'unmatched-opening-quotation-mark',
           severity: DiagnosticSeverity.Error,
@@ -335,8 +335,8 @@ describe('Standard English rule set tests', () => {
       ]);
 
       // The first second level opening quote has been removed
-      expect(
-        await quotationChecker.getDiagnostics(
+      await expect(
+        quotationChecker.getDiagnostics(
           `So he said, “I am Abraham's servant. The Lord has greatly blessed my master, and he has become great.
           He has given him flocks and herds, silver and gold, male servants and female servants, camels and donkeys.
           And Sarah my master's wife bore a son to my master when she was old, and to him he has given all that he has.
@@ -346,7 +346,7 @@ describe('Standard English rule set tests', () => {
           will send his angel with you and prosper your way. You shall take a wife for my son from my clan and from my father's house.
           Then you will be free from my oath, when you come to my clan. And if they will not give her to you, you will be free from my oath.’”`,
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'unmatched-closing-quotation-mark',
           severity: DiagnosticSeverity.Error,
@@ -367,8 +367,8 @@ describe('Standard English rule set tests', () => {
       ]);
 
       // A second-level closing quote has been removed
-      expect(
-        await quotationChecker.getDiagnostics(
+      await expect(
+        quotationChecker.getDiagnostics(
           `“I came today to the spring and said, ‘O Lord, the God of my master Abraham, if now you are prospering the way that I go,
         behold, I am standing by the spring of water. Let the virgin who comes out to draw water, to whom I shall say, “Please give me a little water from your jar to drink,”
         and who will say to me, “Drink, and I will draw for your camels also,” let her be the woman whom the Lord has appointed for my master’s son.’”
@@ -378,7 +378,7 @@ describe('Standard English rule set tests', () => {
         Then I bowed my head and worshiped the Lord and blessed the Lord, the God of my master Abraham, who had led me by the right way to take the daughter of my master’s kinsman for his son.
         Now then, if you are going to show steadfast love and faithfulness to my master, tell me; and if not, tell me, that I may turn to the right hand or to the left.”`,
         ),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'unmatched-opening-quotation-mark',
           severity: DiagnosticSeverity.Error,
@@ -558,10 +558,10 @@ describe('Standard English rule set tests', () => {
       ]);
 
       // A quote continuer is missing
-      expect(
-        await quotationChecker.getDiagnostics(`“To the angel of the church in Ephesus write: ‘The words of him who holds the seven stars in his right hand, who walks among the seven golden lampstands.
+      await expect(
+        quotationChecker.getDiagnostics(`“To the angel of the church in Ephesus write: ‘The words of him who holds the seven stars in his right hand, who walks among the seven golden lampstands.
           “I know your works, your toil and your patient endurance, and how you cannot bear with those who are evil, but have tested those who call themselves apostles and are not, and found them to be false.’”`),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'missing-quote-continuer',
           severity: DiagnosticSeverity.Warning,
@@ -713,11 +713,11 @@ describe('Standard English rule set tests', () => {
       await pairedPunctuationChecker.init();
       await localizer.init();
 
-      expect(
-        await pairedPunctuationChecker.getDiagnostics(`So David went to Baal-perazim and defeated the Philistines there. “The Lord did 
+      await expect(
+        pairedPunctuationChecker.getDiagnostics(`So David went to Baal-perazim and defeated the Philistines there. “The Lord did 
         it!” David exclaimed. “He burst through my enemies like a raging flood!” So he named that place Baal-perazim which means 
         “the Lord who bursts through”).`),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'unmatched-closing-parenthesis',
           source: 'paired-punctuation-checker',
@@ -803,10 +803,10 @@ describe('Standard English rule set tests', () => {
       await punctuationContextChecker.init();
       await localizer.init();
 
-      expect(
-        await punctuationContextChecker.getDiagnostics(`Let the young woman to whom I shall say,‘Please let down your jar that I may drink,’
+      await expect(
+        punctuationContextChecker.getDiagnostics(`Let the young woman to whom I shall say,‘Please let down your jar that I may drink,’
           and who shall say, ‘ Drink, and I will water your camels,’ let her be the one whom you have appointed for your servant Isaac. ”`),
-      ).toEqual([
+      ).resolves.toMatchObject([
         {
           code: 'incorrect-trailing-context',
           source: 'punctuation-context-checker',
