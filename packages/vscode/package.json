@@ -34,12 +34,6 @@
         ]
       }
     ],
-    "commands": [
-      {
-        "command": "lynx.dismissDiagnostic",
-        "title": "Dismiss Diagnostic"
-      }
-    ],
     "configuration": {
       "title": "Lynx",
       "properties": {

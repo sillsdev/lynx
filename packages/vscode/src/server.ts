@@ -65,6 +65,9 @@ connection.onInitialize(async (params: InitializeParams) => {
         workspaceDiagnostics: false,
       },
       codeActionProvider: true,
+      executeCommandProvider: {
+        commands: ['lynx.dismissDiagnostic'],
+      },
     },
   };
   const onTypeTriggerCharacters = workspace.getOnTypeTriggerCharacters();
