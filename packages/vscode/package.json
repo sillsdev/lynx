@@ -39,7 +39,17 @@
         "command": "lynx.dismissDiagnostic",
         "title": "Dismiss Diagnostic"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Lynx",
+      "properties": {
+        "lynx.diagnosticDismissalFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a JSON file for persisting dismissed diagnostics. If empty, dismissals are stored in memory only."
+        }
+      }
+    }
   },
   "dependencies": {
     "@sillsdev/lynx": "*",

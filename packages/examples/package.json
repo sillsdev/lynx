@@ -32,6 +32,7 @@
     "@sillsdev/lynx": "*"
   },
   "devDependencies": {
+    "@types/node": "latest",
     "@repo/eslint-config": "*",
     "@repo/tsdown-config": "*",
     "@repo/typescript-config": "*",

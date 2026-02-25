@@ -1,5 +1,9 @@
 import { Diagnostic, DocumentManager, Localizer, ScriptureDocument, Workspace } from '@sillsdev/lynx';
-import { SimpleQuoteFormattingProvider, VerseOrderDiagnosticProvider } from '@sillsdev/lynx-examples';
+import {
+  JsonFileDiagnosticDismissalStore,
+  SimpleQuoteFormattingProvider,
+  VerseOrderDiagnosticProvider,
+} from '@sillsdev/lynx-examples';
 import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
 import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
@@ -40,6 +44,10 @@ const workspace = new Workspace({
 let hasWorkspaceFolderCapability = false;
 
 connection.onInitialize(async (params: InitializeParams) => {
+  const dismissalFilePath: string | undefined = params.initializationOptions?.diagnosticDismissalFilePath;
+  if (dismissalFilePath) {
+    workspace.diagnosticDismissalStore = new JsonFileDiagnosticDismissalStore(dismissalFilePath);
+  }
   await workspace.init();
   if (params.locale != null) {
     await workspace.changeLanguage(params.locale);
@@ -57,9 +65,6 @@ connection.onInitialize(async (params: InitializeParams) => {
         workspaceDiagnostics: false,
       },
       codeActionProvider: true,
-      executeCommandProvider: {
-        commands: ['lynx.dismissDiagnostic'],
-      },
     },
   };
   const onTypeTriggerCharacters = workspace.getOnTypeTriggerCharacters();
