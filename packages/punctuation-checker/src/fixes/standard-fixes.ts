@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   EditFactory,
   Localizer,
   Range,
@@ -20,7 +20,7 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
     private readonly localizer: Localizer,
   ) {}
 
-  public punctuationRemovalFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
+  public punctuationRemovalFix(diagnostic: Diagnostic): DiagnosticAction<TEdit> {
     return {
       title: this.localizer.t(`punctuationRemovalFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -31,7 +31,7 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
     };
   }
 
-  public punctuationReplacementFix(diagnostic: Diagnostic, replacementCharacter: string): DiagnosticFix<TEdit> {
+  public punctuationReplacementFix(diagnostic: Diagnostic, replacementCharacter: string): DiagnosticAction<TEdit> {
     return {
       title: this.localizer.t(`punctuationReplacementFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -43,7 +43,7 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
     };
   }
 
-  public leadingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
+  public leadingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticAction<TEdit> {
     return {
       title: this.localizer.t(`leadingSpaceInsertionFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -71,7 +71,7 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
     };
   }
 
-  public trailingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticFix<TEdit> {
+  public trailingSpaceInsertionFix(diagnostic: Diagnostic): DiagnosticAction<TEdit> {
     return {
       title: this.localizer.t(`trailingSpaceInsertionFix`, {
         ns: LOCALIZER_NAMESPACE,
@@ -99,7 +99,7 @@ class StandardFixProvider<TDoc extends TextDocument | ScriptureDocument, TEdit =
     };
   }
 
-  public trailingStringInsertionFix(diagnostic: Diagnostic, stringToInsert: string): DiagnosticFix<TEdit> {
+  public trailingStringInsertionFix(diagnostic: Diagnostic, stringToInsert: string): DiagnosticAction<TEdit> {
     return {
       title: this.localizer.t(`trailingStringInsertionFix`, {
         ns: LOCALIZER_NAMESPACE,

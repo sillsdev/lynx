@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DocumentAccessor,
   EditFactory,
   Localizer,
@@ -61,7 +61,7 @@ export class PairedPunctuationChecker<
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticAction<TEdit>[] {
     const standardFixProvider: StandardFixProvider<TDoc, TEdit> =
       this.standardFixProviderFactory.createStandardFixProvider(document);
     if (

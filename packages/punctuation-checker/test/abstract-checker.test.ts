@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DiagnosticSeverity,
   DocumentAccessor,
   DocumentManager,
@@ -285,7 +285,7 @@ class TestEnvironment {
         });
       }
 
-      protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticFix[] {
+      protected getFixes(_document: T, _diagnostic: Diagnostic): DiagnosticAction[] {
         return [];
       }
     }

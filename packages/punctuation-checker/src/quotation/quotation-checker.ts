@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DocumentAccessor,
   EditFactory,
   Localizer,
@@ -57,7 +57,7 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticAction<TEdit>[] {
     const standardFixProvider: StandardFixProvider<TDoc, TEdit> =
       this.standardFixProviderFactory.createStandardFixProvider(document);
 
@@ -85,8 +85,8 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
   private getIncorrectlyNestedQuoteFixes(
     diagnostic: Diagnostic,
     standardFixProvider: StandardFixProvider<TDoc, TEdit>,
-  ): DiagnosticFix<TEdit>[] {
-    const fixes: DiagnosticFix<TEdit>[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
+  ): DiagnosticAction<TEdit>[] {
+    const fixes: DiagnosticAction<TEdit>[] = [standardFixProvider.punctuationRemovalFix(diagnostic)];
     interface QuoteParentDepth {
       depth: number;
     }
@@ -111,7 +111,7 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
   private getAmbiguousQuoteFixes(
     diagnostic: Diagnostic,
     standardFixProvider: StandardFixProvider<TDoc, TEdit>,
-  ): DiagnosticFix<TEdit>[] {
+  ): DiagnosticAction<TEdit>[] {
     interface QuotationMarkCorrection {
       existingQuotationMark: string;
       correctedQuotationMark: string;
@@ -123,7 +123,7 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
   private getMissingQuoteContinuerFixes(
     diagnostic: Diagnostic,
     standardFixProvider: StandardFixProvider<TDoc, TEdit>,
-  ): DiagnosticFix<TEdit>[] {
+  ): DiagnosticAction<TEdit>[] {
     const quoteContinuersToInsert: string = diagnostic.data as string;
     return [standardFixProvider.trailingStringInsertionFix(diagnostic, quoteContinuersToInsert)];
   }

@@ -11,7 +11,7 @@ describe('PairedPunctuationChecker tests', () => {
     await testEnv.init();
 
     expect(
-      await testEnv.pairedPunctuationChecker.getDiagnosticFixes('(Hello', {
+      await testEnv.pairedPunctuationChecker.getDiagnosticActions('(Hello', {
         code: 'unmatched-opening-parenthesis',
         source: 'paired-punctuation-checker',
         severity: DiagnosticSeverity.Error,
@@ -71,7 +71,7 @@ describe('PairedPunctuationChecker tests', () => {
     await testEnv.init();
 
     expect(
-      await testEnv.pairedPunctuationChecker.getDiagnosticFixes('(Hello\u201C) there\u201D', {
+      await testEnv.pairedPunctuationChecker.getDiagnosticActions('(Hello\u201C) there\u201D', {
         code: 'overlapping-punctuation-pairs',
         source: 'paired-punctuation-checker',
         severity: DiagnosticSeverity.Warning,

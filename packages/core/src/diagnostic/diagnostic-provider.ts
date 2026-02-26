@@ -18,7 +18,7 @@ import { TextEdit } from '../common/text-edit';
 import { Document } from '../document/document';
 import { DocumentAccessor } from '../document/document-accessor';
 import { Diagnostic } from './diagnostic';
-import { DiagnosticFix } from './diagnostic-fix';
+import { DiagnosticAction } from './diagnostic-action';
 
 export interface DiagnosticsChanged {
   uri: string;
@@ -29,10 +29,12 @@ export interface DiagnosticsChanged {
 export interface DiagnosticProvider<T = TextEdit> {
   readonly id: string;
   readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  readonly commands: ReadonlySet<string>;
   init(): Promise<void>;
   getDiagnostics(uri: string): Promise<Diagnostic[]>;
-  getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]>;
+  getDiagnosticActions(uri: string, diagnostic: Diagnostic): Promise<DiagnosticAction<T>[]>;
   refresh(uri: string): Promise<void>;
+  executeCommand(command: string, uri: string, diagnostic: Diagnostic): Promise<boolean>;
 }
 
 export function activeDiagnosticsChanged$<T extends Document>(

@@ -12,7 +12,7 @@ describe('PunctuationContextChecker tests', () => {
     await testEnv.init();
 
     expect(
-      await testEnv.punctuationContextChecker.getDiagnosticFixes('No.space', {
+      await testEnv.punctuationContextChecker.getDiagnosticActions('No.space', {
         code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {
@@ -73,7 +73,7 @@ describe('PunctuationContextChecker tests', () => {
     ]);
 
     expect(
-      await testEnv.punctuationContextChecker.getDiagnosticFixes('No(space', {
+      await testEnv.punctuationContextChecker.getDiagnosticActions('No(space', {
         code: 'incorrect-leading-context',
         severity: DiagnosticSeverity.Warning,
         range: {
@@ -141,7 +141,7 @@ describe('PunctuationContextChecker tests', () => {
     await testEnv.init();
 
     expect(
-      await testEnv.punctuationContextChecker.getDiagnosticFixes('No+space', {
+      await testEnv.punctuationContextChecker.getDiagnosticActions('No+space', {
         code: 'incorrect-trailing-context',
         severity: DiagnosticSeverity.Warning,
         range: {

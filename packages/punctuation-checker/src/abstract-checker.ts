@@ -2,7 +2,7 @@ import {
   activeDiagnosticsChanged$,
   allDiagnosticsChanged$,
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DiagnosticProvider,
   DiagnosticsChanged,
   DocumentAccessor,
@@ -22,6 +22,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
   implements DiagnosticProvider<TEdit>
 {
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  public readonly commands = new Set<string>();
   private readonly refreshSubject = new Subject<string>();
 
   constructor(
@@ -57,12 +58,16 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     return await this.validateDocument(doc);
   }
 
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<TEdit>[]> {
+  async getDiagnosticActions(uri: string, diagnostic: Diagnostic): Promise<DiagnosticAction<TEdit>[]> {
     const doc = await this.documentAccessor.get(uri);
     if (doc == null) {
       return [];
     }
     return this.getFixes(doc, diagnostic);
+  }
+
+  executeCommand(_command: string, _uri: string, _diagnostic: Diagnostic): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
   refresh(uri: string): Promise<void> {
@@ -99,5 +104,5 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
     return diagnostics;
   }
 
-  protected abstract getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[];
+  protected abstract getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticAction<TEdit>[];
 }

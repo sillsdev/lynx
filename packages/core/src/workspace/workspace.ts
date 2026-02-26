@@ -3,8 +3,8 @@ import { concatMap, merge, Observable, tap } from 'rxjs';
 import { Position } from '../common/position';
 import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from '../diagnostic/diagnostic';
+import { DiagnosticAction } from '../diagnostic/diagnostic-action';
 import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from '../diagnostic/diagnostic-dismissal-store';
-import { DiagnosticFix } from '../diagnostic/diagnostic-fix';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
 import { Localizer } from './localizer';
@@ -67,12 +67,12 @@ export class Workspace<T = TextEdit> {
     return diagnostics;
   }
 
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]> {
+  async getDiagnosticActions(uri: string, diagnostic: Diagnostic): Promise<DiagnosticAction<T>[]> {
     const provider = this.diagnosticProviders.get(diagnostic.source);
     if (provider == null) {
-      return [];
+      throw new Error(`No provider found for diagnostic source ${diagnostic.source}.`);
     }
-    return await provider.getDiagnosticFixes(uri, diagnostic);
+    return await provider.getDiagnosticActions(uri, diagnostic);
   }
 
   getOnTypeTriggerCharacters(): string[] {
@@ -99,16 +99,42 @@ export class Workspace<T = TextEdit> {
 
   async dismissDiagnostic(uri: string, diagnostic: Diagnostic): Promise<boolean> {
     if (diagnostic.fingerprint == null) {
-      return false;
+      throw new Error('Cannot dismiss a diagnostic without a fingerprint.');
     }
     await this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
 
     // Trigger a refresh on the provider that owns this diagnostic
     const provider = this.diagnosticProviders.get(diagnostic.source);
-    if (provider != null) {
-      await provider.refresh(uri);
+    if (provider == null) {
+      throw new Error(`No provider found for diagnostic source ${diagnostic.source}.`);
     }
+    await provider.refresh(uri);
     return true;
+  }
+
+  getDiagnosticActionCommands(): [string, string][] {
+    const commands: [string, string][] = [];
+    for (const provider of this.diagnosticProviders.values()) {
+      for (const command of provider.commands) {
+        commands.push([provider.id, command]);
+      }
+    }
+    return commands;
+  }
+
+  async executeDiagnosticActionCommand(command: string, uri: string, diagnostic: Diagnostic): Promise<boolean> {
+    const provider = this.diagnosticProviders.get(diagnostic.source);
+    if (provider == null) {
+      throw new Error(`No provider found for diagnostic source ${diagnostic.source}.`);
+    }
+    if (!provider.commands.has(command)) {
+      throw new Error(`Provider ${provider.id} does not support command ${command}.`);
+    }
+    if (await provider.executeCommand(command, uri, diagnostic)) {
+      await provider.refresh(uri);
+      return true;
+    }
+    return false;
   }
 
   private updateCombinedDiagnosticChangedEvent(providerIndex: number, providerId: string, event: DiagnosticsChanged) {
