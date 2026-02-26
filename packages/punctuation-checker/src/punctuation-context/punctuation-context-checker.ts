@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DocumentAccessor,
   EditFactory,
   Localizer,
@@ -52,7 +52,7 @@ export class PunctuationContextChecker<
     await this.standardFixProviderFactory.init();
   }
 
-  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+  protected getFixes(document: TDoc, diagnostic: Diagnostic): DiagnosticAction<TEdit>[] {
     // The only fix we offer is to insert a space
     if (!(diagnostic.data as WhitespaceDiagnosticData).isSpaceAllowed) {
       return [];

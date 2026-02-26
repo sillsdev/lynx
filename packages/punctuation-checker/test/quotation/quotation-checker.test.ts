@@ -54,7 +54,7 @@ describe('QuotationChecker tests', () => {
       message: `Opening quotation mark with no closing mark.`,
     };
 
-    expect(await testEnv.quotationChecker.getDiagnosticFixes('', unmatchedOpeningQuoteDiagnostic)).toEqual([
+    expect(await testEnv.quotationChecker.getDiagnosticActions('', unmatchedOpeningQuoteDiagnostic)).toEqual([
       {
         title: 'Delete punctuation mark',
         isPreferred: false,
@@ -68,7 +68,7 @@ describe('QuotationChecker tests', () => {
       },
     ]);
 
-    expect(await testEnv.quotationChecker.getDiagnosticFixes('', unmatchedClosingQuoteDiagnostic)).toEqual([
+    expect(await testEnv.quotationChecker.getDiagnosticActions('', unmatchedClosingQuoteDiagnostic)).toEqual([
       {
         title: 'Delete punctuation mark',
         isPreferred: false,
@@ -107,7 +107,7 @@ describe('QuotationChecker tests', () => {
       },
     };
 
-    expect(await testEnv.quotationChecker.getDiagnosticFixes('', incorrectlyNestedDiagnostic)).toEqual([
+    expect(await testEnv.quotationChecker.getDiagnosticActions('', incorrectlyNestedDiagnostic)).toEqual([
       {
         title: 'Delete punctuation mark',
         isPreferred: false,
@@ -158,7 +158,7 @@ describe('QuotationChecker tests', () => {
       },
     };
 
-    expect(await testEnv.quotationChecker.getDiagnosticFixes('', ambiguousDiagnostic)).toEqual([
+    expect(await testEnv.quotationChecker.getDiagnosticActions('', ambiguousDiagnostic)).toEqual([
       {
         title: 'Replace this character with \u201C',
         isPreferred: true,
@@ -194,7 +194,7 @@ describe('QuotationChecker tests', () => {
       message: `Too many levels of quotation marks. Consider rephrasing to avoid this.`,
     };
 
-    expect(await testEnv.quotationChecker.getDiagnosticFixes('', tooDeeplyNestedDiagnostic)).toEqual([]);
+    expect(await testEnv.quotationChecker.getDiagnosticActions('', tooDeeplyNestedDiagnostic)).toEqual([]);
   });
 
   it('uses the QuotationConfig that is passed to it', async () => {
