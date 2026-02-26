@@ -28,7 +28,7 @@ describe('TextDocument tests', () => {
     await testEnv.init();
 
     expect(
-      await testEnv.allowedCharacterChecker.getDiagnosticFixes(
+      await testEnv.allowedCharacterChecker.getDiagnosticActions(
         'Hello, _there!&%',
         testEnv.createExpectedDiagnostic(',', 5, 6),
       ),

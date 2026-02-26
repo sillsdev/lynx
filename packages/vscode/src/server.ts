@@ -66,7 +66,10 @@ connection.onInitialize(async (params: InitializeParams) => {
       },
       codeActionProvider: true,
       executeCommandProvider: {
-        commands: ['lynx.dismissDiagnostic'],
+        commands: [
+          'lynx.dismissDiagnostic',
+          ...workspace.getDiagnosticActionCommands().map(([provider, command]) => `lynx.${provider}.${command}`),
+        ],
       },
     },
   };
@@ -119,17 +122,29 @@ connection.onCodeAction(async (params) => {
       moreInfo: diagnostic.data?.moreInfo,
     };
     actions.push(
-      ...(await workspace.getDiagnosticFixes(params.textDocument.uri, lynxDiagnostic)).map((fix) => ({
-        title: fix.title,
-        kind: CodeActionKind.QuickFix,
-        diagnostics: [diagnostic],
-        isPreferred: fix.isPreferred,
-        edit: {
-          changes: {
-            [params.textDocument.uri]: fix.edits,
-          },
-        },
-      })),
+      ...(await workspace.getDiagnosticActions(params.textDocument.uri, lynxDiagnostic)).map((lynxAction) => {
+        const action: CodeAction = {
+          title: lynxAction.title,
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          isPreferred: lynxAction.isPreferred,
+        };
+        if (lynxAction.command != null) {
+          action.command = {
+            title: lynxAction.title,
+            command: `lynx.${lynxDiagnostic.source}.${lynxAction.command}`,
+            arguments: [params.textDocument.uri, lynxDiagnostic],
+          };
+        }
+        if (lynxAction.edits != null) {
+          action.edit = {
+            changes: {
+              [params.textDocument.uri]: lynxAction.edits,
+            },
+          };
+        }
+        return action;
+      }),
     );
     if (lynxDiagnostic.fingerprint != null) {
       actions.push({
@@ -173,6 +188,12 @@ connection.onExecuteCommand(async (params) => {
   if (params.command === 'lynx.dismissDiagnostic' && params.arguments != null) {
     const [uri, diagnostic] = params.arguments as [string, Diagnostic];
     if (await workspace.dismissDiagnostic(uri, diagnostic)) {
+      connection.languages.diagnostics.refresh();
+    }
+  } else if (params.arguments != null) {
+    const [uri, diagnostic] = params.arguments as [string, Diagnostic];
+    const command = params.command.split('.')[2];
+    if (await workspace.executeDiagnosticActionCommand(command, uri, diagnostic)) {
       connection.languages.diagnostics.refresh();
     }
   }

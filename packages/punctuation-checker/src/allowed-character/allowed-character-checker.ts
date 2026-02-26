@@ -1,6 +1,6 @@
 import {
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DocumentAccessor,
   Localizer,
   ScriptureDocument,
@@ -39,7 +39,7 @@ export class AllowedCharacterChecker<
     this.localizer.addNamespace(ALLOWED_CHARACTER_CHECKER_LOCALIZER_NAMESPACE, createLocaleLoader('allowed-character'));
   }
 
-  protected getFixes(_document: TDoc, _diagnostic: Diagnostic): DiagnosticFix<TEdit>[] {
+  protected getFixes(_document: TDoc, _diagnostic: Diagnostic): DiagnosticAction<TEdit>[] {
     // no fixes available for disallowed characters
     return [];
   }

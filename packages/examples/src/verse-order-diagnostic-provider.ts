@@ -2,12 +2,13 @@ import {
   activeDiagnosticsChanged$,
   allDiagnosticsChanged$,
   Diagnostic,
-  DiagnosticFix,
+  DiagnosticAction,
   DiagnosticProvider,
   DiagnosticsChanged,
   DiagnosticSeverity,
   DocumentAccessor,
   Localizer,
+  ScriptureBook,
   ScriptureChapter,
   ScriptureDocument,
   ScriptureEditFactory,
@@ -17,10 +18,18 @@ import {
 } from '@sillsdev/lynx';
 import { Observable, Subject } from 'rxjs';
 
+interface DiagnosticData {
+  missingVerse: number;
+  verseRef: string;
+}
+
 export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticProvider<T> {
   public readonly id = 'verse-order';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  public readonly commands = new Set(['excludeVerse']);
   private readonly refreshSubject = new Subject<string>();
+  // Store excluded verses in memory for simplicity. In a real implementation, this should be persisted.
+  private readonly excludedVerses = new Set<string>();
 
   constructor(
     private readonly localizer: Localizer,
@@ -59,26 +68,40 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
     return this.validateDocument(doc);
   }
 
-  async getDiagnosticFixes(uri: string, diagnostic: Diagnostic): Promise<DiagnosticFix<T>[]> {
+  async getDiagnosticActions(uri: string, diagnostic: Diagnostic): Promise<DiagnosticAction<T>[]> {
     const doc = await this.documents.get(uri);
     if (doc == null) {
       return [];
     }
-    const fixes: DiagnosticFix<T>[] = [];
+    const actions: DiagnosticAction<T>[] = [];
     if (diagnostic.code === 2) {
-      const verseNumber = diagnostic.data as number;
-      fixes.push({
+      const { missingVerse, verseRef } = diagnostic.data as DiagnosticData;
+      actions.push({
         title: this.localizer.t('missingVerse.fixTitle', { ns: 'verseOrder' }),
         isPreferred: true,
         diagnostic,
         edits: this.editFactory.createScriptureEdit(
           doc,
           { start: diagnostic.range.start, end: diagnostic.range.start },
-          new ScriptureVerse(verseNumber.toString()),
+          new ScriptureVerse(missingVerse.toString()),
         ),
       });
+      actions.push({
+        title: this.localizer.t('missingVerse.excludeFixTitle', { ns: 'verseOrder', verseRef }),
+        diagnostic,
+        command: 'excludeVerse',
+      });
     }
-    return fixes;
+    return actions;
+  }
+
+  executeCommand(command: string, _uri: string, diagnostic: Diagnostic): Promise<boolean> {
+    if (command === 'excludeVerse' && diagnostic.code === 2) {
+      const { verseRef } = diagnostic.data as DiagnosticData;
+      this.excludedVerses.add(verseRef);
+      return Promise.resolve(true);
+    }
+    return Promise.resolve(false);
   }
 
   refresh(uri: string): Promise<void> {
@@ -91,11 +114,14 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
 
     const verseNodes: [number, ScriptureVerse][] = [];
     let chapterNumber = '0';
-    for (const node of doc.findNodes([ScriptureNodeType.Chapter, ScriptureNodeType.Verse])) {
+    let bookId = '';
+    for (const node of doc.findNodes([ScriptureNodeType.Book, ScriptureNodeType.Chapter, ScriptureNodeType.Verse])) {
       if (node instanceof ScriptureChapter) {
-        diagnostics.push(...this.findMissingVerses(chapterNumber, verseNodes));
+        diagnostics.push(...this.findMissingVerses(bookId, chapterNumber, verseNodes));
         chapterNumber = node.number;
         verseNodes.length = 0;
+      } else if (node instanceof ScriptureBook) {
+        bookId = node.code;
       } else if (node instanceof ScriptureVerse) {
         const verseNumber = parseInt(node.number);
         if (!isNaN(verseNumber)) {
@@ -113,7 +139,7 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
                 }),
                 moreInfo: this.localizer.t('verseOutOfOrder.moreInfo', { ns: 'verseOrder' }),
                 source: this.id,
-                fingerprint: `1|${chapterNumber}:${prevVerseNumber.toString()}`,
+                fingerprint: `1|${bookId} ${chapterNumber}:${prevVerseNumber.toString()}`,
               });
             }
           }
@@ -122,30 +148,40 @@ export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticPro
       }
     }
 
-    diagnostics.push(...this.findMissingVerses(chapterNumber, verseNodes));
+    diagnostics.push(...this.findMissingVerses(bookId, chapterNumber, verseNodes));
     return diagnostics;
   }
 
-  private findMissingVerses(chapterNumber: string, verseNodes: [number, ScriptureVerse][]): Diagnostic[] {
+  private findMissingVerses(
+    bookId: string,
+    chapterNumber: string,
+    verseNodes: [number, ScriptureVerse][],
+  ): Diagnostic[] {
     verseNodes.sort((a, b) => a[0] - b[0]);
     const diagnostics: Diagnostic[] = [];
     for (const [i, [number, node]] of verseNodes.entries()) {
       if (number !== i + 1) {
         const missingVerse = number - 1;
-        diagnostics.push({
-          range: node.range,
-          severity: DiagnosticSeverity.Warning,
-          code: 2,
-          message: this.localizer.t('missingVerse.description', {
-            ns: 'verseOrder',
-            chapter: chapterNumber,
-            verse: missingVerse.toString(),
-          }),
-          moreInfo: this.localizer.t('missingVerse.moreInfo', { ns: 'verseOrder' }),
-          source: this.id,
-          data: missingVerse,
-          fingerprint: `2|${chapterNumber}:${missingVerse.toString()}`,
-        });
+        const verseRef = `${bookId} ${chapterNumber}:${missingVerse.toString()}`;
+        if (!this.excludedVerses.has(verseRef)) {
+          diagnostics.push({
+            range: node.range,
+            severity: DiagnosticSeverity.Warning,
+            code: 2,
+            message: this.localizer.t('missingVerse.description', {
+              ns: 'verseOrder',
+              chapter: chapterNumber,
+              verse: missingVerse.toString(),
+            }),
+            moreInfo: this.localizer.t('missingVerse.moreInfo', { ns: 'verseOrder' }),
+            source: this.id,
+            data: {
+              missingVerse,
+              verseRef,
+            },
+            fingerprint: `2|${verseRef}`,
+          });
+        }
       }
     }
     return diagnostics;

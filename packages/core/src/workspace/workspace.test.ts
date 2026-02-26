@@ -303,10 +303,7 @@ describe('Workspace', () => {
         // No fingerprint
       };
 
-      const result = await env.workspace.dismissDiagnostic('file1', diagnostic);
-
-      expect(result).toBe(false);
-      expect(env.provider1.refresh).not.toHaveBeenCalled();
+      await expect(() => env.workspace.dismissDiagnostic('file1', diagnostic)).rejects.toThrow();
     });
 
     it('cleans up dismissed fingerprints when diagnostic no longer exists', async () => {
@@ -541,6 +538,83 @@ describe('Workspace', () => {
       expect(dismissalStore.addDismissal).toHaveBeenCalledWith('file1', diagnostics[1]);
     });
   });
+
+  describe('executeDiagnosticActionCommand', () => {
+    it('executes command and refreshes provider when executeCommand returns true', async () => {
+      const env = new TestEnvironment();
+      env.provider1.executeCommand.mockResolvedValue(true);
+
+      const diagnostic: Diagnostic = {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+        severity: DiagnosticSeverity.Warning,
+        code: 1,
+        source: 'provider1',
+        message: 'Test diagnostic',
+      };
+
+      const result = await env.workspace.executeDiagnosticActionCommand('cmd1', 'file1', diagnostic);
+
+      expect(result).toBe(true);
+      expect(env.provider1.executeCommand).toHaveBeenCalledWith('cmd1', 'file1', diagnostic);
+      expect(env.provider1.refresh).toHaveBeenCalledWith('file1');
+    });
+
+    it('returns false and does not refresh when executeCommand returns false', async () => {
+      const env = new TestEnvironment();
+      env.provider1.executeCommand.mockResolvedValue(false);
+
+      const diagnostic: Diagnostic = {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+        severity: DiagnosticSeverity.Warning,
+        code: 1,
+        source: 'provider1',
+        message: 'Test diagnostic',
+      };
+
+      const result = await env.workspace.executeDiagnosticActionCommand('cmd1', 'file1', diagnostic);
+
+      expect(result).toBe(false);
+      expect(env.provider1.executeCommand).toHaveBeenCalledWith('cmd1', 'file1', diagnostic);
+      expect(env.provider1.refresh).not.toHaveBeenCalled();
+    });
+
+    it('throws when provider does not support the requested command', async () => {
+      const env = new TestEnvironment();
+
+      const diagnostic: Diagnostic = {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+        severity: DiagnosticSeverity.Warning,
+        code: 1,
+        source: 'provider1',
+        message: 'Test diagnostic',
+      };
+
+      await expect(
+        env.workspace.executeDiagnosticActionCommand('unsupportedCmd', 'file1', diagnostic),
+      ).rejects.toThrow();
+    });
+
+    it('executes command on the correct provider determined by diagnostic source', async () => {
+      const env = new TestEnvironment();
+      env.provider2.executeCommand.mockResolvedValue(true);
+
+      const diagnostic: Diagnostic = {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+        severity: DiagnosticSeverity.Warning,
+        code: 2,
+        source: 'provider2',
+        message: 'Test diagnostic from provider2',
+      };
+
+      const result = await env.workspace.executeDiagnosticActionCommand('cmd2', 'file1', diagnostic);
+
+      expect(result).toBe(true);
+      expect(env.provider2.executeCommand).toHaveBeenCalledWith('cmd2', 'file1', diagnostic);
+      expect(env.provider2.refresh).toHaveBeenCalledWith('file1');
+      expect(env.provider1.executeCommand).not.toHaveBeenCalled();
+      expect(env.provider1.refresh).not.toHaveBeenCalled();
+    });
+  });
 });
 
 class TestEnvironment {
@@ -560,22 +634,24 @@ class TestEnvironment {
       Object.create({
         id: 'provider1',
         diagnosticsChanged$: this.provider1Subject.asObservable(),
+        commands: new Set(['cmd1']),
       }),
     );
     this.provider1.init.mockResolvedValue();
     this.provider1.getDiagnostics.mockResolvedValue([]);
-    this.provider1.getDiagnosticFixes.mockResolvedValue([]);
+    this.provider1.getDiagnosticActions.mockResolvedValue([]);
 
     this.provider2Subject = new Subject<DiagnosticsChanged>();
     this.provider2 = mock<DiagnosticProvider>(
       Object.create({
         id: 'provider2',
         diagnosticsChanged$: this.provider2Subject.asObservable(),
+        commands: new Set(['cmd2', 'cmd3']),
       }),
     );
     this.provider2.init.mockResolvedValue();
     this.provider2.getDiagnostics.mockResolvedValue([]);
-    this.provider2.getDiagnosticFixes.mockResolvedValue([]);
+    this.provider2.getDiagnosticActions.mockResolvedValue([]);
 
     this.workspace = new Workspace({
       localizer: this.localizer,

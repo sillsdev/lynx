@@ -2,7 +2,8 @@
   "missingVerse": {
     "description": "Verse {{verse}} is missing from chapter {{chapter}}. Insert the missing verse to fix.",
     "moreInfo": "A chapter should contain verse markers for all verses. This may be a typo or a missing verse. Please insert the missing verse to fix this issue.",
-    "fixTitle": "Insert missing verse"
+    "fixTitle": "Insert missing verse",
+    "excludeFixTitle": "Exclude {{verseRef}} from versification"
   },
   "verseOutOfOrder": {
     "description": "Verse {{verse}} occurs out of order in chapter {{chapter}}.",
