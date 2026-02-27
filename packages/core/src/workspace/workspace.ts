@@ -101,13 +101,14 @@ export class Workspace<T = TextEdit> {
     if (diagnostic.fingerprint == null) {
       throw new Error('Cannot dismiss a diagnostic without a fingerprint.');
     }
-    await this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
 
     // Trigger a refresh on the provider that owns this diagnostic
     const provider = this.diagnosticProviders.get(diagnostic.source);
     if (provider == null) {
       throw new Error(`No provider found for diagnostic source ${diagnostic.source}.`);
     }
+
+    await this.diagnosticDismissalStore.addDismissal(uri, diagnostic);
     await provider.refresh(uri);
     return true;
   }
