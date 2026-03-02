@@ -165,7 +165,7 @@ Return a `command` string when the action needs to modify provider state rather 
 }
 ```
 
-The command string must appear in `this.commands`. `Workspace` ignores commands not declared there.
+The command string must appear in `this.commands`. `Workspace` only routes diagnostic action commands declared in this set; attempting to execute a command not listed here will result in an error.
 
 ---
 

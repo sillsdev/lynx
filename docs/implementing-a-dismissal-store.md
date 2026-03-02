@@ -29,7 +29,7 @@ Called by `Workspace` every time it filters a provider's diagnostics — on both
 
 Called by `Workspace.dismissDiagnostic()` when the user dismisses a diagnostic.
 
-- Store the dismissal based on `diagnostic.fingerprint`. If `diagnostic.fingerprint` is `null` or `undefined`, return without storing anything.
+- Store the dismissal based on `diagnostic.fingerprint`. Diagnostics without a fingerprint are not dismissible; `Workspace.dismissDiagnostic()` throws if `diagnostic.fingerprint` is `null` or `undefined`, so callers must only pass dismissible diagnostics and store implementations should not expect to see `null`/`undefined` fingerprints via `Workspace`.
 
 ### `removeDismissals(uri, source, fingerprints)`
 
