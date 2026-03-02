@@ -1,6 +1,6 @@
 {
   "name": "@sillsdev/lynx-usfm",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "",
   "type": "module",
   "types": "./dist/index.d.mts",
@@ -33,7 +33,7 @@
     "directory": "packages/usfm"
   },
   "dependencies": {
-    "@sillsdev/lynx": "^0.3.5",
+    "@sillsdev/lynx": "^0.4.0",
     "@sillsdev/machine": "^3.0.3"
   },
   "devDependencies": {
