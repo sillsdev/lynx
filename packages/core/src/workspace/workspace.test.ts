@@ -1,7 +1,9 @@
-import { firstValueFrom, lastValueFrom, skip, Subject, take, toArray } from 'rxjs';
+import { firstValueFrom, lastValueFrom, Observable, skip, Subject, take, toArray } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 import { mock, MockProxy } from 'vitest-mock-extended';
 
+import { AgentEvent, AgentEventType } from '../agent/agent-event';
+import { AgentProvider, AgentResponse } from '../agent/agent-provider';
 import { Diagnostic, DiagnosticSeverity } from '../diagnostic/diagnostic';
 import { DiagnosticDismissalStore } from '../diagnostic/diagnostic-dismissal-store';
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
@@ -615,6 +617,71 @@ describe('Workspace', () => {
       expect(env.provider1.refresh).not.toHaveBeenCalled();
     });
   });
+
+  describe('agent integration', () => {
+    it('runAgent() throws when no agent is configured', async () => {
+      const env = new TestEnvironment();
+      await expect(env.workspace.runAgent('test')).rejects.toThrow('No agent provider configured.');
+    });
+
+    it('streamAgent() throws when no agent is configured', () => {
+      const env = new TestEnvironment();
+      expect(() => env.workspace.streamAgent('test')).toThrow('No agent provider configured.');
+    });
+
+    it('runAgent() delegates to agent provider', async () => {
+      const env = new TestEnvironment(undefined, true);
+      const response: AgentResponse = { runId: 'run-1', message: 'Hello' };
+      env.agentProvider!.run.mockResolvedValue(response);
+
+      const result = await env.workspace.runAgent('test input');
+
+      expect(result).toEqual(response);
+      expect(env.agentProvider!.run).toHaveBeenCalledWith('test input');
+    });
+
+    it('streamAgent() returns provider stream', () => {
+      const env = new TestEnvironment(undefined, true);
+      const agentEventsSubject = new Subject<AgentEvent>();
+      env.agentProvider!.stream.mockReturnValue(agentEventsSubject.asObservable());
+
+      const result = env.workspace.streamAgent('test input');
+
+      expect(result).toBeInstanceOf(Observable);
+      expect(env.agentProvider!.stream).toHaveBeenCalledWith('test input');
+    });
+
+    it('init() calls agentProvider.init()', async () => {
+      const env = new TestEnvironment(undefined, true);
+      await env.workspace.init();
+      expect(env.agentProvider!.init).toHaveBeenCalled();
+    });
+
+    it('agentEvents$ is set when agent provider is configured', () => {
+      const env = new TestEnvironment(undefined, true);
+      expect(env.workspace.agentEvents$).toBeDefined();
+    });
+
+    it('agentEvents$ is undefined when no agent provider', () => {
+      const env = new TestEnvironment();
+      expect(env.workspace.agentEvents$).toBeUndefined();
+    });
+
+    it('agentEvents$ emits events from provider', async () => {
+      const env = new TestEnvironment(undefined, true);
+      const event: AgentEvent = {
+        type: AgentEventType.Started,
+        timestamp: Date.now(),
+        runId: 'run-1',
+      };
+
+      const eventPromise = firstValueFrom(env.workspace.agentEvents$!);
+      env.agentEventsSubject!.next(event);
+      const received = await eventPromise;
+
+      expect(received).toEqual(event);
+    });
+  });
 });
 
 class TestEnvironment {
@@ -623,9 +690,11 @@ class TestEnvironment {
   readonly provider2: MockProxy<DiagnosticProvider>;
   readonly provider1Subject: Subject<DiagnosticsChanged>;
   readonly provider2Subject: Subject<DiagnosticsChanged>;
+  readonly agentProvider?: MockProxy<AgentProvider>;
+  readonly agentEventsSubject?: Subject<AgentEvent>;
   readonly workspace: Workspace;
 
-  constructor(dismissalStore?: DiagnosticDismissalStore) {
+  constructor(dismissalStore?: DiagnosticDismissalStore, withAgent?: boolean) {
     this.localizer = mock<Localizer>();
     this.localizer.init.mockResolvedValue();
 
@@ -653,10 +722,23 @@ class TestEnvironment {
     this.provider2.getDiagnostics.mockResolvedValue([]);
     this.provider2.getDiagnosticActions.mockResolvedValue([]);
 
+    if (withAgent) {
+      this.agentEventsSubject = new Subject<AgentEvent>();
+      this.agentProvider = mock<AgentProvider>(
+        Object.create({
+          id: 'test-agent',
+          events$: this.agentEventsSubject.asObservable(),
+        }),
+      );
+      this.agentProvider.init.mockResolvedValue();
+      this.agentProvider.dispose.mockResolvedValue();
+    }
+
     this.workspace = new Workspace({
       localizer: this.localizer,
       diagnosticProviders: [this.provider1, this.provider2],
       diagnosticDismissalStore: dismissalStore,
+      agentProvider: this.agentProvider,
     });
   }
 }

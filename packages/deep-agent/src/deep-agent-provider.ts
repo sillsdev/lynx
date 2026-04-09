@@ -1,0 +1,280 @@
+import { StructuredTool } from '@langchain/core/tools';
+import { AgentEvent, AgentEventType, AgentProvider, AgentResponse, TextEdit, WorkspaceAccessor } from '@sillsdev/lynx';
+import { createDeepAgent } from 'deepagents';
+import { tool } from 'langchain';
+import { Observable, Subject } from 'rxjs';
+
+import { DeepAgentConfig } from './deep-agent-config';
+import { DeepAgentToolDefinition } from './deep-agent-tool';
+import { createWorkspaceTools } from './deep-agent-workspace-tools';
+
+type DeepAgent = ReturnType<typeof createDeepAgent>;
+
+const DEFAULT_SYSTEM_PROMPT = `You are a Bible translation assistant integrated into the Lynx workspace.
+You help users with translation quality checks, formatting, and general Bible translation tasks.
+
+You have access to workspace tools that let you:
+- Check documents for translation quality issues (diagnostics)
+- Get suggested fixes for specific issues
+- Dismiss issues that are intentional
+- Execute fix commands
+- Get formatting edits
+
+When users ask about translation issues, first check the diagnostics for the relevant document.
+When suggesting fixes, use the diagnostic actions system to propose concrete edits.
+Always explain your reasoning in the context of Bible translation best practices.`;
+
+export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
+  readonly config: DeepAgentConfig;
+
+  private agent?: DeepAgent;
+  private readonly eventsSubject = new Subject<AgentEvent>();
+
+  readonly events$: Observable<AgentEvent> = this.eventsSubject.asObservable();
+
+  constructor(config: DeepAgentConfig) {
+    this.config = config;
+  }
+
+  init(workspace: WorkspaceAccessor<T>): Promise<void> {
+    const tools = this.buildTools(workspace);
+    const subagents = this.config.subAgents?.map((sa) => ({
+      name: sa.name,
+      description: sa.description,
+      systemPrompt: sa.systemPrompt,
+      model: sa.model,
+      tools: sa.tools?.map((t) => this.convertTool(t)),
+    }));
+
+    this.agent = createDeepAgent({
+      model: this.config.model,
+      systemPrompt: this.config.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+      tools,
+      subagents,
+      skills: this.config.skills,
+    });
+    return Promise.resolve();
+  }
+
+  async run(input: string): Promise<AgentResponse> {
+    if (this.agent == null) {
+      throw new Error('Agent not initialized. Call init() first.');
+    }
+
+    const runId = crypto.randomUUID();
+
+    this.emitEvent({
+      type: AgentEventType.Started,
+      timestamp: Date.now(),
+      runId,
+    });
+
+    try {
+      const result = await this.agent.invoke({
+        messages: [{ role: 'user', content: input }],
+      });
+
+      const lastMessage = result.messages[result.messages.length - 1];
+      const finalMessage =
+        typeof lastMessage.content === 'string' ? lastMessage.content : JSON.stringify(lastMessage.content);
+
+      this.emitEvent({
+        type: AgentEventType.Completed,
+        timestamp: Date.now(),
+        runId,
+        finalMessage,
+      });
+
+      return { runId, message: finalMessage };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.emitEvent({
+        type: AgentEventType.Error,
+        timestamp: Date.now(),
+        runId,
+        error: errorMessage,
+      });
+      throw err;
+    }
+  }
+
+  stream(input: string): Observable<AgentEvent> {
+    return new Observable<AgentEvent>((subscriber) => {
+      if (this.agent == null) {
+        subscriber.error(new Error('Agent not initialized. Call init() first.'));
+        return;
+      }
+
+      const runId = crypto.randomUUID();
+      let aborted = false;
+
+      const execute = async () => {
+        const startedEvent: AgentEvent = {
+          type: AgentEventType.Started,
+          timestamp: Date.now(),
+          runId,
+        };
+        subscriber.next(startedEvent);
+        this.eventsSubject.next(startedEvent);
+
+        try {
+          const agentStream = await this.agent!.stream(
+            { messages: [{ role: 'user', content: input }] },
+            { streamMode: 'updates' },
+          );
+
+          let finalMessage = '';
+
+          for await (const event of agentStream) {
+            if (aborted) break;
+
+            const agentEvents = this.mapStreamEvent(runId, event);
+            for (const agentEvent of agentEvents) {
+              subscriber.next(agentEvent);
+              this.eventsSubject.next(agentEvent);
+
+              if (agentEvent.type === AgentEventType.Message && !agentEvent.isPartial) {
+                finalMessage = agentEvent.content;
+              }
+            }
+          }
+
+          if (!aborted) {
+            const completedEvent: AgentEvent = {
+              type: AgentEventType.Completed,
+              timestamp: Date.now(),
+              runId,
+              finalMessage,
+            };
+            subscriber.next(completedEvent);
+            this.eventsSubject.next(completedEvent);
+            subscriber.complete();
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          const errorEvent: AgentEvent = {
+            type: AgentEventType.Error,
+            timestamp: Date.now(),
+            runId,
+            error: errorMessage,
+          };
+          subscriber.next(errorEvent);
+          this.eventsSubject.next(errorEvent);
+          subscriber.error(err);
+        }
+      };
+
+      void execute();
+
+      return () => {
+        aborted = true;
+      };
+    });
+  }
+
+  dispose(): Promise<void> {
+    this.eventsSubject.complete();
+    return Promise.resolve();
+  }
+
+  private buildTools(workspace: WorkspaceAccessor<T>): StructuredTool[] {
+    const tools: StructuredTool[] = (this.config.tools ?? []).map((t) => this.convertTool(t));
+
+    if (this.config.exposeWorkspaceTools ?? true) {
+      tools.push(...createWorkspaceTools(workspace));
+    }
+
+    return tools;
+  }
+
+  private convertTool(def: DeepAgentToolDefinition) {
+    return tool(async (args: Record<string, unknown>) => def.execute(args), {
+      name: def.name,
+      description: def.description,
+      schema: def.schema,
+    });
+  }
+
+  private mapStreamEvent(runId: string, event: Record<string, unknown>): AgentEvent[] {
+    const events: AgentEvent[] = [];
+    const timestamp = Date.now();
+
+    // LangGraph stream events with streamMode 'updates' emit node-keyed objects.
+    // The 'model_request' node contains AIMessages from the LLM (with optional tool_calls).
+    if ('model_request' in event) {
+      this.extractMessageEvents(event.model_request, runId, timestamp, events);
+    }
+
+    // The 'agent' node is an alternative key used in some LangGraph configurations.
+    if ('agent' in event) {
+      this.extractMessageEvents(event.agent, runId, timestamp, events);
+    }
+
+    // Tool execution results
+    if ('tools' in event) {
+      const toolsData = event.tools as { messages?: unknown[] };
+      if (toolsData.messages) {
+        for (const msg of toolsData.messages) {
+          const message = msg as {
+            name?: string;
+            content?: unknown;
+            kwargs?: { name?: string; content?: unknown };
+          };
+          events.push({
+            type: AgentEventType.ToolResult,
+            timestamp,
+            runId,
+            toolName: message.kwargs?.name ?? message.name ?? 'unknown',
+            result: message.kwargs?.content ?? message.content,
+          });
+        }
+      }
+    }
+
+    return events;
+  }
+
+  private extractMessageEvents(data: unknown, runId: string, timestamp: number, events: AgentEvent[]): void {
+    const nodeData = data as { messages?: unknown[] };
+    if (!nodeData.messages) return;
+
+    for (const msg of nodeData.messages) {
+      const message = msg as {
+        content?: unknown;
+        tool_calls?: unknown[];
+        kwargs?: { content?: unknown; tool_calls?: unknown[] };
+      };
+
+      // Handle both raw and serialized (lc constructor) message formats
+      const content = message.kwargs?.content ?? message.content;
+      const toolCalls = message.kwargs?.tool_calls ?? message.tool_calls;
+
+      if (content && typeof content === 'string') {
+        events.push({
+          type: AgentEventType.Message,
+          timestamp,
+          runId,
+          content,
+          isPartial: false,
+        });
+      }
+
+      if (toolCalls && Array.isArray(toolCalls)) {
+        for (const tc of toolCalls) {
+          const toolCall = tc as { name?: string; args?: Record<string, unknown> };
+          events.push({
+            type: AgentEventType.ToolCall,
+            timestamp,
+            runId,
+            toolName: toolCall.name ?? 'unknown',
+            args: toolCall.args ?? {},
+          });
+        }
+      }
+    }
+  }
+
+  private emitEvent(event: AgentEvent): void {
+    this.eventsSubject.next(event);
+  }
+}

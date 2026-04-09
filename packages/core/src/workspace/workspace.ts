@@ -1,5 +1,7 @@
 import { concatMap, merge, Observable, tap } from 'rxjs';
 
+import { AgentEvent } from '../agent/agent-event';
+import { AgentProvider, AgentResponse } from '../agent/agent-provider';
 import { Position } from '../common/position';
 import { TextEdit } from '../common/text-edit';
 import { Diagnostic } from '../diagnostic/diagnostic';
@@ -8,15 +10,17 @@ import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from '../d
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
 import { Localizer } from './localizer';
+import { WorkspaceAccessor } from './workspace-accessor';
 
 export interface WorkspaceConfig<T = TextEdit> {
   localizer: Localizer;
   diagnosticProviders?: DiagnosticProvider<T>[];
   onTypeFormattingProviders?: OnTypeFormattingProvider<T>[];
   diagnosticDismissalStore?: DiagnosticDismissalStore;
+  agentProvider?: AgentProvider<T>;
 }
 
-export class Workspace<T = TextEdit> {
+export class Workspace<T = TextEdit> implements WorkspaceAccessor<T> {
   private readonly localizer: Localizer;
   private readonly diagnosticProviders: Map<string, DiagnosticProvider<T>>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider<T>>;
@@ -24,9 +28,11 @@ export class Workspace<T = TextEdit> {
     string,
     ({ source: string; event: DiagnosticsChanged } | undefined)[]
   >();
+  private readonly agentProvider?: AgentProvider<T>;
   diagnosticDismissalStore: DiagnosticDismissalStore;
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
+  public readonly agentEvents$: Observable<AgentEvent>;
 
   constructor(config: WorkspaceConfig<T>) {
     this.localizer = config.localizer;
@@ -44,12 +50,15 @@ export class Workspace<T = TextEdit> {
     this.onTypeFormattingProviders = new Map(
       config.onTypeFormattingProviders?.map((provider) => [provider.id, provider]),
     );
+    this.agentProvider = config.agentProvider;
+    this.agentEvents$ = config.agentProvider?.events$ ?? new Observable<AgentEvent>();
   }
 
   async init(): Promise<void> {
     await Promise.all(Array.from(this.diagnosticProviders.values()).map((provider) => provider.init()));
     await Promise.all(Array.from(this.onTypeFormattingProviders.values()).map((provider) => provider.init()));
     await this.localizer.init();
+    await this.agentProvider?.init(this);
   }
 
   changeLanguage(language: string): Promise<void> {
@@ -136,6 +145,20 @@ export class Workspace<T = TextEdit> {
       return true;
     }
     return false;
+  }
+
+  async runAgent(input: string): Promise<AgentResponse> {
+    if (this.agentProvider == null) {
+      throw new Error('No agent provider configured.');
+    }
+    return this.agentProvider.run(input);
+  }
+
+  streamAgent(input: string): Observable<AgentEvent> {
+    if (this.agentProvider == null) {
+      throw new Error('No agent provider configured.');
+    }
+    return this.agentProvider.stream(input);
   }
 
   private updateCombinedDiagnosticChangedEvent(providerIndex: number, providerId: string, event: DiagnosticsChanged) {

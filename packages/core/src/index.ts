@@ -1,3 +1,4 @@
+export * from './agent';
 export * from './common';
 export * from './diagnostic';
 export * from './document';
