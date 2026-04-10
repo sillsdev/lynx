@@ -1,12 +1,20 @@
 import { StructuredTool } from '@langchain/core/tools';
-import { AgentEvent, AgentEventType, AgentProvider, AgentResponse, TextEdit, WorkspaceAccessor } from '@sillsdev/lynx';
+import {
+  AgentEvent,
+  AgentEventType,
+  AgentProvider,
+  AgentResponse,
+  TextEdit,
+  TodoStatus,
+  WorkspaceAccessor,
+} from '@sillsdev/lynx';
 import { createDeepAgent } from 'deepagents';
-import { tool } from 'langchain';
+import { AIMessageChunk, tool } from 'langchain';
 import { Observable, Subject } from 'rxjs';
 
 import { DeepAgentConfig } from './deep-agent-config';
 import { DeepAgentToolDefinition } from './deep-agent-tool';
-import { createWorkspaceTools } from './deep-agent-workspace-tools';
+import { createWorkspaceTools } from './deep-agent-tools';
 
 type DeepAgent = ReturnType<typeof createDeepAgent>;
 
@@ -22,6 +30,7 @@ You have access to workspace tools that let you:
 
 When users ask about translation issues, first check the diagnostics for the relevant document.
 When suggesting fixes, use the diagnostic actions system to propose concrete edits.
+An action will either contain a \`command\` to execute by calling \`execute_diagnostic_command\` or \`edits\` to apply directly to the document.
 Always explain your reasoning in the context of Bible translation best practices.`;
 
 export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
@@ -212,8 +221,15 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
 
     // Tool execution results
     if ('tools' in event) {
-      const toolsData = event.tools as { messages?: unknown[] };
-      if (toolsData.messages) {
+      const toolsData = event.tools as { messages?: unknown[]; todos?: { content: string; status: TodoStatus }[] };
+      if (toolsData.todos) {
+        events.push({
+          type: AgentEventType.Todos,
+          timestamp,
+          runId,
+          todos: toolsData.todos,
+        });
+      } else if (toolsData.messages) {
         for (const msg of toolsData.messages) {
           const message = msg as {
             name?: string;
@@ -235,39 +251,31 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
   }
 
   private extractMessageEvents(data: unknown, runId: string, timestamp: number, events: AgentEvent[]): void {
-    const nodeData = data as { messages?: unknown[] };
+    const nodeData = data as { messages?: AIMessageChunk[] };
     if (!nodeData.messages) return;
 
-    for (const msg of nodeData.messages) {
-      const message = msg as {
-        content?: unknown;
-        tool_calls?: unknown[];
-        kwargs?: { content?: unknown; tool_calls?: unknown[] };
-      };
-
+    for (const message of nodeData.messages) {
       // Handle both raw and serialized (lc constructor) message formats
-      const content = message.kwargs?.content ?? message.content;
-      const toolCalls = message.kwargs?.tool_calls ?? message.tool_calls;
-
-      if (content && typeof content === 'string') {
+      const text = message.text;
+      if (text) {
         events.push({
           type: AgentEventType.Message,
           timestamp,
           runId,
-          content,
+          content: text,
           isPartial: false,
         });
       }
 
-      if (toolCalls && Array.isArray(toolCalls)) {
-        for (const tc of toolCalls) {
-          const toolCall = tc as { name?: string; args?: Record<string, unknown> };
+      const toolCalls = message.tool_calls;
+      if (toolCalls) {
+        for (const toolCall of toolCalls) {
           events.push({
             type: AgentEventType.ToolCall,
             timestamp,
             runId,
-            toolName: toolCall.name ?? 'unknown',
-            args: toolCall.args ?? {},
+            toolName: toolCall.name,
+            args: toolCall.args,
           });
         }
       }

@@ -6,8 +6,9 @@ export type {
   AgentEventStream,
   AgentMessageEvent,
   AgentStartedEvent,
+  AgentTodosEvent,
   AgentToolCallEvent,
   AgentToolResultEvent,
 } from './agent-event';
-export { AgentEventType } from './agent-event';
+export { AgentEventType, TodoStatus } from './agent-event';
 export type { AgentProvider, AgentResponse } from './agent-provider';

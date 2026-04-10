@@ -1,6 +1,8 @@
-import { WorkspaceAccessor } from '@sillsdev/lynx';
+import { Document, DocumentAccessor, WorkspaceAccessor } from '@sillsdev/lynx';
 import { tool } from 'langchain';
 import { z } from 'zod';
+
+import { DeepAgentToolDefinition } from './deep-agent-tool';
 
 const diagnosticSchema = z.object({
   code: z.union([z.string(), z.number()]),
@@ -38,7 +40,7 @@ export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
       },
       {
         name: 'get_diagnostic_actions',
-        description: 'Get available fix actions for a specific diagnostic issue in a document',
+        description: 'Get available fix actions for a specific diagnostic issue in a document.',
         schema: z.object({
           uri: z.string().describe('The document URI'),
           diagnostic: diagnosticSchema.describe('The diagnostic to get actions for'),
@@ -74,5 +76,33 @@ export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
         }),
       },
     ),
+  ];
+}
+
+export function createDocumentAccessorTools<T extends Document = Document>(
+  documents: DocumentAccessor<T>,
+): DeepAgentToolDefinition[] {
+  return [
+    {
+      name: 'get_active_documents',
+      description: 'Returns a list of all documents currently open in the workspace with their URIs and formats.',
+      schema: z.object({}),
+      async execute(_args: unknown) {
+        const docs = await documents.active();
+        return JSON.stringify(docs.map((doc) => ({ uri: doc.uri, format: doc.format })));
+      },
+    },
+    {
+      name: 'get_document',
+      description: 'Returns the URI, format, version, and full text content of a workspace document by URI.',
+      schema: z.object({ uri: z.string().describe('The URI of the document to retrieve.') }),
+      async execute({ uri }: { uri: string }) {
+        const doc = await documents.get(uri);
+        if (doc == null) {
+          return JSON.stringify({ error: `Document not found: ${uri}` });
+        }
+        return JSON.stringify({ uri: doc.uri, format: doc.format, version: doc.version, content: doc.getText() });
+      },
+    },
   ];
 }

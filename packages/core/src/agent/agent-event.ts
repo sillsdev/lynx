@@ -7,6 +7,13 @@ export enum AgentEventType {
   ToolResult = 'tool-result',
   Error = 'error',
   Completed = 'completed',
+  Todos = 'todos',
+}
+
+export enum TodoStatus {
+  Pending = 'pending',
+  Completed = 'completed',
+  InProgress = 'in_progress',
 }
 
 export interface AgentEventBase {
@@ -47,13 +54,19 @@ export interface AgentCompletedEvent extends AgentEventBase {
   readonly finalMessage: string;
 }
 
+export interface AgentTodosEvent extends AgentEventBase {
+  readonly type: AgentEventType.Todos;
+  readonly todos: { content: string; status: TodoStatus }[];
+}
+
 export type AgentEvent =
   | AgentStartedEvent
   | AgentMessageEvent
   | AgentToolCallEvent
   | AgentToolResultEvent
   | AgentErrorEvent
-  | AgentCompletedEvent;
+  | AgentCompletedEvent
+  | AgentTodosEvent;
 
 export interface AgentEventStream {
   readonly events$: Observable<AgentEvent>;
