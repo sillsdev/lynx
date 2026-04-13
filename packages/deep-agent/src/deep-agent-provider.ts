@@ -1,4 +1,5 @@
 import { StructuredTool } from '@langchain/core/tools';
+import { MemorySaver } from '@langchain/langgraph';
 import { AgentEvent, AgentEventType, AgentProvider, AgentResponse, TextEdit, TodoStatus } from '@sillsdev/lynx';
 import { createDeepAgent } from 'deepagents';
 import { AIMessageChunk, tool } from 'langchain';
@@ -55,11 +56,12 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
       tools,
       subagents,
       skills: this.config.skills,
+      checkpointer: new MemorySaver(),
     });
     return Promise.resolve();
   }
 
-  async run(input: string): Promise<AgentResponse> {
+  async run(input: string, threadId?: string): Promise<AgentResponse> {
     if (this.agent == null) {
       throw new Error('Agent not initialized. Call init() first.');
     }
@@ -73,9 +75,10 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
     });
 
     try {
-      const result = await this.agent.invoke({
-        messages: [{ role: 'user', content: input }],
-      });
+      const result = await this.agent.invoke(
+        { messages: [{ role: 'user', content: input }] },
+        threadId != null ? { configurable: { thread_id: threadId } } : undefined,
+      );
 
       const lastMessage = result.messages[result.messages.length - 1];
       const finalMessage =
@@ -101,7 +104,7 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
     }
   }
 
-  stream(input: string): Observable<AgentEvent> {
+  stream(input: string, threadId?: string): Observable<AgentEvent> {
     return new Observable<AgentEvent>((subscriber) => {
       if (this.agent == null) {
         subscriber.error(new Error('Agent not initialized. Call init() first.'));
@@ -123,7 +126,10 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
         try {
           const agentStream = await this.agent!.stream(
             { messages: [{ role: 'user', content: input }] },
-            { streamMode: 'updates' },
+            {
+              streamMode: 'updates',
+              ...(threadId != null ? { configurable: { thread_id: threadId } } : undefined),
+            },
           );
 
           let finalMessage = '';

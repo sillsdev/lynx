@@ -146,18 +146,18 @@ export class Workspace<T = TextEdit> {
     return false;
   }
 
-  async runAgent(input: string): Promise<AgentResponse> {
+  async runAgent(input: string, threadId?: string): Promise<AgentResponse> {
     if (this.agentProvider == null) {
       throw new Error('No agent provider configured.');
     }
-    return this.agentProvider.run(input);
+    return this.agentProvider.run(input, threadId);
   }
 
-  streamAgent(input: string): Observable<AgentEvent> {
+  streamAgent(input: string, threadId?: string): Observable<AgentEvent> {
     if (this.agentProvider == null) {
       throw new Error('No agent provider configured.');
     }
-    return this.agentProvider.stream(input);
+    return this.agentProvider.stream(input, threadId);
   }
 
   private updateCombinedDiagnosticChangedEvent(providerIndex: number, providerId: string, event: DiagnosticsChanged) {

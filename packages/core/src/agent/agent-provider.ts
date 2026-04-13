@@ -11,7 +11,7 @@ export interface AgentProvider {
   readonly events$: Observable<AgentEvent>;
 
   init(): Promise<void>;
-  run(input: string): Promise<AgentResponse>;
-  stream(input: string): Observable<AgentEvent>;
+  run(input: string, threadId?: string): Promise<AgentResponse>;
+  stream(input: string, threadId?: string): Observable<AgentEvent>;
   dispose(): Promise<void>;
 }

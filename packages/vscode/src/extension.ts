@@ -32,6 +32,7 @@ const DEFAULT_MODELS = {
 } as const satisfies Record<AgentProvider, string>;
 
 const USFM_SELECTOR = { language: 'usfm', scheme: 'file' };
+const PARTICIPANT_ID = 'lynx.chatParticipant';
 
 function emptyToUndefined(value: string | undefined): string | undefined {
   return value === '' ? undefined : value;
@@ -273,8 +274,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }
 
   if (agentEnabled) {
-    const chatHandler: vscode.ChatRequestHandler = async (request, _context, response, token) => {
-      const events$ = workspace.streamAgent(request.prompt);
+    const chatHandler: vscode.ChatRequestHandler = async (request, context, response, token) => {
+      let threadId: string;
+      if (context.history.length === 0) {
+        threadId = crypto.randomUUID();
+      } else {
+        // check if the last message has a threadId in its metadata, if so use that, otherwise generate a new one
+        let lastResponseTurn: vscode.ChatResponseTurn | undefined;
+        for (let i = context.history.length - 1; i >= 0; i--) {
+          const turn = context.history[i];
+          if (turn instanceof vscode.ChatResponseTurn && turn.participant === PARTICIPANT_ID) {
+            lastResponseTurn = turn;
+            break;
+          }
+        }
+        threadId = (lastResponseTurn?.result.metadata?.threadId as string | undefined) ?? crypto.randomUUID();
+      }
+      const events$ = workspace.streamAgent(request.prompt, threadId);
 
       return new Promise<vscode.ChatResult>((resolve) => {
         const subscription = events$.subscribe({
@@ -297,15 +313,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 break;
               }
               case AgentEventType.Error:
-                resolve({ errorDetails: { message: event.error } });
+                resolve({ metadata: { threadId }, errorDetails: { message: event.error } });
                 break;
               case AgentEventType.Completed:
-                resolve({});
+                resolve({ metadata: { threadId } });
                 break;
             }
           },
           error(err) {
             resolve({
+              metadata: { threadId },
               errorDetails: { message: err instanceof Error ? err.message : String(err) },
             });
           },
@@ -313,7 +330,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
         const cancellationListener = token.onCancellationRequested(() => {
           subscription.unsubscribe();
-          resolve({});
+          resolve({ metadata: { threadId } });
         });
         subscription.add(() => {
           cancellationListener.dispose();
@@ -321,7 +338,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       });
     };
 
-    const participant = vscode.chat.createChatParticipant('lynx.chatParticipant', chatHandler);
+    const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, chatHandler);
     context.subscriptions.push(participant);
   }
 }
