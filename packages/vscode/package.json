@@ -16,6 +16,9 @@
   "engines": {
     "vscode": "^1.93.0"
   },
+  "enabledApiProposals": [
+    "chatParticipantAdditions"
+  ],
   "activationEvents": [
     "onLanguage:usfm"
   ],
@@ -58,7 +61,11 @@
         },
         "lynx.agent.provider": {
           "type": "string",
-          "enum": ["anthropic", "openai", "google-genai"],
+          "enum": [
+            "anthropic",
+            "openai",
+            "google-genai"
+          ],
           "default": "anthropic",
           "description": "LLM provider for the Lynx agent."
         },

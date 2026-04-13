@@ -1,5 +1,4 @@
-import { WorkspaceAccessor } from '@sillsdev/lynx';
-import { AgentEventType } from '@sillsdev/lynx';
+import { AgentEventType, DiagnosticProvider, DocumentAccessor } from '@sillsdev/lynx';
 import { FakeToolCallingModel } from 'langchain';
 import { firstValueFrom, take, toArray } from 'rxjs';
 import { describe, expect, it } from 'vitest';
@@ -29,14 +28,20 @@ const greetToolDefinition = {
 describe('DeepAgentProvider', () => {
   const baseConfig: DeepAgentConfig = {
     model: createTextOnlyModel(),
-    exposeWorkspaceTools: false,
+    documents: mock<DocumentAccessor>(),
+    applyEdit: async () => {
+      /* empty */
+    },
   };
 
   describe('init()', () => {
     it('passes custom tools to the agent', async () => {
       const config: DeepAgentConfig = {
         model: createTextOnlyModel(),
-        exposeWorkspaceTools: false,
+        documents: mock<DocumentAccessor>(),
+        applyEdit: async () => {
+          /* empty */
+        },
         tools: [
           {
             name: 'my_tool',
@@ -47,25 +52,30 @@ describe('DeepAgentProvider', () => {
         ],
       };
       const provider = new DeepAgentProvider(config);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       // Verify init completes without error - tools are passed to createDeepAgent internally
       const result = await provider.run('hello');
       expect(result.runId).toBeDefined();
     });
 
-    it('creates workspace tools when exposeWorkspaceTools is true', async () => {
-      const workspace = mock<WorkspaceAccessor>();
-      workspace.getDiagnostics.mockResolvedValue([]);
+    it('creates diagnostic provider tools when diagnosticProviders are supplied', async () => {
+      const diagnosticProvider = mock<DiagnosticProvider>();
+      Object.assign(diagnosticProvider, { id: 'test-provider', description: 'A test diagnostic provider' });
+      diagnosticProvider.getDiagnostics.mockResolvedValue([]);
 
       const config: DeepAgentConfig = {
         model: createToolCallingModel(),
-        exposeWorkspaceTools: true,
+        documents: mock<DocumentAccessor>(),
+        applyEdit: async () => {
+          /* empty */
+        },
+        diagnosticProviders: [diagnosticProvider],
       };
       const provider = new DeepAgentProvider(config);
 
-      // Should not throw - workspace tools are created and bound
-      await provider.init(workspace);
+      // Should not throw - diagnostic provider tools are created and bound
+      await provider.init();
     });
   });
 
@@ -77,7 +87,7 @@ describe('DeepAgentProvider', () => {
 
     it('returns AgentResponse with runId and message', async () => {
       const provider = new DeepAgentProvider(baseConfig);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const result = await provider.run('test input');
 
@@ -88,7 +98,7 @@ describe('DeepAgentProvider', () => {
 
     it('emits Started and Completed events to global events$', async () => {
       const provider = new DeepAgentProvider(baseConfig);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const eventsPromise = firstValueFrom(provider.events$.pipe(take(2), toArray()));
       await provider.run('test input');
@@ -102,11 +112,14 @@ describe('DeepAgentProvider', () => {
     it('invokes a tool and returns the final message', async () => {
       const config: DeepAgentConfig = {
         model: createToolCallingModel(),
-        exposeWorkspaceTools: false,
+        documents: mock<DocumentAccessor>(),
+        applyEdit: async () => {
+          /* empty */
+        },
         tools: [greetToolDefinition],
       };
       const provider = new DeepAgentProvider(config);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const result = await provider.run('Please greet World');
 
@@ -124,7 +137,7 @@ describe('DeepAgentProvider', () => {
 
     it('emits Started and Completed events', async () => {
       const provider = new DeepAgentProvider(baseConfig);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const events = await firstValueFrom(provider.stream('test input').pipe(toArray()));
 
@@ -136,11 +149,14 @@ describe('DeepAgentProvider', () => {
     it('emits tool call and tool result events when tools are used', async () => {
       const config: DeepAgentConfig = {
         model: createToolCallingModel(),
-        exposeWorkspaceTools: false,
+        documents: mock<DocumentAccessor>(),
+        applyEdit: async () => {
+          /* empty */
+        },
         tools: [greetToolDefinition],
       };
       const provider = new DeepAgentProvider(config);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const events = await firstValueFrom(provider.stream('Greet World').pipe(toArray()));
 
@@ -156,7 +172,7 @@ describe('DeepAgentProvider', () => {
 
     it('forwards events to global events$', async () => {
       const provider = new DeepAgentProvider(baseConfig);
-      await provider.init(mock<WorkspaceAccessor>());
+      await provider.init();
 
       const globalEventsPromise = firstValueFrom(provider.events$.pipe(take(2), toArray()));
       await firstValueFrom(provider.stream('test input').pipe(toArray()));

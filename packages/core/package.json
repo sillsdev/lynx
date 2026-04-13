@@ -22,7 +22,8 @@
     "build": "tsdown",
     "dev": "tsdown --watch --sourcemap",
     "check-types": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "SIL Global",

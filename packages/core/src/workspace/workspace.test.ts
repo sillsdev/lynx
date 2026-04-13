@@ -632,39 +632,29 @@ describe('Workspace', () => {
     it('runAgent() delegates to agent provider', async () => {
       const env = new TestEnvironment(undefined, true);
       const response: AgentResponse = { runId: 'run-1', message: 'Hello' };
-      env.agentProvider!.run.mockResolvedValue(response);
+      env.agentProvider.run.mockResolvedValue(response);
 
       const result = await env.workspace.runAgent('test input');
 
       expect(result).toEqual(response);
-      expect(env.agentProvider!.run).toHaveBeenCalledWith('test input');
+      expect(env.agentProvider.run).toHaveBeenCalledWith('test input', undefined);
     });
 
     it('streamAgent() returns provider stream', () => {
       const env = new TestEnvironment(undefined, true);
       const agentEventsSubject = new Subject<AgentEvent>();
-      env.agentProvider!.stream.mockReturnValue(agentEventsSubject.asObservable());
+      env.agentProvider.stream.mockReturnValue(agentEventsSubject.asObservable());
 
       const result = env.workspace.streamAgent('test input');
 
       expect(result).toBeInstanceOf(Observable);
-      expect(env.agentProvider!.stream).toHaveBeenCalledWith('test input');
+      expect(env.agentProvider.stream).toHaveBeenCalledWith('test input', undefined);
     });
 
     it('init() calls agentProvider.init()', async () => {
       const env = new TestEnvironment(undefined, true);
       await env.workspace.init();
-      expect(env.agentProvider!.init).toHaveBeenCalled();
-    });
-
-    it('agentEvents$ is set when agent provider is configured', () => {
-      const env = new TestEnvironment(undefined, true);
-      expect(env.workspace.agentEvents$).toBeDefined();
-    });
-
-    it('agentEvents$ is undefined when no agent provider', () => {
-      const env = new TestEnvironment();
-      expect(env.workspace.agentEvents$).toBeUndefined();
+      expect(env.agentProvider.init).toHaveBeenCalled();
     });
 
     it('agentEvents$ emits events from provider', async () => {
@@ -675,8 +665,8 @@ describe('Workspace', () => {
         runId: 'run-1',
       };
 
-      const eventPromise = firstValueFrom(env.workspace.agentEvents$!);
-      env.agentEventsSubject!.next(event);
+      const eventPromise = firstValueFrom(env.workspace.agentEvents$);
+      env.agentEventsSubject.next(event);
       const received = await eventPromise;
 
       expect(received).toEqual(event);
@@ -690,8 +680,8 @@ class TestEnvironment {
   readonly provider2: MockProxy<DiagnosticProvider>;
   readonly provider1Subject: Subject<DiagnosticsChanged>;
   readonly provider2Subject: Subject<DiagnosticsChanged>;
-  readonly agentProvider?: MockProxy<AgentProvider>;
-  readonly agentEventsSubject?: Subject<AgentEvent>;
+  readonly agentProvider: MockProxy<AgentProvider>;
+  readonly agentEventsSubject: Subject<AgentEvent>;
   readonly workspace: Workspace;
 
   constructor(dismissalStore?: DiagnosticDismissalStore, withAgent?: boolean) {
@@ -722,23 +712,21 @@ class TestEnvironment {
     this.provider2.getDiagnostics.mockResolvedValue([]);
     this.provider2.getDiagnosticActions.mockResolvedValue([]);
 
-    if (withAgent) {
-      this.agentEventsSubject = new Subject<AgentEvent>();
-      this.agentProvider = mock<AgentProvider>(
-        Object.create({
-          id: 'test-agent',
-          events$: this.agentEventsSubject.asObservable(),
-        }),
-      );
-      this.agentProvider.init.mockResolvedValue();
-      this.agentProvider.dispose.mockResolvedValue();
-    }
+    this.agentEventsSubject = new Subject<AgentEvent>();
+    this.agentProvider = mock<AgentProvider>(
+      Object.create({
+        id: 'test-agent',
+        events$: this.agentEventsSubject.asObservable(),
+      }),
+    );
+    this.agentProvider.init.mockResolvedValue();
+    this.agentProvider.dispose.mockResolvedValue();
 
     this.workspace = new Workspace({
       localizer: this.localizer,
       diagnosticProviders: [this.provider1, this.provider2],
       diagnosticDismissalStore: dismissalStore,
-      agentProvider: this.agentProvider,
+      agentProvider: withAgent ? this.agentProvider : undefined,
     });
   }
 }

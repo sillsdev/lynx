@@ -67,6 +67,7 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
     }
 
     const runId = crypto.randomUUID();
+    const resolvedThreadId = threadId ?? crypto.randomUUID();
 
     this.emitEvent({
       type: AgentEventType.Started,
@@ -77,7 +78,7 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
     try {
       const result = await this.agent.invoke(
         { messages: [{ role: 'user', content: input }] },
-        threadId != null ? { configurable: { thread_id: threadId } } : undefined,
+        { configurable: { thread_id: resolvedThreadId } },
       );
 
       const lastMessage = result.messages[result.messages.length - 1];
@@ -112,6 +113,7 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
       }
 
       const runId = crypto.randomUUID();
+      const resolvedThreadId = threadId ?? crypto.randomUUID();
       let aborted = false;
 
       const execute = async () => {
@@ -128,7 +130,7 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
             { messages: [{ role: 'user', content: input }] },
             {
               streamMode: 'updates',
-              ...(threadId != null ? { configurable: { thread_id: threadId } } : undefined),
+              configurable: { thread_id: resolvedThreadId },
             },
           );
 

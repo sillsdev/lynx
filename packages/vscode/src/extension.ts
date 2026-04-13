@@ -82,6 +82,17 @@ function toVscodeTextEdit(edit: TextEdit): vscode.TextEdit {
   return new vscode.TextEdit(toVscodeRange(edit.range), edit.newText);
 }
 
+function toVscodeTodoStatus(status: TodoStatus): vscode.ChatTodoStatus {
+  switch (status) {
+    case TodoStatus.Pending:
+      return vscode.ChatTodoStatus.NotStarted;
+    case TodoStatus.InProgress:
+      return vscode.ChatTodoStatus.InProgress;
+    case TodoStatus.Completed:
+      return vscode.ChatTodoStatus.Completed;
+  }
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const config = vscode.workspace.getConfiguration('lynx');
   const dismissalFilePath = config.get<string>('diagnosticDismissalFilePath');
@@ -293,6 +304,30 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const events$ = workspace.streamAgent(request.prompt, threadId);
 
       return new Promise<vscode.ChatResult>((resolve) => {
+        let todoCounter = 0;
+        let currentTodoCallId: string | undefined;
+        let lastTodoData: vscode.ChatTodoToolInvocationData | undefined;
+
+        const hidePreviousTodos = () => {
+          if (currentTodoCallId) {
+            const hide = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
+            hide.enablePartialUpdate = true;
+            hide.isComplete = true;
+            hide.presentation = 'hidden';
+            response.push(hide);
+          }
+        };
+
+        const completeTodos = () => {
+          if (currentTodoCallId) {
+            const part = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
+            part.enablePartialUpdate = true;
+            part.isComplete = true;
+            part.toolSpecificData = lastTodoData;
+            response.push(part);
+          }
+        };
+
         const subscription = events$.subscribe({
           next(event) {
             switch (event.type) {
@@ -306,21 +341,38 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
                 response.progress(`Running ${event.toolName}`);
                 break;
               case AgentEventType.Todos: {
-                const todoList = event.todos
-                  .map((t) => `- [${t.status === TodoStatus.Completed ? 'x' : ' '}] ${t.content}`)
-                  .join('\n');
-                response.markdown(`### Tasks:\n${todoList}\n`);
+                // Workaround for VS Code bug: toolSpecificData updates don't trigger
+                // UI re-renders, so we hide the old part and create a new one.
+                hidePreviousTodos();
+                todoCounter++;
+                const callId = `lynx-todos-${todoCounter.toString()}`;
+                currentTodoCallId = callId;
+                lastTodoData = {
+                  todoList: event.todos.map((t, i) => ({
+                    id: i,
+                    title: t.content,
+                    status: toVscodeTodoStatus(t.status),
+                  })),
+                };
+                const part = new vscode.ChatToolInvocationPart('todos', callId);
+                part.enablePartialUpdate = true;
+                part.isComplete = false;
+                part.toolSpecificData = lastTodoData;
+                response.push(part);
                 break;
               }
               case AgentEventType.Error:
+                completeTodos();
                 resolve({ metadata: { threadId }, errorDetails: { message: event.error } });
                 break;
               case AgentEventType.Completed:
+                completeTodos();
                 resolve({ metadata: { threadId } });
                 break;
             }
           },
           error(err) {
+            completeTodos();
             resolve({
               metadata: { threadId },
               errorDetails: { message: err instanceof Error ? err.message : String(err) },
@@ -329,6 +381,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         });
 
         const cancellationListener = token.onCancellationRequested(() => {
+          completeTodos();
           subscription.unsubscribe();
           resolve({ metadata: { threadId } });
         });
