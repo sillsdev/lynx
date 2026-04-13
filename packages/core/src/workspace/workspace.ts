@@ -10,17 +10,16 @@ import { DiagnosticDismissalStore, InMemoryDiagnosticDismissalStore } from '../d
 import { DiagnosticProvider, DiagnosticsChanged } from '../diagnostic/diagnostic-provider';
 import { OnTypeFormattingProvider } from '../formatting/on-type-formatting-provider';
 import { Localizer } from './localizer';
-import { WorkspaceAccessor } from './workspace-accessor';
 
 export interface WorkspaceConfig<T = TextEdit> {
   localizer: Localizer;
   diagnosticProviders?: DiagnosticProvider<T>[];
   onTypeFormattingProviders?: OnTypeFormattingProvider<T>[];
   diagnosticDismissalStore?: DiagnosticDismissalStore;
-  agentProvider?: AgentProvider<T>;
+  agentProvider?: AgentProvider;
 }
 
-export class Workspace<T = TextEdit> implements WorkspaceAccessor<T> {
+export class Workspace<T = TextEdit> {
   private readonly localizer: Localizer;
   private readonly diagnosticProviders: Map<string, DiagnosticProvider<T>>;
   private readonly onTypeFormattingProviders: Map<string, OnTypeFormattingProvider<T>>;
@@ -28,7 +27,7 @@ export class Workspace<T = TextEdit> implements WorkspaceAccessor<T> {
     string,
     ({ source: string; event: DiagnosticsChanged } | undefined)[]
   >();
-  private readonly agentProvider?: AgentProvider<T>;
+  private readonly agentProvider?: AgentProvider;
   diagnosticDismissalStore: DiagnosticDismissalStore;
 
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
@@ -58,7 +57,7 @@ export class Workspace<T = TextEdit> implements WorkspaceAccessor<T> {
     await Promise.all(Array.from(this.diagnosticProviders.values()).map((provider) => provider.init()));
     await Promise.all(Array.from(this.onTypeFormattingProviders.values()).map((provider) => provider.init()));
     await this.localizer.init();
-    await this.agentProvider?.init(this);
+    await this.agentProvider?.init();
   }
 
   changeLanguage(language: string): Promise<void> {

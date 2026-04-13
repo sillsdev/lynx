@@ -1,20 +1,12 @@
 import { StructuredTool } from '@langchain/core/tools';
-import {
-  AgentEvent,
-  AgentEventType,
-  AgentProvider,
-  AgentResponse,
-  TextEdit,
-  TodoStatus,
-  WorkspaceAccessor,
-} from '@sillsdev/lynx';
+import { AgentEvent, AgentEventType, AgentProvider, AgentResponse, TextEdit, TodoStatus } from '@sillsdev/lynx';
 import { createDeepAgent } from 'deepagents';
 import { AIMessageChunk, tool } from 'langchain';
 import { Observable, Subject } from 'rxjs';
 
 import { DeepAgentConfig } from './deep-agent-config';
 import { DeepAgentToolDefinition } from './deep-agent-tool';
-import { createWorkspaceTools } from './deep-agent-tools';
+import { createApplyEditTool, createDiagnosticProviderTools, createDocumentAccessorTools } from './deep-agent-tools';
 
 type DeepAgent = ReturnType<typeof createDeepAgent>;
 
@@ -31,22 +23,24 @@ You have access to workspace tools that let you:
 When users ask about translation issues, first check the diagnostics for the relevant document.
 When suggesting fixes, use the diagnostic actions system to propose concrete edits.
 An action will either contain a \`command\` to execute by calling \`execute_diagnostic_command\` or \`edits\` to apply directly to the document.
-Always explain your reasoning in the context of Bible translation best practices.`;
+You should use the \`apply_edit\` tool to apply \`edits\` to a document.
+Always explain your reasoning in the context of Bible translation best practices.
+File system tools, such as \`edit_file\`, \`read_file\`, \`write_file\`, \`ls\`, etc., should only be used for scratch files, never for actual translation documents.`;
 
-export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
-  readonly config: DeepAgentConfig;
+export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
+  readonly config: DeepAgentConfig<T>;
 
   private agent?: DeepAgent;
   private readonly eventsSubject = new Subject<AgentEvent>();
 
   readonly events$: Observable<AgentEvent> = this.eventsSubject.asObservable();
 
-  constructor(config: DeepAgentConfig) {
+  constructor(config: DeepAgentConfig<T>) {
     this.config = config;
   }
 
-  init(workspace: WorkspaceAccessor<T>): Promise<void> {
-    const tools = this.buildTools(workspace);
+  init(): Promise<void> {
+    const tools = this.buildTools();
     const subagents = this.config.subAgents?.map((sa) => ({
       name: sa.name,
       description: sa.description,
@@ -186,12 +180,16 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider<T> {
     return Promise.resolve();
   }
 
-  private buildTools(workspace: WorkspaceAccessor<T>): StructuredTool[] {
+  private buildTools(): StructuredTool[] {
     const tools: StructuredTool[] = (this.config.tools ?? []).map((t) => this.convertTool(t));
 
-    if (this.config.exposeWorkspaceTools ?? true) {
-      tools.push(...createWorkspaceTools(workspace));
+    if (this.config.diagnosticProviders != null && this.config.diagnosticProviders.length > 0) {
+      tools.push(...createDiagnosticProviderTools(this.config.diagnosticProviders));
     }
+
+    tools.push(...createDocumentAccessorTools(this.config.documents));
+
+    tools.push(createApplyEditTool(this.config.applyEdit as (uri: string, edits: unknown[]) => Promise<void>));
 
     return tools;
   }

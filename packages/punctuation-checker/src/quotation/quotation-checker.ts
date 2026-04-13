@@ -42,6 +42,7 @@ export class QuotationChecker<TDoc extends TextDocument | ScriptureDocument, TEd
   ) {
     super(
       'quotation-mark-checker',
+      'Checks for correct and consistent usage of quotation marks, including matching pairs and proper nesting',
       documentAccessor,
       new QuotationIssueFinderFactory(localizer, quotationConfig),
       validateAllDocuments,

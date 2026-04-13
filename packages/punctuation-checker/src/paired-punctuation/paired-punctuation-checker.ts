@@ -43,6 +43,7 @@ export class PairedPunctuationChecker<
   ) {
     super(
       'paired-punctuation-checker',
+      'Checks for unmatched paired punctuation marks such as parentheses, brackets, and braces',
       documentAccessor,
       new PairedPunctuationIssueFinderFactory(localizer, pairedPunctuationConfig),
       validateAllDocuments,

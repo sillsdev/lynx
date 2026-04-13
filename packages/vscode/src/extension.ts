@@ -11,7 +11,7 @@ import {
   TodoStatus,
   Workspace,
 } from '@sillsdev/lynx';
-import { createDocumentAccessorTools, DeepAgentProvider } from '@sillsdev/lynx-deep-agent';
+import { DeepAgentProvider } from '@sillsdev/lynx-deep-agent';
 import {
   JsonFileDiagnosticDismissalStore,
   SimpleQuoteFormattingProvider,
@@ -22,8 +22,6 @@ import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { initChatModel } from 'langchain/chat_models/universal';
 import * as vscode from 'vscode';
-
-import { createVscodeContextTools } from './vscode-tools';
 
 type AgentProvider = 'anthropic' | 'openai' | 'google-genai';
 
@@ -97,6 +95,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const documentManager = new DocumentManager<ScriptureDocument>(documentFactory);
   const ruleSet = StandardRuleSets.English;
 
+  const diagnosticProviders = [
+    ...ruleSet.createDiagnosticProviders(localizer, documentManager, editFactory),
+    new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory),
+  ];
+
   let agentProvider: DeepAgentProvider | undefined;
   if (agentEnabled) {
     const agentModel = emptyToUndefined(config.get<string>('agent.model')) ?? DEFAULT_MODELS[agentProviderName];
@@ -106,16 +109,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     });
     agentProvider = new DeepAgentProvider({
       model,
-      tools: [...createVscodeContextTools(), ...createDocumentAccessorTools(documentManager)],
+      documents: documentManager,
+      applyEdit: async (uri, edits) => {
+        const docUri = vscode.Uri.parse(uri);
+        const wsEdit = new vscode.WorkspaceEdit();
+        wsEdit.set(docUri, edits.map(toVscodeTextEdit));
+        await vscode.workspace.applyEdit(wsEdit);
+      },
+      diagnosticProviders,
     });
   }
 
   const workspace = new Workspace({
     localizer,
-    diagnosticProviders: [
-      ...ruleSet.createDiagnosticProviders(localizer, documentManager, editFactory),
-      new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory),
-    ],
+    diagnosticProviders,
     onTypeFormattingProviders: [
       ...ruleSet.createOnTypeFormattingProviders(documentManager, editFactory),
       new SimpleQuoteFormattingProvider(documentManager, editFactory),
@@ -274,19 +281,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           next(event) {
             switch (event.type) {
               case AgentEventType.Started:
-                response.progress('Thinking...');
+                response.progress('Thinking');
                 break;
               case AgentEventType.Message:
                 response.markdown(event.content);
                 break;
               case AgentEventType.ToolCall:
-                response.progress(`Running ${event.toolName}...`);
+                response.progress(`Running ${event.toolName}`);
                 break;
               case AgentEventType.Todos: {
                 const todoList = event.todos
                   .map((t) => `- [${t.status === TodoStatus.Completed ? 'x' : ' '}] ${t.content}`)
                   .join('\n');
-                response.markdown(`### Updating Tasks:\n${todoList}\n`);
+                response.markdown(`### Tasks:\n${todoList}\n`);
                 break;
               }
               case AgentEventType.Error:

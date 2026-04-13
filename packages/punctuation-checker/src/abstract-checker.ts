@@ -27,6 +27,7 @@ export abstract class AbstractChecker<TDoc extends TextDocument | ScriptureDocum
 
   constructor(
     public readonly id: string,
+    public readonly description: string,
     private readonly documentAccessor: DocumentAccessor<TDoc>,
     private readonly issueFinderFactory: IssueFinderFactory,
     validateAllDocuments = false,

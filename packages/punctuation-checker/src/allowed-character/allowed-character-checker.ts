@@ -27,6 +27,7 @@ export class AllowedCharacterChecker<
   ) {
     super(
       'allowed-character-set-checker',
+      'Checks that all characters in a document belong to the configured allowed character set',
       documentAccessor,
       new AllowedCharacterIssueFinderFactory(localizer, allowedCharacterSet),
       validateAllDocuments,

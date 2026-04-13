@@ -25,6 +25,8 @@ interface DiagnosticData {
 
 export class VerseOrderDiagnosticProvider<T = TextEdit> implements DiagnosticProvider<T> {
   public readonly id = 'verse-order';
+  public readonly description =
+    'Checks that Scripture verses appear in the correct numerical order within each chapter';
   public readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
   public readonly commands = new Set(['excludeVerse']);
   private readonly refreshSubject = new Subject<string>();

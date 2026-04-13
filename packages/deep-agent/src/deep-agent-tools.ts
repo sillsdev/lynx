@@ -1,8 +1,6 @@
-import { Document, DocumentAccessor, WorkspaceAccessor } from '@sillsdev/lynx';
-import { tool } from 'langchain';
+import { DiagnosticProvider, Document, DocumentAccessor } from '@sillsdev/lynx';
+import { StructuredTool, tool } from 'langchain';
 import { z } from 'zod';
-
-import { DeepAgentToolDefinition } from './deep-agent-tool';
 
 const diagnosticSchema = z.object({
   code: z.union([z.string(), z.number()]),
@@ -18,12 +16,30 @@ const diagnosticSchema = z.object({
   fingerprint: z.string().optional(),
 });
 
-export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
+export function createDiagnosticProviderTools(providers: DiagnosticProvider<unknown>[]): StructuredTool[] {
+  function findProvider(source: string): DiagnosticProvider<unknown> | undefined {
+    return providers.find((p) => p.id === source);
+  }
+
   return [
     tool(
+      () => {
+        return Promise.resolve(
+          JSON.stringify(
+            providers.map((p) => ({ id: p.id, description: p.description, commands: Array.from(p.commands) })),
+          ),
+        );
+      },
+      {
+        name: 'get_diagnostic_providers',
+        description: 'Returns the list of available diagnostic providers with their IDs and supported commands.',
+        schema: z.object({}),
+      },
+    ),
+    tool(
       async ({ uri }) => {
-        const diagnostics = await workspace.getDiagnostics(uri);
-        return JSON.stringify(diagnostics);
+        const results = await Promise.all(providers.map((p) => p.getDiagnostics(uri)));
+        return JSON.stringify(results.flat());
       },
       {
         name: 'get_diagnostics',
@@ -34,8 +50,26 @@ export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
       },
     ),
     tool(
+      async ({ providerId, uri }: { providerId: string; uri: string }) => {
+        const provider = findProvider(providerId);
+        if (provider == null) return JSON.stringify({ error: `Unknown provider: ${providerId}` });
+        const diagnostics = await provider.getDiagnostics(uri);
+        return JSON.stringify(diagnostics);
+      },
+      {
+        name: 'get_diagnostics_by_provider',
+        description: 'Get diagnostics for a specific provider by its ID.',
+        schema: z.object({
+          providerId: z.string().describe('The provider ID to get diagnostics from'),
+          uri: z.string().describe('The document URI to get diagnostics for'),
+        }),
+      },
+    ),
+    tool(
       async ({ uri, diagnostic }) => {
-        const actions = await workspace.getDiagnosticActions(uri, diagnostic);
+        const provider = findProvider(diagnostic.source);
+        if (provider == null) return JSON.stringify([]);
+        const actions = await provider.getDiagnosticActions(uri, diagnostic);
         return JSON.stringify(actions);
       },
       {
@@ -48,22 +82,11 @@ export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
       },
     ),
     tool(
-      async ({ uri, diagnostic }) => {
-        const result = await workspace.dismissDiagnostic(uri, diagnostic);
-        return JSON.stringify({ dismissed: result });
-      },
-      {
-        name: 'dismiss_diagnostic',
-        description: 'Dismiss a diagnostic so it no longer appears. The diagnostic must have a fingerprint.',
-        schema: z.object({
-          uri: z.string().describe('The document URI'),
-          diagnostic: diagnosticSchema.describe('The diagnostic to dismiss'),
-        }),
-      },
-    ),
-    tool(
       async ({ command, uri, diagnostic }) => {
-        const result = await workspace.executeDiagnosticActionCommand(command, uri, diagnostic);
+        const provider = findProvider(diagnostic.source);
+        if (provider == null) return JSON.stringify({ executed: false });
+        const result = await provider.executeCommand(command, uri, diagnostic);
+        if (result) await provider.refresh(uri);
         return JSON.stringify({ executed: result });
       },
       {
@@ -79,30 +102,61 @@ export function createWorkspaceTools<T>(workspace: WorkspaceAccessor<T>) {
   ];
 }
 
+export function createApplyEditTool(applyEdit: (uri: string, edits: unknown[]) => Promise<void>): StructuredTool {
+  const positionSchema = z.object({ line: z.number(), character: z.number() });
+  const rangeSchema = z.object({ start: positionSchema, end: positionSchema });
+  return tool(
+    async ({ uri, edits }) => {
+      await applyEdit(uri, edits);
+      return JSON.stringify({ success: true });
+    },
+    {
+      name: 'appy_edit',
+      description:
+        'Applies a list of text edits to a document. Each edit replaces the text in a range with new text. Use this tool to make changes to documents instead of `edit_file`.',
+      schema: z.object({
+        uri: z.string().describe('The URI of the document to edit.'),
+        edits: z
+          .array(
+            z.object({
+              range: rangeSchema.describe('The range of text to replace.'),
+              newText: z.string().describe('The replacement text.'),
+            }),
+          )
+          .describe('The text edits to apply.'),
+      }),
+    },
+  );
+}
+
 export function createDocumentAccessorTools<T extends Document = Document>(
   documents: DocumentAccessor<T>,
-): DeepAgentToolDefinition[] {
+): StructuredTool[] {
   return [
-    {
-      name: 'get_active_documents',
-      description: 'Returns a list of all documents currently open in the workspace with their URIs and formats.',
-      schema: z.object({}),
-      async execute(_args: unknown) {
+    tool(
+      async () => {
         const docs = await documents.active();
         return JSON.stringify(docs.map((doc) => ({ uri: doc.uri, format: doc.format })));
       },
-    },
-    {
-      name: 'get_document',
-      description: 'Returns the URI, format, version, and full text content of a workspace document by URI.',
-      schema: z.object({ uri: z.string().describe('The URI of the document to retrieve.') }),
-      async execute({ uri }: { uri: string }) {
+      {
+        name: 'get_active_documents',
+        description: 'Returns a list of all documents currently open in the workspace with their URIs and formats.',
+        schema: z.object({}),
+      },
+    ),
+    tool(
+      async ({ uri }: { uri: string }) => {
         const doc = await documents.get(uri);
         if (doc == null) {
           return JSON.stringify({ error: `Document not found: ${uri}` });
         }
         return JSON.stringify({ uri: doc.uri, format: doc.format, version: doc.version, content: doc.getText() });
       },
-    },
+      {
+        name: 'get_document',
+        description: 'Returns the URI, format, version, and full text content of a workspace document by URI.',
+        schema: z.object({ uri: z.string().describe('The URI of the document to retrieve.') }),
+      },
+    ),
   ];
 }

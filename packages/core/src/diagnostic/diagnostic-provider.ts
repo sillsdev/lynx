@@ -28,6 +28,7 @@ export interface DiagnosticsChanged {
 
 export interface DiagnosticProvider<T = TextEdit> {
   readonly id: string;
+  readonly description: string;
   readonly diagnosticsChanged$: Observable<DiagnosticsChanged>;
   readonly commands: ReadonlySet<string>;
   init(): Promise<void>;

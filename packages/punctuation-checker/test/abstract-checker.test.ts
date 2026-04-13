@@ -278,7 +278,7 @@ class TestEnvironment {
 
     class StubChecker<T extends TextDocument | ScriptureDocument> extends AbstractChecker<T> {
       constructor(documentManager: DocumentAccessor<T>) {
-        super('stub-checker', documentManager, {
+        super('stub-checker', 'Stub checker for testing', documentManager, {
           createIssueFinder(_diagnosticFactory: DiagnosticFactory) {
             return mockIssueFinder;
           },

@@ -34,6 +34,7 @@ export class PunctuationContextChecker<
   ) {
     super(
       'punctuation-context-checker',
+      'Checks that punctuation marks appear in the correct context with proper surrounding whitespace',
       documentAccessor,
       new PunctuationContextIssueFinderFactory(localizer, punctuationContextConfig),
       validateAllDocuments,
