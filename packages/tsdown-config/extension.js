@@ -5,7 +5,7 @@ export default () => {
     entry: ['src/**/*.ts', '!src/**/*.test.ts'],
     dts: false,
     clean: true,
-    format: ['cjs'],
+    format: ['esm'],
     unbundle: true,
     external: ['vscode', /^@sillsdev\//],
   });

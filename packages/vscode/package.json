@@ -2,8 +2,8 @@
   "name": "@sillsdev/lynx-vscode",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
-  "main": "./dist/extension.cjs",
+  "type": "module",
+  "main": "./dist/extension.mjs",
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch --sourcemap",
