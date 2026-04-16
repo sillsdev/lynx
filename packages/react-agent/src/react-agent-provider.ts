@@ -1,15 +1,20 @@
-import { StructuredTool } from '@langchain/core/tools';
+import { AIMessageChunk } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
-import { AgentEvent, AgentEventType, AgentProvider, AgentResponse, TextEdit, TodoStatus } from '@sillsdev/lynx';
-import { createDeepAgent } from 'deepagents';
-import { AIMessageChunk, tool } from 'langchain';
+import {
+  AgentEvent,
+  AgentEventType,
+  AgentProvider,
+  AgentResponse,
+  DiagnosticProvider,
+  TextEdit,
+  TodoStatus,
+} from '@sillsdev/lynx';
 import { Observable, Subject } from 'rxjs';
 
-import { DeepAgentConfig } from './deep-agent-config';
-import { DeepAgentToolDefinition } from './deep-agent-tool';
-import { createApplyEditTool, createDiagnosticProviderTools, createDocumentAccessorTools } from './deep-agent-tools';
+import { createAgentGraph } from './graph/agent-graph';
+import { ReactAgentConfig } from './react-agent-config';
 
-type DeepAgent = ReturnType<typeof createDeepAgent>;
+type AgentGraph = ReturnType<typeof createAgentGraph>;
 
 const DEFAULT_SYSTEM_PROMPT = `You are a Bible translation assistant integrated into the Lynx workspace.
 You help users with translation quality checks, formatting, and general Bible translation tasks.
@@ -24,38 +29,29 @@ You have access to workspace tools that let you:
 When users ask about translation issues, first check the diagnostics for the relevant document.
 When suggesting fixes, use the diagnostic actions system to propose concrete edits.
 An action will either contain a \`command\` to execute by calling \`execute_diagnostic_command\` or \`edits\` to apply directly to the document.
-You should use the \`apply_edit\` tool to apply \`edits\` to a document.
-Always explain your reasoning in the context of Bible translation best practices.
-File system tools, such as \`edit_file\`, \`read_file\`, \`write_file\`, \`ls\`, etc., should only be used for scratch files, never for actual translation documents.`;
+Always explain your reasoning in the context of Bible translation best practices.`;
 
-export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
-  readonly config: DeepAgentConfig<T>;
+export class ReactAgentProvider<T = TextEdit> implements AgentProvider {
+  readonly config: ReactAgentConfig<T>;
 
-  private agent?: DeepAgent;
+  private agent?: AgentGraph;
   private readonly eventsSubject = new Subject<AgentEvent>();
 
   readonly events$: Observable<AgentEvent> = this.eventsSubject.asObservable();
 
-  constructor(config: DeepAgentConfig<T>) {
+  constructor(config: ReactAgentConfig<T>) {
     this.config = config;
   }
 
   init(): Promise<void> {
-    const tools = this.buildTools();
-    const subagents = this.config.subAgents?.map((sa) => ({
-      name: sa.name,
-      description: sa.description,
-      systemPrompt: sa.systemPrompt,
-      model: sa.model,
-      tools: sa.tools?.map((t) => this.convertTool(t)),
-    }));
-
-    this.agent = createDeepAgent({
+    this.agent = createAgentGraph({
       model: this.config.model,
       systemPrompt: this.config.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
-      tools,
-      subagents,
-      skills: this.config.skills,
+      documents: this.config.documents,
+      diagnosticProviders: this.config.diagnosticProviders as DiagnosticProvider<unknown>[] | undefined,
+      applyEdit: this.config.applyEdit as ((uri: string, edits: unknown[]) => Promise<void>) | undefined,
+      tools: this.config.tools,
+      subagents: this.config.subAgents,
       checkpointer: new MemorySaver(),
     });
     return Promise.resolve();
@@ -186,28 +182,6 @@ export class DeepAgentProvider<T = TextEdit> implements AgentProvider {
   dispose(): Promise<void> {
     this.eventsSubject.complete();
     return Promise.resolve();
-  }
-
-  private buildTools(): StructuredTool[] {
-    const tools: StructuredTool[] = (this.config.tools ?? []).map((t) => this.convertTool(t));
-
-    if (this.config.diagnosticProviders != null && this.config.diagnosticProviders.length > 0) {
-      tools.push(...createDiagnosticProviderTools(this.config.diagnosticProviders));
-    }
-
-    tools.push(...createDocumentAccessorTools(this.config.documents));
-
-    tools.push(createApplyEditTool(this.config.applyEdit as (uri: string, edits: unknown[]) => Promise<void>));
-
-    return tools;
-  }
-
-  private convertTool(def: DeepAgentToolDefinition) {
-    return tool(async (args: Record<string, unknown>) => def.execute(args), {
-      name: def.name,
-      description: def.description,
-      schema: def.schema,
-    });
   }
 
   private mapStreamEvent(runId: string, event: Record<string, unknown>): AgentEvent[] {

@@ -11,13 +11,13 @@ import {
   TodoStatus,
   Workspace,
 } from '@sillsdev/lynx';
-import { DeepAgentProvider } from '@sillsdev/lynx-deep-agent';
 import {
   JsonFileDiagnosticDismissalStore,
   SimpleQuoteFormattingProvider,
   VerseOrderDiagnosticProvider,
 } from '@sillsdev/lynx-examples';
 import { StandardRuleSets } from '@sillsdev/lynx-punctuation-checker';
+import { ReactAgentProvider } from '@sillsdev/lynx-react-agent';
 import { UsfmDocumentFactory, UsfmEditFactory } from '@sillsdev/lynx-usfm';
 import { UsfmStylesheet } from '@sillsdev/machine/corpora';
 import { initChatModel } from 'langchain/chat_models/universal';
@@ -112,14 +112,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     new VerseOrderDiagnosticProvider(localizer, documentManager, editFactory),
   ];
 
-  let agentProvider: DeepAgentProvider | undefined;
+  let agentProvider: ReactAgentProvider | undefined;
   if (agentEnabled) {
     const agentModel = emptyToUndefined(config.get<string>('agent.model')) ?? DEFAULT_MODELS[agentProviderName];
     const model = await initChatModel(agentModel, {
       modelProvider: agentProviderName,
       apiKey: agentApiKey,
     });
-    agentProvider = new DeepAgentProvider({
+    agentProvider = new ReactAgentProvider({
       model,
       documents: documentManager,
       applyEdit: async (uri, edits) => {

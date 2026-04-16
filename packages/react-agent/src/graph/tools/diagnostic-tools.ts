@@ -1,5 +1,5 @@
-import { DiagnosticProvider, Document, DocumentAccessor } from '@sillsdev/lynx';
-import { StructuredTool, tool } from 'langchain';
+import { StructuredTool, tool } from '@langchain/core/tools';
+import { DiagnosticProvider } from '@sillsdev/lynx';
 import { z } from 'zod';
 
 const diagnosticSchema = z.object({
@@ -16,7 +16,7 @@ const diagnosticSchema = z.object({
   fingerprint: z.string().optional(),
 });
 
-export function createDiagnosticProviderTools(providers: DiagnosticProvider<unknown>[]): StructuredTool[] {
+export function createDiagnosticTools(providers: DiagnosticProvider<unknown>[]): StructuredTool[] {
   function findProvider(source: string): DiagnosticProvider<unknown> | undefined {
     return providers.find((p) => p.id === source);
   }
@@ -97,65 +97,6 @@ export function createDiagnosticProviderTools(providers: DiagnosticProvider<unkn
           uri: z.string().describe('The document URI'),
           diagnostic: diagnosticSchema.describe('The diagnostic to execute the command on'),
         }),
-      },
-    ),
-  ];
-}
-
-export function createApplyEditTool(applyEdit: (uri: string, edits: unknown[]) => Promise<void>): StructuredTool {
-  const positionSchema = z.object({ line: z.number(), character: z.number() });
-  const rangeSchema = z.object({ start: positionSchema, end: positionSchema });
-  return tool(
-    async ({ uri, edits }) => {
-      await applyEdit(uri, edits);
-      return JSON.stringify({ success: true });
-    },
-    {
-      name: 'appy_edit',
-      description:
-        'Applies a list of text edits to a document. Each edit replaces the text in a range with new text. Use this tool to make changes to documents instead of `edit_file`.',
-      schema: z.object({
-        uri: z.string().describe('The URI of the document to edit.'),
-        edits: z
-          .array(
-            z.object({
-              range: rangeSchema.describe('The range of text to replace.'),
-              newText: z.string().describe('The replacement text.'),
-            }),
-          )
-          .describe('The text edits to apply.'),
-      }),
-    },
-  );
-}
-
-export function createDocumentAccessorTools<T extends Document = Document>(
-  documents: DocumentAccessor<T>,
-): StructuredTool[] {
-  return [
-    tool(
-      async () => {
-        const docs = await documents.active();
-        return JSON.stringify(docs.map((doc) => ({ uri: doc.uri, format: doc.format })));
-      },
-      {
-        name: 'get_active_documents',
-        description: 'Returns a list of all documents currently open in the workspace with their URIs and formats.',
-        schema: z.object({}),
-      },
-    ),
-    tool(
-      async ({ uri }: { uri: string }) => {
-        const doc = await documents.get(uri);
-        if (doc == null) {
-          return JSON.stringify({ error: `Document not found: ${uri}` });
-        }
-        return JSON.stringify({ uri: doc.uri, format: doc.format, version: doc.version, content: doc.getText() });
-      },
-      {
-        name: 'get_document',
-        description: 'Returns the URI, format, version, and full text content of a workspace document by URI.',
-        schema: z.object({ uri: z.string().describe('The URI of the document to retrieve.') }),
       },
     ),
   ];

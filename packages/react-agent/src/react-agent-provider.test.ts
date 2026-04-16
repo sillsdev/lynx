@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 import { z } from 'zod';
 
-import type { DeepAgentConfig } from './deep-agent-config';
-import { DeepAgentProvider } from './deep-agent-provider';
+import type { ReactAgentConfig } from './react-agent-config';
+import { ReactAgentProvider } from './react-agent-provider';
 
 function createTextOnlyModel(): FakeToolCallingModel {
   return new FakeToolCallingModel({ toolCalls: [] });
@@ -25,8 +25,8 @@ const greetToolDefinition = {
   execute: ({ name }: { name: string }) => Promise.resolve(`Hello, ${name}!`),
 };
 
-describe('DeepAgentProvider', () => {
-  const baseConfig: DeepAgentConfig = {
+describe('ReactAgentProvider', () => {
+  const baseConfig: ReactAgentConfig = {
     model: createTextOnlyModel(),
     documents: mock<DocumentAccessor>(),
     applyEdit: async () => {
@@ -36,7 +36,7 @@ describe('DeepAgentProvider', () => {
 
   describe('init()', () => {
     it('passes custom tools to the agent', async () => {
-      const config: DeepAgentConfig = {
+      const config: ReactAgentConfig = {
         model: createTextOnlyModel(),
         documents: mock<DocumentAccessor>(),
         applyEdit: async () => {
@@ -51,10 +51,10 @@ describe('DeepAgentProvider', () => {
           },
         ],
       };
-      const provider = new DeepAgentProvider(config);
+      const provider = new ReactAgentProvider(config);
       await provider.init();
 
-      // Verify init completes without error - tools are passed to createDeepAgent internally
+      // Verify init completes without error - tools are passed to createAgentGraph internally
       const result = await provider.run('hello');
       expect(result.runId).toBeDefined();
     });
@@ -64,7 +64,7 @@ describe('DeepAgentProvider', () => {
       Object.assign(diagnosticProvider, { id: 'test-provider', description: 'A test diagnostic provider' });
       diagnosticProvider.getDiagnostics.mockResolvedValue([]);
 
-      const config: DeepAgentConfig = {
+      const config: ReactAgentConfig = {
         model: createToolCallingModel(),
         documents: mock<DocumentAccessor>(),
         applyEdit: async () => {
@@ -72,7 +72,7 @@ describe('DeepAgentProvider', () => {
         },
         diagnosticProviders: [diagnosticProvider],
       };
-      const provider = new DeepAgentProvider(config);
+      const provider = new ReactAgentProvider(config);
 
       // Should not throw - diagnostic provider tools are created and bound
       await provider.init();
@@ -81,12 +81,12 @@ describe('DeepAgentProvider', () => {
 
   describe('run()', () => {
     it('throws if not initialized', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       await expect(provider.run('test')).rejects.toThrow('Agent not initialized');
     });
 
     it('returns AgentResponse with runId and message', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       await provider.init();
 
       const result = await provider.run('test input');
@@ -97,7 +97,7 @@ describe('DeepAgentProvider', () => {
     });
 
     it('emits Started and Completed events to global events$', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       await provider.init();
 
       const eventsPromise = firstValueFrom(provider.events$.pipe(take(2), toArray()));
@@ -110,7 +110,7 @@ describe('DeepAgentProvider', () => {
     });
 
     it('invokes a tool and returns the final message', async () => {
-      const config: DeepAgentConfig = {
+      const config: ReactAgentConfig = {
         model: createToolCallingModel(),
         documents: mock<DocumentAccessor>(),
         applyEdit: async () => {
@@ -118,7 +118,7 @@ describe('DeepAgentProvider', () => {
         },
         tools: [greetToolDefinition],
       };
-      const provider = new DeepAgentProvider(config);
+      const provider = new ReactAgentProvider(config);
       await provider.init();
 
       const result = await provider.run('Please greet World');
@@ -130,13 +130,13 @@ describe('DeepAgentProvider', () => {
 
   describe('stream()', () => {
     it('errors if not initialized', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
 
       await expect(firstValueFrom(provider.stream('test'))).rejects.toThrow('Agent not initialized');
     });
 
     it('emits Started and Completed events', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       await provider.init();
 
       const events = await firstValueFrom(provider.stream('test input').pipe(toArray()));
@@ -147,7 +147,7 @@ describe('DeepAgentProvider', () => {
     });
 
     it('emits tool call and tool result events when tools are used', async () => {
-      const config: DeepAgentConfig = {
+      const config: ReactAgentConfig = {
         model: createToolCallingModel(),
         documents: mock<DocumentAccessor>(),
         applyEdit: async () => {
@@ -155,7 +155,7 @@ describe('DeepAgentProvider', () => {
         },
         tools: [greetToolDefinition],
       };
-      const provider = new DeepAgentProvider(config);
+      const provider = new ReactAgentProvider(config);
       await provider.init();
 
       const events = await firstValueFrom(provider.stream('Greet World').pipe(toArray()));
@@ -171,7 +171,7 @@ describe('DeepAgentProvider', () => {
     });
 
     it('forwards events to global events$', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       await provider.init();
 
       const globalEventsPromise = firstValueFrom(provider.events$.pipe(take(2), toArray()));
@@ -185,7 +185,7 @@ describe('DeepAgentProvider', () => {
 
   describe('dispose()', () => {
     it('completes the events subject', async () => {
-      const provider = new DeepAgentProvider(baseConfig);
+      const provider = new ReactAgentProvider(baseConfig);
       let completed = false;
       provider.events$.subscribe({ complete: () => (completed = true) });
 
