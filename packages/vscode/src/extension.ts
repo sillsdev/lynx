@@ -284,116 +284,126 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
   }
 
-  if (agentEnabled) {
-    const chatHandler: vscode.ChatRequestHandler = async (request, context, response, token) => {
-      let threadId: string;
-      if (context.history.length === 0) {
-        threadId = crypto.randomUUID();
-      } else {
-        // check if the last message has a threadId in its metadata, if so use that, otherwise generate a new one
-        let lastResponseTurn: vscode.ChatResponseTurn | undefined;
-        for (let i = context.history.length - 1; i >= 0; i--) {
-          const turn = context.history[i];
-          if (turn instanceof vscode.ChatResponseTurn && turn.participant === PARTICIPANT_ID) {
-            lastResponseTurn = turn;
-            break;
-          }
+  const chatHandler: vscode.ChatRequestHandler = async (request, context, response, token) => {
+    if (!agentEnabled || agentProvider == null) {
+      response.markdown(
+        'The Lynx agent is not enabled. To use `@lynx`, update your settings:\n\n' +
+          '- Set `lynx.agent.enabled` to `true`\n' +
+          '- Set `lynx.agent.provider` to `anthropic`, `openai`, or `google-genai`\n' +
+          "- Provide an API key via `lynx.agent.apiKey` (or the provider's environment variable: " +
+          '`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY`)\n\n' +
+          'Then reload the window for the changes to take effect.',
+      );
+      return {};
+    }
+
+    let threadId: string;
+    if (context.history.length === 0) {
+      threadId = crypto.randomUUID();
+    } else {
+      // check if the last message has a threadId in its metadata, if so use that, otherwise generate a new one
+      let lastResponseTurn: vscode.ChatResponseTurn | undefined;
+      for (let i = context.history.length - 1; i >= 0; i--) {
+        const turn = context.history[i];
+        if (turn instanceof vscode.ChatResponseTurn && turn.participant === PARTICIPANT_ID) {
+          lastResponseTurn = turn;
+          break;
         }
-        threadId = (lastResponseTurn?.result.metadata?.threadId as string | undefined) ?? crypto.randomUUID();
       }
-      const events$ = workspace.streamAgent(request.prompt, threadId);
+      threadId = (lastResponseTurn?.result.metadata?.threadId as string | undefined) ?? crypto.randomUUID();
+    }
+    const events$ = workspace.streamAgent(request.prompt, threadId);
 
-      return new Promise<vscode.ChatResult>((resolve) => {
-        let todoCounter = 0;
-        let currentTodoCallId: string | undefined;
-        let lastTodoData: vscode.ChatTodoToolInvocationData | undefined;
+    return new Promise<vscode.ChatResult>((resolve) => {
+      let todoCounter = 0;
+      let currentTodoCallId: string | undefined;
+      let lastTodoData: vscode.ChatTodoToolInvocationData | undefined;
 
-        const hidePreviousTodos = () => {
-          if (currentTodoCallId) {
-            const hide = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
-            hide.enablePartialUpdate = true;
-            hide.isComplete = true;
-            hide.presentation = 'hidden';
-            response.push(hide);
-          }
-        };
+      const hidePreviousTodos = () => {
+        if (currentTodoCallId) {
+          const hide = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
+          hide.enablePartialUpdate = true;
+          hide.isComplete = true;
+          hide.presentation = 'hidden';
+          response.push(hide);
+        }
+      };
 
-        const completeTodos = () => {
-          if (currentTodoCallId) {
-            const part = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
-            part.enablePartialUpdate = true;
-            part.isComplete = true;
-            part.toolSpecificData = lastTodoData;
-            response.push(part);
-          }
-        };
+      const completeTodos = () => {
+        if (currentTodoCallId) {
+          const part = new vscode.ChatToolInvocationPart('todos', currentTodoCallId);
+          part.enablePartialUpdate = true;
+          part.isComplete = true;
+          part.toolSpecificData = lastTodoData;
+          response.push(part);
+        }
+      };
 
-        const subscription = events$.subscribe({
-          next(event) {
-            switch (event.type) {
-              case AgentEventType.Started:
-                response.progress('Thinking');
-                break;
-              case AgentEventType.Message:
-                response.markdown(event.content);
-                break;
-              case AgentEventType.ToolCall:
-                response.progress(`Running ${event.toolName}`);
-                break;
-              case AgentEventType.Todos: {
-                // Workaround for VS Code bug: toolSpecificData updates don't trigger
-                // UI re-renders, so we hide the old part and create a new one.
-                hidePreviousTodos();
-                todoCounter++;
-                const callId = `lynx-todos-${todoCounter.toString()}`;
-                currentTodoCallId = callId;
-                lastTodoData = {
-                  todoList: event.todos.map((t, i) => ({
-                    id: i,
-                    title: t.content,
-                    status: toVscodeTodoStatus(t.status),
-                  })),
-                };
-                const part = new vscode.ChatToolInvocationPart('todos', callId);
-                part.enablePartialUpdate = true;
-                part.isComplete = false;
-                part.toolSpecificData = lastTodoData;
-                response.push(part);
-                break;
-              }
-              case AgentEventType.Error:
-                completeTodos();
-                resolve({ metadata: { threadId }, errorDetails: { message: event.error } });
-                break;
-              case AgentEventType.Completed:
-                completeTodos();
-                resolve({ metadata: { threadId } });
-                break;
+      const subscription = events$.subscribe({
+        next(event) {
+          switch (event.type) {
+            case AgentEventType.Started:
+              response.progress('Thinking');
+              break;
+            case AgentEventType.Message:
+              response.markdown(event.content);
+              break;
+            case AgentEventType.ToolCall:
+              response.progress(`Running ${event.toolName}`);
+              break;
+            case AgentEventType.Todos: {
+              // Workaround for VS Code bug: toolSpecificData updates don't trigger
+              // UI re-renders, so we hide the old part and create a new one.
+              hidePreviousTodos();
+              todoCounter++;
+              const callId = `lynx-todos-${todoCounter.toString()}`;
+              currentTodoCallId = callId;
+              lastTodoData = {
+                todoList: event.todos.map((t, i) => ({
+                  id: i,
+                  title: t.content,
+                  status: toVscodeTodoStatus(t.status),
+                })),
+              };
+              const part = new vscode.ChatToolInvocationPart('todos', callId);
+              part.enablePartialUpdate = true;
+              part.isComplete = false;
+              part.toolSpecificData = lastTodoData;
+              response.push(part);
+              break;
             }
-          },
-          error(err) {
-            completeTodos();
-            resolve({
-              metadata: { threadId },
-              errorDetails: { message: err instanceof Error ? err.message : String(err) },
-            });
-          },
-        });
-
-        const cancellationListener = token.onCancellationRequested(() => {
+            case AgentEventType.Error:
+              completeTodos();
+              resolve({ metadata: { threadId }, errorDetails: { message: event.error } });
+              break;
+            case AgentEventType.Completed:
+              completeTodos();
+              resolve({ metadata: { threadId } });
+              break;
+          }
+        },
+        error(err) {
           completeTodos();
-          subscription.unsubscribe();
-          resolve({ metadata: { threadId } });
-        });
-        subscription.add(() => {
-          cancellationListener.dispose();
-        });
+          resolve({
+            metadata: { threadId },
+            errorDetails: { message: err instanceof Error ? err.message : String(err) },
+          });
+        },
       });
-    };
 
-    const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, chatHandler);
-    context.subscriptions.push(participant);
-  }
+      const cancellationListener = token.onCancellationRequested(() => {
+        completeTodos();
+        subscription.unsubscribe();
+        resolve({ metadata: { threadId } });
+      });
+      subscription.add(() => {
+        cancellationListener.dispose();
+      });
+    });
+  };
+
+  const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, chatHandler);
+  context.subscriptions.push(participant);
 }
 
 export function deactivate(): void {
