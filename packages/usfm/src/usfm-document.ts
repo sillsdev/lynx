@@ -31,8 +31,6 @@ import {
 } from '@sillsdev/machine/corpora';
 
 export class UsfmDocument extends ScriptureTextDocument {
-  private lineChildren: number[] = [];
-
   constructor(
     uri: string,
     format: string,
@@ -47,72 +45,43 @@ export class UsfmDocument extends ScriptureTextDocument {
 
   update(changes: TextDocumentChange[], version: number): void {
     for (const change of changes) {
-      if (change.range == null) {
-        this.parseUsfm(change.text);
-      } else {
-        let startChangeLine = Math.max(change.range.start.line, 0);
-        let endChangeLine = Math.max(change.range.end.line, 0);
-        if (change.range.end.character === 0) {
-          endChangeLine--;
-          if (endChangeLine < startChangeLine) {
-            startChangeLine = endChangeLine;
-          }
-        }
-        const startChildIndex = this.lineChildren[startChangeLine];
-        const endChildIndex = this.lineChildren[endChangeLine];
-        const startChild = this.children[startChildIndex];
-        const endChild = this.children[endChildIndex];
-        const childStartOffset = this.offsetAt(startChild.range.start);
-        let childEndOffset = this.offsetAt(endChild.range.end);
-        const changeStartOffset = this.offsetAt(change.range.start);
-        const changeEndOffset = this.offsetAt(change.range.end);
-        if (changeEndOffset > childEndOffset) {
-          childEndOffset = changeEndOffset;
-        }
-        const usfm =
-          this.content.substring(childStartOffset, changeStartOffset) +
-          change.text +
-          this.content.substring(changeEndOffset, childEndOffset);
-        const subDocument = new UsfmDocument(
-          this.uri,
-          this.format,
-          version,
-          usfm,
-          this.stylesheet,
-          startChild.range.start,
-        );
+      if (change.range == null || this.children.length === 0) {
+        this.updateContent(change);
+        this.parseUsfm(this.content);
+        continue;
+      }
 
-        // update nodes
-        this.spliceChildren(startChildIndex, endChildIndex - startChildIndex + 1, ...subDocument.children);
+      // start from a child before the change's line, because the change could extend it
+      const startChildIndex = Math.max(this.findLastChildStartingAtOrBefore(change.range.start.line - 1), 0);
+      // a line can hold several top-level children (e.g. a verse and its text), and all of them must be reparsed
+      const endChildIndex = Math.max(this.findLastChildStartingAtOrBefore(change.range.end.line), startChildIndex);
+      const startChild = this.children[startChildIndex];
+      const endChild = this.children[endChildIndex];
+      const changeStartOffset = this.offsetAt(change.range.start);
+      const changeEndOffset = this.offsetAt(change.range.end);
+      const childStartOffset = Math.min(this.offsetAt(startChild.range.start), changeStartOffset);
+      const childEndOffset = Math.max(this.offsetAt(endChild.range.end), changeEndOffset);
+      const usfm =
+        this.content.substring(childStartOffset, changeStartOffset) +
+        change.text +
+        this.content.substring(changeEndOffset, childEndOffset);
+      const subDocument = new UsfmDocument(
+        this.uri,
+        this.format,
+        version,
+        usfm,
+        this.stylesheet,
+        this.positionAt(childStartOffset),
+      );
 
-        // update line children
-        const startLine = startChild.range.start.line;
-        const endLine = endChild.range.end.line;
-        const addedLineChildren = subDocument.lineChildren.map((index) => index + startChildIndex);
-        const lineDiff = addedLineChildren.length - (endLine - startLine + 1);
-        const childDiff = subDocument.children.length - 1;
-        if (lineDiff === 0) {
-          for (let i = 0; i < addedLineChildren.length; i++) {
-            this.lineChildren[i + startLine] = addedLineChildren[i];
-          }
-        } else {
-          if (addedLineChildren.length < 10000) {
-            this.lineChildren.splice(startLine, endLine - startLine + 1, ...addedLineChildren);
-          } else {
-            // avoid too many arguments for splice
-            this.lineChildren = this.lineChildren
-              .slice(0, startLine)
-              .concat(addedLineChildren, this.lineChildren.slice(endLine + 1));
-          }
+      this.spliceChildren(startChildIndex, endChildIndex - startChildIndex + 1, ...subDocument.children);
 
-          for (let i = endChildIndex + childDiff + 1; i < this.children.length; i++) {
-            updateNodeLine(this.children[i], lineDiff);
-          }
-        }
-        if (childDiff !== 0) {
-          for (let i = endLine + lineDiff + 1; i < this.lineChildren.length; i++) {
-            this.lineChildren[i] += childDiff;
-          }
+      const lineDiff =
+        countLineBreaks(change.text) - countLineBreaks(this.content.substring(changeStartOffset, changeEndOffset));
+      if (lineDiff !== 0) {
+        // the remaining children start on lines after the change, so only their line numbers need to be updated
+        for (let i = startChildIndex + subDocument.children.length; i < this.children.length; i++) {
+          updateNodeLine(this.children[i], lineDiff);
         }
       }
       this.updateContent(change);
@@ -120,9 +89,18 @@ export class UsfmDocument extends ScriptureTextDocument {
     this.version = version;
   }
 
-  clearChildren(): void {
-    super.clearChildren();
-    this.lineChildren.length = 0;
+  private findLastChildStartingAtOrBefore(line: number): number {
+    let low = 0;
+    let high = this.children.length;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (this.children[mid].range.start.line > line) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+    return low - 1;
   }
 
   private parseUsfm(content: string, start: Position = { line: 0, character: 0 }): void {
@@ -136,16 +114,7 @@ export class UsfmDocument extends ScriptureTextDocument {
       start.character + 1,
     );
     const parser = new UsfmParser(tokens, handler, this.stylesheet);
-    let prevLine = start.line;
-    while (parser.processToken()) {
-      if (prevLine !== parser.state.lineNumber) {
-        for (let i = prevLine + 1; i < parser.state.lineNumber; i++) {
-          this.lineChildren.push(this.children.length - 2);
-        }
-        this.lineChildren.push(this.children.length - 1);
-        prevLine = parser.state.lineNumber;
-      }
-    }
+    parser.processTokens();
   }
 }
 
@@ -155,6 +124,10 @@ function updateNodeLine(node: ScriptureNode, lineDiff: number): void {
   for (const child of node.children) {
     updateNodeLine(child, lineDiff);
   }
+}
+
+function countLineBreaks(text: string): number {
+  return text.match(/\r\n|\r|\n/g)?.length ?? 0;
 }
 
 class UsfmDocumentBuilder extends UsfmParserHandlerBase {
