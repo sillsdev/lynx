@@ -1,5 +1,18 @@
 # @sillsdev/lynx-punctuation-checker
 
+## 0.3.0
+
+### Minor Changes
+
+- def6aea: Add support for commands in diagnostic providers
+- 7a44cbd: Add support for dismissing diagnostics
+
+### Patch Changes
+
+- Updated dependencies [def6aea]
+- Updated dependencies [7a44cbd]
+  - @sillsdev/lynx@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes

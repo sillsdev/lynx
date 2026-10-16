@@ -1,5 +1,13 @@
 # @sillsdev/lynx-delta
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [def6aea]
+- Updated dependencies [7a44cbd]
+  - @sillsdev/lynx@0.4.0
+
 ## 0.2.4
 
 ### Patch Changes
