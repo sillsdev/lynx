@@ -1,5 +1,12 @@
 # @sillsdev/lynx
 
+## 0.4.0
+
+### Minor Changes
+
+- def6aea: Add support for commands in diagnostic providers
+- 7a44cbd: Add support for dismissing diagnostics
+
 ## 0.3.5
 
 ### Patch Changes

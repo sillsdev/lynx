@@ -1,5 +1,14 @@
 # @sillsdev/lynx-usfm
 
+## 0.3.2
+
+### Patch Changes
+
+- db61f9e: Fix duplicate children when updating a UsfmDocument line that contains multiple top-level nodes
+- Updated dependencies [def6aea]
+- Updated dependencies [7a44cbd]
+  - @sillsdev/lynx@0.4.0
+
 ## 0.3.1
 
 ### Patch Changes
